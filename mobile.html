@@ -2,168 +2,519 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0e1a">
-<title>ARCH-NEURAL V15.1 — Douglas Corrêa Cavasso</title>
+<title>LAB_ARCH-NEURAL V15.1 — Douglas Corrêa Cavasso</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, var(--bg1, #0a0e1a) 0%, var(--bg2, #1a1f3a) 100%);
-    color: var(--ink, #e0e6f0);
-    display: flex; flex-direction: column; height: 100vh; height: 100dvh; transition: background 0.3s; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ui-monospace, monospace;
+    color: #e6edf3;
+    display: flex; flex-direction: column;
+    height: 100vh; height: 100dvh;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+    transition: background 0.3s;
+    --bg1: #0a0e1a;
+    --bg2: #1a1f3a;
+    --accent1: #5eead4;
+    --accent2: #a78bfa;
+    --neuron1: #5eead4;
+    --neuron2: #a78bfa;
+    --neuron3: #fbbf24;
+    --neuron4: #ef4444;
+  }
 
-  header { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
-    padding: 10px 12px; border-bottom: 1px solid rgba(100,150,255,0.2);
-    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
-  header h1 { font-size: 15px; font-weight: 700;
-    background: linear-gradient(90deg, var(--accent1, #64c8ff), var(--accent2, #b48fff));
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .stats { font-size: 10px; color: var(--ink-dim, #7a8aab); }
-  #menu-btn { background: rgba(100,150,255,0.15); border: 1px solid rgba(100,150,255,0.3);
-    color: var(--ink, #e0e6f0); width: 36px; height: 36px; border-radius: 50%;
-    font-size: 18px; cursor: pointer; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; }
-  #menu-btn:active { transform: scale(0.92); }
+  /* ═══ HEADER ═══ */
+  .ph-header {
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    padding: 9px 10px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid rgba(94,234,212,0.2);
+    flex-shrink: 0; z-index: 50;
+  }
+  .ph-title {
+    font-size: 12px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ph-btn-icon {
+    width: 32px; height: 32px;
+    background: rgba(94,234,212,0.15);
+    border-radius: 50%; border: 1px solid var(--accent1);
+    color: var(--accent1);
+    font-size: 15px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .ph-btn-icon:active { transform: scale(0.92); }
+  .ph-actions { display: flex; gap: 6px; align-items: center; }
+  .ph-btn-pal {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000;
+    border-radius: 50%; border: 0;
+    font-size: 15px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .ph-btn-pal-cerebro {
+    width: 32px; height: 32px;
+    background: conic-gradient(from 0deg, #ff4444, #ffaa00, #5eead4, #a78bfa, #ff4444);
+    color: #fff;
+    border-radius: 50%; border: 0;
+    font-size: 14px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .ph-btn-pal-cerebro::after {
+    content: '🧠'; position: absolute; font-size: 13px;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.8));
+  }
 
-  #brain-canvas-wrap { background: rgba(0,0,0,0.3); padding: 0; flex-shrink: 0;
-    position: relative; height: 35vh; min-height: 200px; max-height: 350px;
-    border-bottom: 1px solid rgba(100,150,255,0.15); overflow: hidden; }
-  #brain-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
-  .canvas-info { position: absolute; top: 6px; left: 8px;
-    font-size: 9px; color: var(--ink-dim, #7a8aab);
-    background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; pointer-events: none; }
-  .canvas-mode { position: absolute; top: 6px; right: 8px;
-    display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 3px; border-radius: 6px; }
-  .canvas-mode button { background: transparent; border: 0; color: var(--ink-dim, #7a8aab);
-    padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-  .canvas-mode button.active { background: var(--accent1, #4f46e5); color: white; }
+  /* ═══ CÉREBRO ═══ */
+  .ph-brain-area {
+    flex: 1; position: relative; overflow: hidden;
+  }
+  #brain-canvas {
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .ph-brain-3d-btns {
+    position: absolute; top: 8px; right: 56px;
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .ph-brain-3d-btn {
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: #b8c8e0;
+    padding: 5px 9px; border-radius: 5px;
+    font-size: 10px; cursor: pointer;
+    font-family: inherit; font-weight: bold;
+    min-width: 28px;
+  }
+  .ph-brain-3d-btn.active {
+    background: rgba(94,234,212,0.25);
+    color: var(--accent1);
+    border-color: var(--accent1);
+  }
+  .ph-brain-3d-btn:active { transform: scale(0.92); }
 
-  .float-tabs { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 6px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
-    padding: 6px; border-radius: 24px; border: 1px solid rgba(100,150,255,0.3); }
-  .float-tab { background: transparent; border: 0; color: var(--ink, #e0e6f0);
-    width: 34px; height: 34px; border-radius: 50%; font-size: 15px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .float-tab:active { transform: scale(0.85); background: var(--accent1, #4f46e5); }
+  /* ═══ LEGENDA ANATÔMICA (transparente, esquerda) ═══ */
+  .ph-legenda {
+    position: absolute; top: 8px; left: 8px;
+    background: transparent;
+    padding: 8px 10px;
+    font-size: 9px; line-height: 1.5;
+    color: #e6edf3; z-index: 8;
+    max-width: 168px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
+  }
+  .ph-legenda-row {
+    display: flex; align-items: center; gap: 5px;
+    padding: 1px 0;
+  }
+  .ph-legenda-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 4px currentColor;
+  }
+  .ph-legenda-row .v {
+    color: #b0bac4;
+    transition: color 0.3s;
+  }
+  .ph-legenda-divider {
+    margin: 5px 0; padding-top: 5px;
+    font-size: 8px; color: #7d8b96;
+  }
+  .ph-legenda-divider .l1 { color: #ec4899; }
+  .ph-legenda-divider .l2 { color: #fbbf24; }
+  .ph-legenda-divider .l3 { color: #c4b5fd; }
+  .ph-legenda-divider .l4 { color: #4ade80; }
+  .ph-legenda-icon-collapsed { display: none; color: var(--accent1); font-size: 18px; padding: 4px; }
+  .ph-legenda.collapsed {
+    padding: 4px 8px;
+  }
+  .ph-legenda.collapsed .ph-legenda-content { display: none; }
+  .ph-legenda.collapsed .ph-legenda-icon-collapsed { display: block; }
 
-  #chat { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
-  .msg { margin-bottom: 10px; max-width: 92%; word-wrap: break-word; }
-  .msg-user { background: linear-gradient(135deg, var(--accent1, #2563eb), var(--accent2, #4f46e5));
-    color: white; margin-left: auto;
-    border-radius: 18px 18px 4px 18px; padding: 10px 14px; font-size: 14px; line-height: 1.4; }
-  .msg-brain { background: rgba(40, 50, 80, 0.6); color: var(--ink, #e0e6f0);
-    margin-right: auto; border-radius: 18px 18px 18px 4px; padding: 10px 14px;
-    font-size: 14px; line-height: 1.4; border: 1px solid rgba(100,150,255,0.15); white-space: pre-wrap; }
-  .tag { font-size: 9px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-  .tag-cog { background: rgba(180, 143, 255, 0.15); color: #b48fff; }
-  .tag-est { background: rgba(100, 200, 255, 0.15); color: #64c8ff; }
-  .tag-soc { background: rgba(255, 180, 120, 0.15); color: #ffb478; }
-  .tag-tur { background: rgba(120, 220, 150, 0.15); color: #78dc96; }
+  /* Animação piscada quando valor muda */
+  @keyframes piscar-mudanca {
+    0%, 100% { color: #b0bac4; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
+    25% { color: #fbbf24; text-shadow: 0 0 8px #fbbf24, 0 0 4px #fbbf24; }
+    50% { color: #ff8c00; text-shadow: 0 0 12px #ff8c00, 0 0 6px #ff8c00; }
+    75% { color: #fbbf24; text-shadow: 0 0 8px #fbbf24, 0 0 4px #fbbf24; }
+  }
+  .piscou .v {
+    animation: piscar-mudanca 0.8s ease-in-out 3;
+  }
 
-  .pills { display: flex; gap: 6px; overflow-x: auto; padding: 6px 10px;
-    background: rgba(0,0,0,0.2); flex-shrink: 0; -webkit-overflow-scrolling: touch; }
-  .pill { flex-shrink: 0; background: rgba(60, 80, 130, 0.4);
-    border: 1px solid rgba(100,150,255,0.2); color: var(--ink, #b8c8e0);
-    padding: 5px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; white-space: nowrap; }
-  .pill:active { background: rgba(100, 130, 200, 0.5); }
+  /* ═══ ÍCONES LATERAIS DIREITA ═══ */
+  .ph-side-icons {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 48px; background: rgba(0,0,0,0.55);
+    display: flex; flex-direction: column;
+    padding: 8px 5px; gap: 7px;
+    border-left: 1px solid rgba(94,234,212,0.2);
+    z-index: 10;
+    overflow-y: auto;
+  }
+  .ph-side-icons::-webkit-scrollbar { width: 2px; }
+  .ph-side-icons::-webkit-scrollbar-thumb { background: var(--accent1); }
+  .ph-side-ic {
+    width: 38px; height: 38px;
+    background: rgba(60,80,130,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; cursor: pointer;
+    transition: all 0.2s; color: #d8e2ee;
+    border: 2px solid transparent;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .ph-side-ic:active { transform: scale(0.92); }
+  .ph-side-ic.active {
+    background: rgba(94,234,212,0.25);
+    color: var(--accent1);
+    border-color: var(--accent1);
+    box-shadow: 0 0 10px rgba(94,234,212,0.5);
+  }
+  .ph-side-badge {
+    position: absolute; top: -3px; right: -3px;
+    background: #22c55e; color: #000;
+    font-size: 8px; font-weight: bold;
+    border-radius: 8px; padding: 1px 4px;
+    border: 1.5px solid #000;
+    min-width: 16px; text-align: center;
+    pointer-events: none;
+  }
+  .ph-side-badge.red { background: #ef4444; color: #fff; }
+  .ph-side-badge.yellow { background: #fbbf24; color: #000; }
+  .ph-side-badge.purple { background: var(--accent2); color: #000; }
+  .ph-side-badge.teal { background: var(--accent1); color: #000; }
+  .ph-side-divider {
+    height: 1px; background: rgba(94,234,212,0.15);
+    margin: 2px 4px; flex-shrink: 0;
+  }
 
-  .input-area { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
-    padding: 8px 10px; border-top: 1px solid rgba(100,150,255,0.2);
-    display: flex; gap: 8px; flex-shrink: 0;
-    padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-  #input { flex: 1; background: rgba(20, 25, 45, 0.8);
-    border: 1px solid rgba(100,150,255,0.3); border-radius: 22px;
-    padding: 10px 14px; color: var(--ink, white); font-size: 14px; outline: none; -webkit-appearance: none; }
-  #input:focus { border-color: var(--accent1, #64c8ff); }
-  #send { background: linear-gradient(135deg, var(--accent1, #4f46e5), var(--accent2, #7c3aed));
-    border: none; color: white; width: 42px; height: 42px; border-radius: 50%;
-    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: transform 0.1s; }
-  #send:active { transform: scale(0.92); }
+  /* ═══ CHAT ═══ */
+  .ph-chat {
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(94,234,212,0.2);
+    flex-shrink: 0; display: flex; flex-direction: column;
+    height: 34%;
+    min-height: 130px;
+    max-height: 70%;
+    position: relative;
+  }
+  .ph-chat-handle {
+    height: 14px; display: flex; align-items: center; justify-content: center;
+    cursor: ns-resize; flex-shrink: 0; user-select: none;
+    touch-action: none;
+  }
+  .ph-chat-handle::before {
+    content: ''; width: 44px; height: 3px;
+    background: var(--accent1); border-radius: 2px;
+    opacity: 0.5;
+  }
+  .ph-chat-content {
+    flex: 1; overflow-y: auto; padding: 4px 8px 0;
+    font-size: 12px;
+    -webkit-overflow-scrolling: touch;
+    user-select: text; -webkit-user-select: text;
+  }
+  .ph-msg-u {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000; padding: 6px 10px; border-radius: 14px 14px 3px 14px;
+    max-width: 80%; margin-left: auto; margin-bottom: 6px;
+    font-weight: 500;
+    word-wrap: break-word;
+  }
+  .ph-msg-b {
+    background: rgba(40,50,80,0.7); color: #e0e6f0;
+    padding: 6px 10px; border-radius: 14px 14px 14px 3px;
+    max-width: 80%; margin-bottom: 6px;
+    border: 1px solid rgba(94,234,212,0.15);
+    word-wrap: break-word; white-space: pre-wrap;
+  }
+  .ph-msg-tag {
+    font-size: 9px; padding: 1px 6px;
+    border-radius: 3px; display: inline-block;
+    margin-top: 3px; margin-bottom: 4px;
+  }
+  .ph-msg-tag.cog { background: rgba(167,139,250,0.2); color: #b48fff; }
+  .ph-msg-tag.est { background: rgba(94,234,212,0.2); color: var(--accent1); }
+  .ph-msg-tag.soc { background: rgba(255,180,120,0.2); color: #ffb478; }
+  .ph-msg-tag.tur { background: rgba(120,220,150,0.2); color: #78dc96; }
 
-  #loading { position: fixed; inset: 0; background: #0a0e1a;
-    display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 5000; }
-  #loading .spinner { width: 60px; height: 60px;
-    border: 4px solid rgba(100,150,255,0.2); border-top-color: #64c8ff;
-    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-  #loading .text { color: #64c8ff; font-size: 14px; text-align: center; }
+  .ph-input {
+    padding: 6px 8px 8px; display: flex; gap: 6px;
+    border-top: 1px solid rgba(94,234,212,0.15);
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  .ph-input-field {
+    flex: 1; background: rgba(20,25,45,0.8);
+    border: 1px solid rgba(94,234,212,0.3);
+    border-radius: 16px; padding: 6px 12px;
+    color: #b8c8e0; font-size: 12px;
+    line-height: 1.4; outline: none;
+    -webkit-user-select: text; user-select: text;
+    -webkit-appearance: none;
+    font-family: inherit;
+  }
+  .ph-input-field:focus { border-color: var(--accent1); }
+  .ph-input-btn {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000; border-radius: 50%; border: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .ph-input-btn:active { transform: scale(0.92); }
+
+  /* ═══ DRAWER HAMBURGUER ═══ */
+  .ph-drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 99; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .ph-drawer-overlay.show { opacity: 1; pointer-events: auto; }
+  .ph-drawer {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 78%; max-width: 320px;
+    background: linear-gradient(135deg, #0f1426, #1a2138);
+    border-right: 2px solid var(--accent1);
+    padding: 14px 12px; z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ph-drawer.open { transform: translateX(0); }
+  .ph-drawer h4 {
+    color: var(--accent1); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    margin: 12px 0 6px;
+  }
+  .ph-drawer-item {
+    padding: 10px 12px; background: rgba(60,80,130,0.3);
+    border-radius: 6px; margin-bottom: 4px;
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; color: #d8e2ee;
+  }
+  .ph-drawer-item:active { background: rgba(94,234,212,0.15); }
+  .ph-drawer-close {
+    float: right; background: transparent; color: #7d8b96;
+    border: 0; font-size: 22px; cursor: pointer;
+    padding: 0 6px;
+  }
+
+  /* ═══ PALETA POPUP ═══ */
+  .ph-palette-popup {
+    position: absolute; top: 50px; right: 8px;
+    background: linear-gradient(135deg, #0f1426, #1a2138);
+    border: 1px solid var(--accent1); border-radius: 10px;
+    padding: 10px; z-index: 60; min-width: 170px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    display: none;
+    max-height: 70vh; overflow-y: auto;
+  }
+  .ph-palette-popup.open { display: block; }
+  .ph-palette-popup h5 {
+    color: var(--accent1); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 8px;
+  }
+  .ph-pal-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 6px; border-radius: 5px;
+    cursor: pointer; margin-bottom: 2px;
+    transition: background 0.15s;
+  }
+  .ph-pal-row:active { background: rgba(94,234,212,0.15); }
+  .ph-pal-row.active { background: rgba(94,234,212,0.2); }
+  .ph-pal-swatch {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+  .ph-pal-label { font-size: 11px; color: #d8e2ee; }
+
+  /* ═══ PAINEL OVERLAY ═══ */
+  .ph-panel-overlay {
+    position: absolute; left: 8px; right: 56px;
+    top: 50px; max-height: calc(100% - 60px);
+    background: linear-gradient(135deg, rgba(15,20,38,0.92), rgba(26,33,56,0.92));
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--accent1);
+    border-radius: 12px;
+    z-index: 30; padding: 10px;
+    display: none; flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    -webkit-overflow-scrolling: touch;
+  }
+  .ph-panel-overlay.open { display: flex; }
+  .ph-panel-overlay h3 {
+    color: var(--accent1); font-size: 13px;
+    margin-bottom: 8px; display: flex; justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(94,234,212,0.2);
+    padding-bottom: 6px;
+  }
+  .ph-panel-close {
+    background: rgba(239,68,68,0.2); color: #fca5a5;
+    border: 1px solid #ef4444; border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; font-weight: bold;
+  }
+  .ph-panel-close:active { transform: scale(0.9); }
+
+  /* Quadradinhos coloridos */
+  .data-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  .data-cell {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(94,234,212,0.2);
+    border-radius: 6px;
+    padding: 7px 5px;
+    text-align: center;
+  }
+  .data-cell .num {
+    font-size: 14px; font-weight: bold;
+    color: var(--accent1);
+    line-height: 1.1;
+  }
+  .data-cell .label {
+    font-size: 8px; color: #7d8b96;
+    text-transform: uppercase;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+  .data-cell.purple .num { color: var(--accent2); }
+  .data-cell.red .num { color: #ef4444; }
+  .data-cell.yellow .num { color: #fbbf24; }
+  .data-cell.green .num { color: #22c55e; }
+
+  /* Último Turno */
+  .ut-line {
+    background: rgba(0,0,0,0.3);
+    border-radius: 5px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    line-height: 1.6;
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  }
+  .ut-line .ut-label {
+    color: #7d8b96; font-weight: bold;
+    font-size: 9px;
+    min-width: 56px;
+  }
+  .ut-chip {
+    display: inline-block;
+    background: rgba(94,234,212,0.15);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: var(--accent1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .ut-chip.cortex { background: rgba(167,139,250,0.15); border-color: var(--accent2); color: var(--accent2); }
+  .ut-chip.motor  { background: rgba(251,191,36,0.15); border-color: #fbbf24; color: #fbbf24; }
+  .ut-chip.evento { background: rgba(34,197,94,0.15); border-color: #22c55e; color: #4ade80; }
+  .ut-chip.token  { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #fca5a5; }
+  .ut-chip.score  { background: rgba(0,0,0,0.5); color: #7d8b96; font-size: 8px; padding: 0 4px; }
+
+  /* Self-Core */
+  .self-section { margin-bottom: 10px; }
+  .self-section-title {
+    font-size: 10px; color: var(--accent2);
+    font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid rgba(167,139,250,0.2);
+  }
+  .self-fact {
+    font-size: 10px; padding: 4px 7px;
+    background: rgba(0,0,0,0.3);
+    border-left: 2px solid var(--accent1);
+    border-radius: 3px;
+    margin-bottom: 3px;
+    color: #d8e2ee;
+  }
+  .self-fact.usuario { border-left-color: var(--accent2); }
+  .self-fact small {
+    display: block; font-size: 8px;
+    color: #7d8b96; margin-top: 1px;
+  }
+
+  /* Experimentos grid */
+  .exp-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+  .exp-btn {
+    background: rgba(94,234,212,0.1);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: var(--accent1);
+    font-size: 13px; font-weight: bold;
+    padding: 10px 0; border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .exp-btn:active {
+    background: rgba(94,234,212,0.3);
+    transform: scale(0.95);
+  }
+
+  /* ═══ LOADING ═══ */
+  #loading {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 100%);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 9999;
+  }
+  #loading .spinner {
+    width: 60px; height: 60px;
+    border: 4px solid rgba(94,234,212,0.2);
+    border-top-color: var(--accent1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  #loading .text { color: var(--accent1); font-size: 14px; text-align: center; }
   #loading .subtext { color: #5a6a8a; font-size: 11px; margin-top: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.85); color: white;
-    padding: 10px 16px; border-radius: 8px; font-size: 13px;
-    z-index: 4000; opacity: 0; transition: opacity 0.3s;
-    pointer-events: none; max-width: 90%; text-align: center; }
+  /* ═══ TOAST ═══ */
+  #toast {
+    position: fixed; top: 70px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: white;
+    padding: 10px 16px; border-radius: 8px;
+    font-size: 13px; z-index: 4000;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; max-width: 90%; text-align: center;
+  }
   #toast.show { opacity: 1; }
 
-  #menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(8px); z-index: 3000;
-    display: none; align-items: flex-end; justify-content: center; }
-  #menu-overlay.show { display: flex; }
-  #menu-panel { background: linear-gradient(135deg, #0f1426, #1a2138);
-    border-top: 2px solid rgba(100,150,255,0.3);
-    border-radius: 18px 18px 0 0; padding: 20px;
-    width: 100%; max-width: 600px;
-    max-height: 85vh; overflow-y: auto;
-    animation: slide-up 0.3s ease; }
-  @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  #menu-panel h3 { color: var(--accent1, #64c8ff); font-size: 13px;
-    text-transform: uppercase; letter-spacing: 1px;
-    margin: 14px 0 8px; opacity: 0.8; }
-  #menu-panel h3:first-of-type { margin-top: 0; }
-  .menu-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 8px; margin-bottom: 12px; }
-  .menu-btn { background: rgba(60, 80, 130, 0.5);
-    border: 1px solid rgba(100,150,255,0.2);
-    color: #e0e6f0; padding: 12px 8px;
-    border-radius: 10px; font-size: 12px;
-    cursor: pointer; text-align: center; transition: all 0.15s; }
-  .menu-btn:active { transform: scale(0.95); background: rgba(100,130,200,0.6); }
-  .menu-btn.active { background: linear-gradient(135deg, var(--accent1, #4f46e5), var(--accent2, #7c3aed));
-    border-color: var(--accent1, #64c8ff); color: white; font-weight: 600; }
-  .menu-btn .ico { display: block; font-size: 22px; margin-bottom: 4px; }
-  .menu-btn .sub { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; }
-  .menu-close { float: right; background: transparent; border: 0; color: #7a8aab;
-    font-size: 24px; cursor: pointer; padding: 0 8px; }
-  .menu-info { font-size: 11px; color: #7a8aab; line-height: 1.6; padding: 8px 0; }
-  .menu-info a { color: #b48fff; }
-
-  body.tema-sci-fi { --bg1: #0a0e1a; --bg2: #1a1f3a; --accent1: #4f46e5; --accent2: #7c3aed; --ink: #e0e6f0; --ink-dim: #7a8aab; }
-  body.tema-matrix { --bg1: #000000; --bg2: #001a00; --accent1: #00cc44; --accent2: #00ff66; --ink: #88ff99; --ink-dim: #00aa44; }
-  body.tema-matrix .msg-user { background: linear-gradient(135deg, #003300, #006600); }
-  body.tema-matrix .msg-brain { background: rgba(0, 40, 0, 0.6); border-color: rgba(0,255,100,0.2); color: #88ff99; }
-  body.tema-matrix #input { background: rgba(0,30,0,0.8); border-color: rgba(0,255,100,0.3); color: #88ff99; }
-  body.tema-matrix #send { background: linear-gradient(135deg, #006600, #00aa44); }
-  body.tema-solar { --bg1: #1a0d00; --bg2: #3a2008; --accent1: #ff8c00; --accent2: #ffb84d; --ink: #ffe6cc; --ink-dim: #cc8855; }
-  body.tema-solar .msg-user { background: linear-gradient(135deg, #cc6600, #ff8c00); }
-  body.tema-solar .msg-brain { background: rgba(80, 50, 20, 0.6); border-color: rgba(255,160,80,0.2); }
-  body.tema-solar #send { background: linear-gradient(135deg, #cc6600, #ff8c00); }
-  body.tema-borboleta { --bg1: #0a0e2a; --bg2: #2a1a4a; --accent1: #4488ff; --accent2: #8866ff; --ink: #ccd8ff; --ink-dim: #7a8acc; }
-  body.tema-borboleta .msg-user { background: linear-gradient(135deg, #3366cc, #6644cc); }
-  body.tema-borboleta .msg-brain { background: rgba(40, 30, 80, 0.6); border-color: rgba(140,120,255,0.2); }
-  body.tema-borboleta #send { background: linear-gradient(135deg, #3366cc, #6644cc); }
-  body.tema-cyber { --bg1: #001a1a; --bg2: #1a0033; --accent1: #00ffff; --accent2: #ff00ff; --ink: #aaffff; --ink-dim: #66cccc; }
-  body.tema-cyber .msg-user { background: linear-gradient(135deg, #008888, #006688); }
-  body.tema-cyber .msg-brain { background: rgba(0, 40, 40, 0.6); border-color: rgba(0,255,255,0.2); color: #aaffff; }
-  body.tema-cyber #input { color: #aaffff; border-color: rgba(0,255,255,0.3); }
-  body.tema-cyber #send { background: linear-gradient(135deg, #008888, #880088); }
-
+  /* Desktop responsive (caso abra acidentalmente no PC) */
   @media (min-width: 768px) {
-    header h1 { font-size: 19px; } .stats { font-size: 12px; }
-    .msg { max-width: 75%; }
-    .msg-user, .msg-brain { font-size: 15px; padding: 12px 16px; }
-    #input { font-size: 15px; padding: 13px 18px; }
-    #chat { padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
-    .input-area { max-width: 900px; margin: 0 auto; width: 100%; padding: 12px 20px; }
-    .pills { max-width: 900px; margin: 0 auto; width: 100%; }
-    #brain-canvas-wrap { max-width: 900px; margin: 0 auto; width: 100%; }
+    body { max-width: 480px; margin: 0 auto; border-left: 1px solid #2b3340; border-right: 1px solid #2b3340; }
   }
 </style>
 </head>
-<body class="tema-sci-fi">
+<body>
 
 <div id="loading">
   <div class="spinner"></div>
@@ -171,116 +522,314 @@
   <div class="subtext">115 sub-redes • 2400+ neurônios</div>
 </div>
 
-<header>
-  <h1>🧠 ARCH-NEURAL V15.1</h1>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <div class="stats" id="stats">carregando...</div>
-    <button id="menu-btn" onclick="toggleMenu()">☰</button>
-  </div>
-</header>
-
 <div id="toast"></div>
 
-<div id="brain-canvas-wrap">
-  <canvas id="brain-canvas"></canvas>
-  <div class="canvas-info" id="canvas-info">Modo 2D • 0 nós</div>
-  <div class="canvas-mode">
-    <button id="mode-2d" class="active" onclick="setRender('2d')">2D</button>
-    <button id="mode-3d" onclick="setRender('3d')">3D</button>
+<!-- HEADER -->
+<div class="ph-header">
+  <div style="display:flex; gap:6px; align-items:center;">
+    <div class="ph-btn-icon" onclick="abrirDrawer()">☰</div>
+    <div class="ph-title">LAB_ARCH-NEURAL V15.1</div>
   </div>
-  <div class="float-tabs">
-    <button class="float-tab" onclick="acaoMeditar()" title="Meditar">🧘</button>
-    <button class="float-tab" onclick="acaoArvore()" title="Árvore">🌳</button>
-    <button class="float-tab" onclick="acaoGirar()" title="Girar">🔃</button>
-    <button class="float-tab" onclick="acaoResetar()" title="Resetar chat">🔄</button>
-    <button class="float-tab" onclick="acaoSalvar()" title="Salvar">💾</button>
-    <button class="float-tab" onclick="document.getElementById('file-import').click()" title="Importar">📥</button>
-    <button class="float-tab" onclick="acaoMesclar()" title="Mesclar">🔀</button>
+  <div class="ph-actions">
+    <button class="ph-btn-pal" onclick="togglePaleta('geral', event)" title="Paleta geral">🎨</button>
+    <button class="ph-btn-pal-cerebro" onclick="togglePaleta('cerebro', event)" title="Paleta cérebro"></button>
   </div>
 </div>
 
-<input type="file" id="file-import" accept=".json" style="display:none" onchange="acaoImportar(this.files[0])">
+<!-- ÁREA CENTRAL -->
+<div style="flex:1; position:relative; display:flex; min-height:0;">
 
-<div id="menu-overlay" onclick="if(event.target===this) toggleMenu()">
-  <div id="menu-panel">
-    <button class="menu-close" onclick="toggleMenu()">×</button>
+  <div class="ph-brain-area">
 
-    <h3>🎨 Paleta de Cores</h3>
-    <div class="menu-section">
-      <button class="menu-btn tema-btn" data-tema="sci-fi" onclick="setTema('sci-fi')"><span class="ico">🌌</span>Sci-Fi<span class="sub">azul · roxo</span></button>
-      <button class="menu-btn tema-btn" data-tema="matrix" onclick="setTema('matrix')"><span class="ico">💚</span>Matrix<span class="sub">preto · verde</span></button>
-      <button class="menu-btn tema-btn" data-tema="solar" onclick="setTema('solar')"><span class="ico">🌅</span>Solar<span class="sub">laranja · âmbar</span></button>
-      <button class="menu-btn tema-btn" data-tema="borboleta" onclick="setTema('borboleta')"><span class="ico">🦋</span>Borboleta<span class="sub">azul · violeta</span></button>
-      <button class="menu-btn tema-btn" data-tema="cyber" onclick="setTema('cyber')"><span class="ico">💎</span>Cyber<span class="sub">ciano · magenta</span></button>
+    <!-- LEGENDA ANATÔMICA (transparente, clica em qualquer lugar pra recolher) -->
+    <div class="ph-legenda" id="legenda" onclick="toggleLegenda()">
+      <div class="ph-legenda-icon-collapsed">ℹ</div>
+      <div class="ph-legenda-content">
+        <div class="ph-legenda-row" data-key="self">
+          <div class="ph-legenda-dot" style="background:#fbbf24"></div>
+          <b>SELF-CORE</b> <span class="v">(0,0,0) — EU</span>
+        </div>
+        <div class="ph-legenda-row" data-key="sens">
+          <div class="ph-legenda-dot" style="background:#5eead4"></div>
+          sensorial (+200) <span class="v">— 500</span>
+        </div>
+        <div class="ph-legenda-row" data-key="talamo">
+          <div class="ph-legenda-dot" style="background:#a78bfa"></div>
+          tálamo (+150) <span class="v">— 20 roteador</span>
+        </div>
+        <div class="ph-legenda-row" data-key="hipo">
+          <div class="ph-legenda-dot" style="background:#22c55e"></div>
+          hipocampo (+100) <span class="v">— 400 + eventos</span>
+        </div>
+        <div class="ph-legenda-row" data-key="gaba">
+          <div class="ph-legenda-dot" style="background:#fbbf24"></div>
+          GABA (+50) <span class="v">— 10 inibidor</span>
+        </div>
+        <div class="ph-legenda-row" data-key="cortex">
+          <div class="ph-legenda-dot" style="background:#a78bfa"></div>
+          córtex (0) <span class="v">— 400</span>
+        </div>
+        <div class="ph-legenda-row" data-key="amig">
+          <div class="ph-legenda-dot" style="background:#ef4444"></div>
+          amígdala (0 off) <span class="v">— 50 emocional</span>
+        </div>
+        <div class="ph-legenda-row" data-key="nucleos">
+          <div class="ph-legenda-dot" style="background:#84cc16"></div>
+          núcleos ação (-50) <span class="v">— 30 ignição</span>
+        </div>
+        <div class="ph-legenda-row" data-key="motora">
+          <div class="ph-legenda-dot" style="background:#fb923c"></div>
+          motora (-150) <span class="v">— 200</span>
+        </div>
+        <div class="ph-legenda-row" data-key="broca">
+          <div class="ph-legenda-dot" style="background:#f97316"></div>
+          Broca (-200) <span class="v">— 100 saída</span>
+        </div>
+        <div class="ph-legenda-divider">
+          <span class="l1">━ cronológica</span><span> · </span>
+          <span class="l2">━ temporal</span><br>
+          <span class="l3">━ mielinizada</span><span> · </span>
+          <span class="l4">━ anatômica</span>
+        </div>
+      </div>
     </div>
 
-    <h3>🧠 Carregar Cérebro</h3>
-    <div class="menu-section">
-      <button class="menu-btn" onclick="carregarDoGithub()"><span class="ico">🌐</span>Do GitHub<span class="sub">pré-treinado</span></button>
-      <button class="menu-btn" onclick="carregarManual()"><span class="ico">📂</span>Manual<span class="sub">do seu PC</span></button>
+    <!-- Botões 3D F/L/Girar -->
+    <div class="ph-brain-3d-btns">
+      <button class="ph-brain-3d-btn active" onclick="setVista('frontal', event)">F</button>
+      <button class="ph-brain-3d-btn" onclick="setVista('lateral', event)">L</button>
+      <button class="ph-brain-3d-btn" id="btn-girar" onclick="toggleGirar(event)">↻</button>
     </div>
 
-    <h3>👁️ Visualização</h3>
-    <div class="menu-section">
-      <button class="menu-btn" id="vis-2d" onclick="setRender('2d')"><span class="ico">🟦</span>2D<span class="sub">rápido</span></button>
-      <button class="menu-btn" id="vis-3d" onclick="setRender('3d')"><span class="ico">🟩</span>3D<span class="sub">⚠️ pesado</span></button>
-    </div>
+    <!-- Canvas do cérebro (será renderizado por JS lendo V112) -->
+    <canvas id="brain-canvas"></canvas>
+  </div>
 
-    <h3>ℹ️ Sobre</h3>
-    <div class="menu-info">
-      <b style="color:#b8c8e0">ARCH-NEURAL Cortex V15.1</b><br>
-      Autor: <b style="color:#64c8ff">Douglas Corrêa Cavasso</b><br>
-      📧 douglas.cavasso@gmail.com<br>
-      🐙 <a href="https://github.com/douglascorreacavasso" target="_blank">github.com/douglascorreacavasso</a><br>
-      Licença: Proprietária — todos os direitos reservados
+  <!-- ÍCONES LATERAIS -->
+  <div class="ph-side-icons">
+    <div class="ph-side-ic active" onclick="abrirPainel('rede', event)" title="Estado da Rede">
+      🕸️
+      <span class="ph-side-badge teal" id="badge-rede">—</span>
     </div>
+    <div class="ph-side-ic" onclick="abrirPainel('amigdala', event)" title="Amígdala">
+      🚨
+      <span class="ph-side-badge" id="badge-amig">OK</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('ut', event)" title="Último Turno">
+      <span style="font-size:11px; font-weight:bold; color:inherit;">UT</span>
+      <span class="ph-side-badge yellow" id="badge-ut">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('hipo', event)" title="Hipocampo">
+      🧠
+      <span class="ph-side-badge purple" id="badge-hipo">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('ajustes', event)" title="Ajustes">🔧</div>
+    <div class="ph-side-ic" onclick="abrirPainel('self', event)" title="Self-Core">
+      ⭐
+      <span class="ph-side-badge purple" id="badge-self">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('cand', event)" title="Candidatos">
+      🎯
+    </div>
+    <div class="ph-side-divider"></div>
+    <div class="ph-side-ic" onclick="abrirPainel('exp', event)" title="Experimentos">🧪</div>
+  </div>
+
+  <!-- DRAWER -->
+  <div class="ph-drawer-overlay" id="drawer-ov" onclick="fecharDrawer()"></div>
+  <div class="ph-drawer" id="drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="color:var(--accent1);font-size:13px;font-weight:bold;">⚡ AÇÕES</div>
+      <button class="ph-drawer-close" onclick="fecharDrawer()">×</button>
+    </div>
+    <div class="ph-drawer-item" onclick="acao_ensinar240()">📌 ensinar 240 frases</div>
+    <div class="ph-drawer-item" onclick="acao_meditar()">🧘 meditar</div>
+    <div class="ph-drawer-item" onclick="acao_salvar()">💾 salvar cérebro</div>
+    <div class="ph-drawer-item" onclick="acao_carregar_github()">📂 carregar do GitHub</div>
+    <div class="ph-drawer-item" onclick="acao_carregar_manual()">📥 importar JSON manual</div>
+    <div class="ph-drawer-item" onclick="acao_juntar()">🔀 juntar/mesclar</div>
+    <div class="ph-drawer-item" onclick="acao_arvore()">🌳 árvore</div>
+    <div class="ph-drawer-item" onclick="acao_log_json()">📋 log JSON</div>
+    <div class="ph-drawer-item" onclick="acao_log_txt()">📄 log TXT</div>
+    <div class="ph-drawer-item" onclick="acao_reset()" style="color:#fca5a5;">🔄 reset</div>
+    <div class="ph-drawer-item" onclick="acao_desktop()" style="color:var(--accent2);">🖥️ versão desktop</div>
+  </div>
+
+  <!-- PALETA GERAL -->
+  <div class="ph-palette-popup" id="paleta-geral" style="right:46px;">
+    <h5>🎨 PALETA GERAL</h5>
+    <div class="ph-pal-row active" onclick="aplicarTema('geral','sci-fi', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#5eead4,#a78bfa)"></div>
+      <div class="ph-pal-label">Sci-Fi</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','matrix', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#00ff66,#00cc44)"></div>
+      <div class="ph-pal-label">Matrix</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','solar', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff8c00,#ffb84d)"></div>
+      <div class="ph-pal-label">Solar</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','borboleta', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#4488ff,#8866ff)"></div>
+      <div class="ph-pal-label">Borboleta</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','cyber', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#00ffff,#ff00ff)"></div>
+      <div class="ph-pal-label">Cyber</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','fogo', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff4444,#ffaa00)"></div>
+      <div class="ph-pal-label">Fogo</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','oceano', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#0077be,#00d4ff)"></div>
+      <div class="ph-pal-label">Oceano</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','floresta', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#2d5016,#7cb342)"></div>
+      <div class="ph-pal-label">Floresta</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','rosa', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff1493,#ffb6c1)"></div>
+      <div class="ph-pal-label">Rosa Neon</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','dourado', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ffd700,#daa520)"></div>
+      <div class="ph-pal-label">Dourado</div>
+    </div>
+  </div>
+
+  <!-- PALETA CEREBRO -->
+  <div class="ph-palette-popup" id="paleta-cerebro">
+    <h5>🧠 SÓ AGLOMERADOS</h5>
+    <div class="ph-pal-row active" onclick="aplicarTema('cerebro','padrao', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#5eead4,#a78bfa,#fbbf24,#ef4444)"></div>
+      <div class="ph-pal-label">Padrão</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','arco-iris', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(red,orange,yellow,green,blue,purple)"></div>
+      <div class="ph-pal-label">Arco-íris</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','frio', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#00ffff,#0077be,#4488ff,#8866ff)"></div>
+      <div class="ph-pal-label">Frio</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','quente', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#ff4444,#ffaa00,#ffd700,#ff1493)"></div>
+      <div class="ph-pal-label">Quente</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','neon', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#00ff66,#ff00ff,#00ffff,#ffff00)"></div>
+      <div class="ph-pal-label">Neon</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','terra', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#7cb342,#daa520,#cc8855,#2d5016)"></div>
+      <div class="ph-pal-label">Terra</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','pastel', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#ffb6c1,#a78bfa,#5eead4,#ffd700)"></div>
+      <div class="ph-pal-label">Pastel</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-azul', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#88ddff,#0077be,#003366,#001144)"></div>
+      <div class="ph-pal-label">Mono Azul</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-verde', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#88ff99,#22c55e,#15803d,#052e16)"></div>
+      <div class="ph-pal-label">Mono Verde</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-roxo', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#e9d5ff,#a78bfa,#6d28d9,#2e1065)"></div>
+      <div class="ph-pal-label">Mono Roxo</div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="ph-panel-overlay" id="painel">
+    <h3>
+      <span id="painel-titulo">🕸️ Estado da Rede</span>
+      <button class="ph-panel-close" onclick="fecharPainel()">×</button>
+    </h3>
+    <div id="painel-conteudo"></div>
+  </div>
+
+</div>
+
+<!-- CHAT -->
+<div class="ph-chat" id="chat-section">
+  <div class="ph-chat-handle" id="chat-handle"></div>
+  <div class="ph-chat-content" id="chat-content"></div>
+  <div class="ph-input">
+    <input id="input" class="ph-input-field" type="text" placeholder="fale com o cérebro..." autocomplete="off" autocapitalize="off">
+    <button class="ph-input-btn" onclick="enviar()">→</button>
   </div>
 </div>
 
-<div class="pills">
-  <div class="pill" onclick="ex('oi')">👋 oi</div>
-  <div class="pill" onclick="ex('média de [10, 20, 30, 40, 50]')">📊 média</div>
-  <div class="pill" onclick="ex('bayes prior=0.01 sensibilidade=0.99 especificidade=0.95')">🎲 bayes</div>
-  <div class="pill" onclick="ex('qual rende mais: 1000 com taxa 5% por 10 anos vs 2000 com taxa 3% por 8 anos?')">💰 invest</div>
-  <div class="pill" onclick="ex('tanque vazando 5L/min com 100L')">💧 analogia</div>
-  <div class="pill" onclick="exSeq(['entrada 2 → saida 5','entrada 5 → saida 11','entrada 10 → saida 21'])">🔬 eng-rev</div>
-  <div class="pill" onclick="exSeq(['estado: x=0, s=0, i=1','regra: enquanto i menor_que 11 faça [s = s + i, i = i + 1]','execute e mostre valor de s'])">⚙️ soma</div>
-  <div class="pill" onclick="ex('analise metacognitiva')">🪞 metacog</div>
-  <div class="pill" onclick="ex('quem é você?')">🤖 quem</div>
-</div>
-
-<div id="chat"></div>
-
-<div class="input-area">
-  <input id="input" type="text" placeholder="fale com o cérebro..." autocomplete="off" autocapitalize="off">
-  <button id="send" onclick="enviar()">→</button>
-</div>
-
+<!-- ARQUIVO ÚNICO (4MB com tudo) -->
 <script src="arch_neural_v15_final.js"></script>
 
 <script>
 'use strict';
+
+// ═══ ESTADO ═══
+let girarState = 0; // 0=parado, 1=horizontal, 2=vertical
+let girarAnimRef = null;
+let anguloY = 0, anguloX = 0;
+let vistaAtual = 'frontal';
+let loopBgRodando = false;
+let selfFacts = { sobre_si: [], sobre_usuario: [] };
+let turnoNumero = 0;
+let ultimoTurno = null;
+
+// ═══ TEMAS ═══
+const TEMAS_GERAL = {
+  'sci-fi':    { bg1: '#0a0e1a', bg2: '#1a1f3a', accent1: '#5eead4', accent2: '#a78bfa' },
+  'matrix':    { bg1: '#000000', bg2: '#001a00', accent1: '#00ff66', accent2: '#00cc44' },
+  'solar':     { bg1: '#1a0d00', bg2: '#3a2008', accent1: '#ff8c00', accent2: '#ffb84d' },
+  'borboleta': { bg1: '#0a0e2a', bg2: '#2a1a4a', accent1: '#4488ff', accent2: '#8866ff' },
+  'cyber':     { bg1: '#001a1a', bg2: '#1a0033', accent1: '#00ffff', accent2: '#ff00ff' },
+  'fogo':      { bg1: '#1a0500', bg2: '#3a1000', accent1: '#ff4444', accent2: '#ffaa00' },
+  'oceano':    { bg1: '#001a2a', bg2: '#003355', accent1: '#0077be', accent2: '#00d4ff' },
+  'floresta':  { bg1: '#0a1500', bg2: '#1a2d00', accent1: '#7cb342', accent2: '#2d5016' },
+  'rosa':      { bg1: '#2a0015', bg2: '#4a0033', accent1: '#ff1493', accent2: '#ffb6c1' },
+  'dourado':   { bg1: '#1a1500', bg2: '#3a2d00', accent1: '#ffd700', accent2: '#daa520' }
+};
+const TEMAS_CEREBRO = {
+  'padrao':     { n1: '#5eead4', n2: '#a78bfa', n3: '#fbbf24', n4: '#ef4444' },
+  'arco-iris':  { n1: '#ef4444', n2: '#ff8c00', n3: '#fbbf24', n4: '#22c55e' },
+  'frio':       { n1: '#00ffff', n2: '#0077be', n3: '#4488ff', n4: '#8866ff' },
+  'quente':     { n1: '#ff4444', n2: '#ffaa00', n3: '#ffd700', n4: '#ff1493' },
+  'neon':       { n1: '#00ff66', n2: '#ff00ff', n3: '#00ffff', n4: '#ffff00' },
+  'terra':      { n1: '#7cb342', n2: '#daa520', n3: '#cc8855', n4: '#2d5016' },
+  'pastel':     { n1: '#ffb6c1', n2: '#a78bfa', n3: '#5eead4', n4: '#ffd700' },
+  'mono-azul':  { n1: '#88ddff', n2: '#0077be', n3: '#003366', n4: '#001144' },
+  'mono-verde': { n1: '#88ff99', n2: '#22c55e', n3: '#15803d', n4: '#052e16' },
+  'mono-roxo':  { n1: '#e9d5ff', n2: '#a78bfa', n3: '#6d28d9', n4: '#2e1065' }
+};
+
+// ═══ TOAST ═══
 function toast(msg, dur) {
   dur = dur || 2500;
-  var t = document.getElementById('toast');
+  const t = document.getElementById('toast');
   if(!t) return;
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(t._timer);
   t._timer = setTimeout(function(){ t.classList.remove('show'); }, dur);
 }
-window.toast = toast;
 
+// ═══ CHAT ═══
 function addMsg(quem, texto, tag) {
-  var chat = document.getElementById('chat');
-  var div = document.createElement('div');
-  div.className = 'msg msg-' + quem;
+  const chat = document.getElementById('chat-content');
+  const div = document.createElement('div');
+  div.className = 'ph-msg-' + (quem === 'user' ? 'u' : 'b');
   div.textContent = texto;
   chat.appendChild(div);
   if(tag) {
-    var tagDiv = document.createElement('div');
-    tagDiv.className = 'tag tag-' + tag;
-    var labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing'};
+    const tagDiv = document.createElement('div');
+    tagDiv.className = 'ph-msg-tag ' + tag;
+    const labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing'};
     tagDiv.textContent = labelMap[tag] || tag;
     chat.appendChild(tagDiv);
   }
@@ -288,242 +837,370 @@ function addMsg(quem, texto, tag) {
 }
 
 function enviar() {
-  var inp = document.getElementById('input');
-  var texto = inp.value.trim();
+  const inp = document.getElementById('input');
+  const texto = inp.value.trim();
   if(!texto) return;
   inp.value = '';
   addMsg('user', texto);
+
   setTimeout(function() {
     try {
-      var r = window.v112_processar(texto);
-      var resposta = (r && r.resposta) || '(sem resposta)';
-      var tag = null;
+      const r = window.v112_processar(texto);
+      const resposta = (r && r.resposta) || '(sem resposta)';
+      let tag = null;
       if(r && r._cognitivo) tag = 'cog';
       else if(r && r._estatistico) tag = 'est';
       else if(r && r.reflexo_social) tag = 'soc';
       else if(r && r.resposta) tag = 'tur';
       addMsg('brain', resposta, tag);
-      desenharCerebro();
-    } catch(e) { addMsg('brain', '⚠ erro: ' + e.message); }
-  }, 50);
-}
 
-function ex(texto) { document.getElementById('input').value = texto; enviar(); }
-function exSeq(seq) {
-  var i = 0;
-  function next() {
-    if(i >= seq.length) return;
-    document.getElementById('input').value = seq[i];
-    enviar();
-    i++;
-    setTimeout(next, 500);
-  }
-  next();
+      turnoNumero++;
+      ultimoTurno = { input: texto, resposta: resposta, tag: tag, r: r };
+
+      // Detectar e armazenar fatos sobre si/usuário
+      const lower = texto.toLowerCase();
+      if(/meu nome é|eu sou|moro em|trabalho|gosto/.test(lower)) {
+        selfFacts.sobre_usuario.push({ f: texto, t: 'turno ' + turnoNumero });
+        document.getElementById('badge-self').textContent = (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length);
+      } else if(/seu nome é|você é/.test(lower)) {
+        selfFacts.sobre_si.push({ f: texto, t: 'turno ' + turnoNumero });
+        document.getElementById('badge-self').textContent = (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length);
+      }
+
+      // Atualizar badges + cérebro
+      atualizarBadges();
+      desenharCerebro();
+
+      // Piscar valores da legenda
+      piscarLegenda();
+    } catch(e) {
+      addMsg('brain', '⚠ erro: ' + e.message);
+    }
+  }, 30);
 }
 
 document.getElementById('input').addEventListener('keypress', function(e) {
   if(e.key === 'Enter') enviar();
 });
 
-window.toggleMenu = function() {
-  document.getElementById('menu-overlay').classList.toggle('show');
+// ═══ DRAWER ═══
+window.abrirDrawer = function() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-ov').classList.add('show');
+};
+window.fecharDrawer = function() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-ov').classList.remove('show');
 };
 
-window.setTema = function(nome) {
-  var temas = ['sci-fi', 'matrix', 'solar', 'borboleta', 'cyber'];
-  for(var i = 0; i < temas.length; i++) {
-    document.body.classList.remove('tema-' + temas[i]);
+// ═══ AÇÕES DO DRAWER ═══
+window.acao_ensinar240 = function() {
+  fecharDrawer();
+  toast('⏳ Treinando 240 frases...');
+  // Treino básico se TREINAMENTO_PACOTE disponível
+  if(typeof window.TREINAMENTO_PACOTE !== 'undefined') {
+    setTimeout(function(){
+      let count = 0;
+      const todas = (window.TREINAMENTO_PACOTE.curtas || []).concat(window.TREINAMENTO_PACOTE.medias || []);
+      for(const f of todas.slice(0, 100)) {
+        try { window.v112_processar(f); count++; } catch(e){}
+      }
+      toast('✓ ' + count + ' frases treinadas');
+      atualizarBadges();
+      desenharCerebro();
+    }, 100);
+  } else {
+    toast('⚠ Pacote de treinamento não disponível');
   }
-  document.body.classList.add('tema-' + nome);
-  try { localStorage.setItem('arch_tema', nome); } catch(e) {}
-  var btns = document.querySelectorAll('.tema-btn');
-  for(var j = 0; j < btns.length; j++) {
-    btns[j].classList.toggle('active', btns[j].getAttribute('data-tema') === nome);
-  }
-  toast('Tema: ' + nome);
-  desenharCerebro();
 };
 
-var renderMode = '2d';
-window.setRender = function(modo) {
-  renderMode = modo;
-  try { localStorage.setItem('arch_render', modo); } catch(e) {}
-  document.getElementById('mode-2d').classList.toggle('active', modo === '2d');
-  document.getElementById('mode-3d').classList.toggle('active', modo === '3d');
-  var b2 = document.getElementById('vis-2d');
-  var b3 = document.getElementById('vis-3d');
-  if(b2) b2.classList.toggle('active', modo === '2d');
-  if(b3) b3.classList.toggle('active', modo === '3d');
-  if(modo === '3d') toast('⚠️ Modo 3D — pode ser pesado em dispositivos antigos');
-  else toast('Modo 2D — rápido');
-  desenharCerebro();
+window.acao_meditar = function() {
+  fecharDrawer();
+  toast('🧘 Meditando (consolidando)...');
+  setTimeout(function(){ toast('✓ Meditação completa'); }, 1500);
 };
 
-window.carregarDoGithub = function() {
-  var url = 'https://raw.githubusercontent.com/douglascorreacavasso/arch-neural-cortex-v15/main/cerebro_V15.json';
-  toast('Baixando cérebro do GitHub...');
-  fetch(url).then(function(r) {
+window.acao_salvar = function() {
+  fecharDrawer();
+  if(typeof window.v112_exportar !== 'function') { toast('❌ Não disponível'); return; }
+  try {
+    const data = window.v112_exportar();
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cerebro_V15_' + Date.now() + '.json';
+    a.click();
+    toast('✓ Cérebro salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
+
+window.acao_carregar_github = function() {
+  fecharDrawer();
+  const url = 'cerebro_V15.json';  // local primeiro (mesma pasta)
+  toast('⏳ Baixando cérebro...');
+  fetch(url).then(function(r){
     if(!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
-  }).then(function(cerebro) {
-    if(typeof window.v112_importar === 'function') {
-      window.v112_importar(cerebro);
-      toast('✓ Cérebro do GitHub (' + (cerebro.nodes ? cerebro.nodes.length : '?') + ' nós)');
-      toggleMenu();
-      desenharCerebro();
-    } else { toast('Erro: v112_importar não disponível'); }
-  }).catch(function(e) { toast('❌ Falha: ' + e.message); });
+  }).then(function(c){
+    window.v112_importar(c);
+    toast('✓ Cérebro carregado (' + c.nodes.length + ' nós)');
+    atualizarBadges();
+    desenharCerebro();
+  }).catch(function(e){ toast('❌ ' + e.message); });
 };
 
-window.carregarManual = function() {
-  var inp = document.createElement('input');
+window.acao_carregar_manual = function() {
+  fecharDrawer();
+  const inp = document.createElement('input');
   inp.type = 'file'; inp.accept = '.json';
-  inp.onchange = function(e) {
-    var f = e.target.files[0];
+  inp.onchange = function(e){
+    const f = e.target.files[0];
     if(!f) return;
-    var r = new FileReader();
-    r.onload = function() {
+    const r = new FileReader();
+    r.onload = function(){
       try {
-        var c = JSON.parse(r.result);
-        if(typeof window.v112_importar === 'function') {
-          window.v112_importar(c);
-          toast('✓ Importado: ' + f.name);
-          toggleMenu();
-          desenharCerebro();
-        }
-      } catch(err) { toast('❌ ' + err.message); }
+        const c = JSON.parse(r.result);
+        window.v112_importar(c);
+        toast('✓ ' + f.name);
+        atualizarBadges();
+        desenharCerebro();
+      } catch(err){ toast('❌ ' + err.message); }
     };
     r.readAsText(f);
   };
   inp.click();
 };
 
-window.acaoResetar = function() {
+window.acao_juntar = function() { fecharDrawer(); toast('🔀 Mesclar — em V16'); };
+window.acao_arvore = function() { fecharDrawer(); toast('🌳 Árvore — em V16'); };
+window.acao_log_json = function() { fecharDrawer(); toast('📋 Log JSON'); };
+window.acao_log_txt = function() { fecharDrawer(); toast('📄 Log TXT'); };
+window.acao_reset = function() {
+  fecharDrawer();
   if(!confirm('Limpar chat?')) return;
-  document.getElementById('chat').innerHTML = '';
+  document.getElementById('chat-content').innerHTML = '';
   toast('Chat limpo');
 };
-window.acaoSalvar = function() {
-  if(typeof window.v112_exportar !== 'function') { toast('❌ N/A'); return; }
-  try {
-    var data = window.v112_exportar();
-    var json = JSON.stringify(data);
-    var blob = new Blob([json], {type: 'application/json'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'cerebro_V15_' + Date.now() + '.json';
-    a.click();
-    toast('✓ Salvo');
-  } catch(e) { toast('❌ ' + e.message); }
-};
-window.acaoImportar = function(file) {
-  if(!file) return;
-  var r = new FileReader();
-  r.onload = function() {
-    try {
-      var c = JSON.parse(r.result);
-      if(typeof window.v112_importar === 'function') {
-        window.v112_importar(c);
-        toast('✓ ' + file.name);
-        desenharCerebro();
-      }
-    } catch(err) { toast('❌ ' + err.message); }
-  };
-  r.readAsText(file);
-};
-window.acaoMeditar = function() {
-  toast('🧘 Meditando...');
-  setTimeout(function(){ toast('✓ Meditação completa'); }, 1500);
-};
-window.acaoMesclar = function() { toast('🔀 Em desenvolvimento V16'); };
-window.acaoArvore = function() { toast('🌳 Em desenvolvimento V16'); };
-var rotacaoAuto = false;
-var anguloRot = 0;
-window.acaoGirar = function() {
-  rotacaoAuto = !rotacaoAuto;
-  toast(rotacaoAuto ? '🔃 Girando' : '⏸ Parado');
+window.acao_desktop = function() {
+  location.href = 'index.html?desktop=1';
 };
 
+// ═══ PALETA ═══
+window.togglePaleta = function(qual, ev) {
+  const outra = qual === 'geral' ? 'cerebro' : 'geral';
+  document.getElementById('paleta-' + outra).classList.remove('open');
+  document.getElementById('paleta-' + qual).classList.toggle('open');
+  if(ev) ev.stopPropagation();
+};
+
+window.aplicarTema = function(qual, nome, ev) {
+  if(qual === 'geral') {
+    const t = TEMAS_GERAL[nome]; if(!t) return;
+    document.body.style.setProperty('--bg1', t.bg1);
+    document.body.style.setProperty('--bg2', t.bg2);
+    document.body.style.setProperty('--accent1', t.accent1);
+    document.body.style.setProperty('--accent2', t.accent2);
+    try { localStorage.setItem('arch_tema_geral', nome); } catch(e){}
+  } else {
+    const t = TEMAS_CEREBRO[nome]; if(!t) return;
+    document.body.style.setProperty('--neuron1', t.n1);
+    document.body.style.setProperty('--neuron2', t.n2);
+    document.body.style.setProperty('--neuron3', t.n3);
+    document.body.style.setProperty('--neuron4', t.n4);
+    try { localStorage.setItem('arch_tema_cerebro', nome); } catch(e){}
+    desenharCerebro();
+  }
+  const popup = document.getElementById('paleta-' + qual);
+  popup.querySelectorAll('.ph-pal-row').forEach(function(r){ r.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+  toast('🎨 ' + nome);
+  setTimeout(function(){ popup.classList.remove('open'); }, 200);
+};
+
+// ═══ LEGENDA ═══
+window.toggleLegenda = function() {
+  document.getElementById('legenda').classList.toggle('collapsed');
+};
+
+function piscarLegenda() {
+  // Piscar 2-3 itens aleatórios da legenda
+  const keys = ['sens','talamo','hipo','gaba','cortex','amig','nucleos','motora','broca'];
+  const escolhidos = [];
+  const n = Math.floor(Math.random() * 3) + 1;
+  for(let i = 0; i < n; i++) {
+    escolhidos.push(keys[Math.floor(Math.random() * keys.length)]);
+  }
+  escolhidos.forEach(function(k){
+    const row = document.querySelector('[data-key="' + k + '"]');
+    if(!row) return;
+    row.classList.remove('piscou');
+    void row.offsetWidth;
+    row.classList.add('piscou');
+  });
+}
+
+// ═══ BOTÃO GIRAR ═══
+window.setVista = function(qual, ev) {
+  document.querySelectorAll('.ph-brain-3d-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+  if(girarAnimRef) { cancelAnimationFrame(girarAnimRef); girarAnimRef = null; }
+  girarState = 0;
+  vistaAtual = qual;
+  anguloY = 0; anguloX = 0;
+  const btnGirar = document.getElementById('btn-girar');
+  btnGirar.textContent = '↻';
+  btnGirar.style.color = '';
+  btnGirar.style.borderColor = '';
+  desenharCerebro();
+};
+
+window.toggleGirar = function(ev) {
+  const btnGirar = document.getElementById('btn-girar');
+  girarState = (girarState + 1) % 3;
+
+  if(girarState === 0) {
+    if(girarAnimRef) cancelAnimationFrame(girarAnimRef);
+    girarAnimRef = null;
+    btnGirar.style.color = '';
+    btnGirar.style.borderColor = '';
+    btnGirar.classList.remove('active');
+    btnGirar.textContent = '↻';
+  } else if(girarState === 1) {
+    btnGirar.classList.add('active');
+    btnGirar.style.color = '#5eead4';
+    btnGirar.style.borderColor = '#5eead4';
+    btnGirar.textContent = '↻H';
+    if(!girarAnimRef) animarGiroHorizontal();
+  } else {
+    if(girarAnimRef) { cancelAnimationFrame(girarAnimRef); girarAnimRef = null; }
+    btnGirar.style.color = '#a78bfa';
+    btnGirar.style.borderColor = '#a78bfa';
+    btnGirar.textContent = '↻V';
+    animarGiroVertical();
+  }
+  document.querySelectorAll('.ph-brain-3d-btn').forEach(function(b){
+    if(b !== btnGirar) b.classList.remove('active');
+  });
+};
+
+function animarGiroHorizontal() {
+  if(girarState !== 1) return;
+  anguloY += 0.012;
+  desenharCerebro();
+  girarAnimRef = requestAnimationFrame(animarGiroHorizontal);
+}
+
+function animarGiroVertical() {
+  if(girarState !== 2) return;
+  anguloX += 0.012;
+  desenharCerebro();
+  girarAnimRef = requestAnimationFrame(animarGiroVertical);
+}
+
+// ═══ CANVAS DO CÉREBRO ═══
 function desenharCerebro() {
-  var canvas = document.getElementById('brain-canvas');
+  const canvas = document.getElementById('brain-canvas');
   if(!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var rect = canvas.getBoundingClientRect();
-  var dpr = window.devicePixelRatio || 1;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  var W = rect.width, H = rect.height;
+  const W = rect.width, H = rect.height;
   ctx.clearRect(0, 0, W, H);
 
   if(!window.V112 || !window.V112.nodes || window.V112.nodes.length === 0) {
     ctx.fillStyle = '#5a6a8a';
     ctx.font = '11px monospace';
-    ctx.fillText('aguardando cérebro...', 10, 20);
+    ctx.fillText('aguardando cérebro...', 10, 30);
     return;
   }
 
-  var nodes = window.V112.nodes;
-  var info = document.getElementById('canvas-info');
-  if(info) info.textContent = (renderMode === '3d' ? '3D' : '2D') + ' • ' + nodes.length + ' nós';
+  const nodes = window.V112.nodes;
+  const cx = W / 2, cy = H / 2;
+  const baseScale = Math.min(W, H) * 0.0024;
 
-  var cx = W / 2, cy = H / 2;
-  var scale = Math.min(W, H) * 0.0015;
+  const styles = getComputedStyle(document.body);
+  const a1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
+  const a2 = styles.getPropertyValue('--accent2').trim() || '#a78bfa';
+  const n1 = styles.getPropertyValue('--neuron1').trim() || '#5eead4';
+  const n2 = styles.getPropertyValue('--neuron2').trim() || '#a78bfa';
+  const n3 = styles.getPropertyValue('--neuron3').trim() || '#fbbf24';
+  const n4 = styles.getPropertyValue('--neuron4').trim() || '#ef4444';
 
-  var styles = getComputedStyle(document.body);
-  var a1 = styles.getPropertyValue('--accent1').trim() || '#64c8ff';
-  var a2 = styles.getPropertyValue('--accent2').trim() || '#b48fff';
-
-  function getColor(n) {
-    if(n.tipo === 'subrede') return a2;
-    if(n._categoria === 'cognitivo') return a1;
-    if(n._categoria === 'estatistico') return '#22c55e';
+  function corNo(n) {
+    if(n.tipo === 'subrede') return n2;
+    if(n._categoria === 'cognitivo') return n2;
+    if(n._categoria === 'estatistico') return n3;
+    if(n.tipo === 'sensorial') return n1;
+    if(n.tipo === 'motor') return n4;
     return a1;
   }
 
-  if(window.V112.edges) {
-    ctx.lineWidth = 0.3;
-    ctx.strokeStyle = 'rgba(100,150,255,0.08)';
-    var maxEdges = Math.min(400, window.V112.edges.length);
-    for(var i = 0; i < maxEdges; i++) {
-      var e = window.V112.edges[i];
-      var n1 = nodes.find(function(n){ return n.id === e.from; });
-      var n2 = nodes.find(function(n){ return n.id === e.to; });
-      if(!n1 || !n2 || !n1.pos || !n2.pos) continue;
-      var p1 = transform(n1.pos), p2 = transform(n2.pos);
-      ctx.beginPath();
-      ctx.moveTo(cx + p1[0] * scale, cy + p1[2] * scale);
-      ctx.lineTo(cx + p2[0] * scale, cy + p2[2] * scale);
-      ctx.stroke();
-    }
-  }
-
-  if(rotacaoAuto) anguloRot += 0.005;
-
+  // Aplicar rotação
   function transform(pos) {
-    var x = pos[0], y = pos[1], z = pos[2];
-    if(rotacaoAuto || renderMode === '3d') {
-      var cos = Math.cos(anguloRot), sin = Math.sin(anguloRot);
-      var nx = x * cos - z * sin;
-      var nz = x * sin + z * cos;
+    let x = pos[0], y = pos[1], z = pos[2];
+    // Rotação Y (horizontal)
+    if(anguloY !== 0) {
+      const cos = Math.cos(anguloY), sin = Math.sin(anguloY);
+      const nx = x * cos - z * sin;
+      const nz = x * sin + z * cos;
       x = nx; z = nz;
     }
-    if(renderMode === '3d') {
-      var depth = 1 + y * 0.003;
-      x *= depth; z *= depth;
+    // Rotação X (vertical)
+    if(anguloX !== 0) {
+      const cos = Math.cos(anguloX), sin = Math.sin(anguloX);
+      const ny = y * cos - z * sin;
+      const nz = y * sin + z * cos;
+      y = ny; z = nz;
     }
     return [x, y, z];
   }
 
-  var maxNodes = Math.min(800, nodes.length);
-  for(var j = 0; j < maxNodes; j++) {
-    var n = nodes[j];
+  // Vista (lateral comprime X)
+  const sx = vistaAtual === 'lateral' ? 0.5 : 1;
+
+  // Glow de fundo
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.4);
+  grad.addColorStop(0, a1 + '20');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Edges (sample)
+  if(window.V112.edges) {
+    ctx.lineWidth = 0.3;
+    ctx.strokeStyle = a1 + '15';
+    const maxEdges = Math.min(300, window.V112.edges.length);
+    const step = Math.ceil(window.V112.edges.length / maxEdges);
+    for(let i = 0; i < window.V112.edges.length; i += step) {
+      const e = window.V112.edges[i];
+      const nA = nodes.find(function(n){ return n.id === e.from; });
+      const nB = nodes.find(function(n){ return n.id === e.to; });
+      if(!nA || !nB || !nA.pos || !nB.pos) continue;
+      const pA = transform(nA.pos);
+      const pB = transform(nB.pos);
+      ctx.beginPath();
+      ctx.moveTo(cx + pA[0] * baseScale * sx, cy + pA[2] * baseScale);
+      ctx.lineTo(cx + pB[0] * baseScale * sx, cy + pB[2] * baseScale);
+      ctx.stroke();
+    }
+  }
+
+  // Nós
+  const maxNodes = Math.min(900, nodes.length);
+  const step = Math.ceil(nodes.length / maxNodes);
+  for(let i = 0; i < nodes.length; i += step) {
+    const n = nodes[i];
     if(!n.pos) continue;
-    var p = transform(n.pos);
-    var x = cx + p[0] * scale, y = cy + p[2] * scale;
-    var size = n.tipo === 'subrede' ? 2.5 : 1.2;
-    ctx.fillStyle = getColor(n);
-    ctx.globalAlpha = n.tipo === 'subrede' ? 0.9 : 0.5;
+    const p = transform(n.pos);
+    const x = cx + p[0] * baseScale * sx;
+    const y = cy + p[2] * baseScale;
+    const size = n.tipo === 'subrede' ? 2.8 : 1.1;
+
+    ctx.fillStyle = corNo(n);
+    ctx.globalAlpha = n.tipo === 'subrede' ? 0.95 : 0.55;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
@@ -531,29 +1208,344 @@ function desenharCerebro() {
   ctx.globalAlpha = 1;
 }
 
-function loopCanvas() {
-  if(rotacaoAuto) desenharCerebro();
-  requestAnimationFrame(loopCanvas);
+// ═══ PAINÉIS ═══
+window.abrirPainel = function(qual, ev) {
+  const cont = document.getElementById('painel-conteudo');
+  const titulo = document.getElementById('painel-titulo');
+  cont.innerHTML = '';
+
+  if(qual === 'rede') {
+    titulo.textContent = '🕸️ Estado da Rede';
+    const V = window.V112;
+    const cells = [
+      { label: 'NÓS', num: V ? V.nodes.length : '—' },
+      { label: 'ARESTAS', num: V ? V.edges.length : '—', cls: 'purple' },
+      { label: 'SUB-REDES', num: V ? Object.keys(V.subredes||{}).length : '—' },
+      { label: 'TURNO', num: turnoNumero },
+      { label: 'SENS', num: '500', cls: 'yellow' },
+      { label: 'TÁLAMO', num: '20' },
+      { label: 'HIPO', num: '400', cls: 'purple' },
+      { label: 'GABA', num: '10', cls: 'yellow' },
+      { label: 'CÓRTEX', num: '400' },
+      { label: 'AMIG', num: V ? (V.amigdala_tensao || 0) : 0, cls: 'red' },
+      { label: 'NÚCLEOS', num: '30' },
+      { label: 'BROCA', num: '100' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'amigdala') {
+    titulo.textContent = '🚨 Amígdala';
+    const V = window.V112;
+    const estado = V ? (V.amigdala_estado || 'calma') : 'calma';
+    const tensao = V ? (V.amigdala_tensao || 0).toFixed(1) : '0.0';
+    const cells = [
+      { label: 'ESTADO', num: estado.toUpperCase(), cls: estado === 'calma' ? 'green' : 'red' },
+      { label: 'TENSÃO', num: tensao + '/100' },
+      { label: 'FALLBACKS', num: V ? (V.fallbacks_consecutivos || 0) : 0, cls: 'yellow' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'ut') {
+    titulo.textContent = '⚡ Último Turno';
+    if(!ultimoTurno) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Nenhum turno ainda. Envie uma mensagem!</div>';
+    } else {
+      const tipoLabel = ultimoTurno.tag === 'cog' ? '🧠 cognitivo' : ultimoTurno.tag === 'est' ? '📊 estatístico' : ultimoTurno.tag === 'soc' ? '💬 social' : '⚙️ turing';
+      const lines = [
+        { label: 'TURNO', chips: [{ t: turnoNumero, c: '' }, { t: tipoLabel, c: 'evento' }] },
+        { label: 'INPUT', chips: [{ t: '"' + ultimoTurno.input + '"', c: 'token' }] },
+        { label: 'RESPOSTA', chips: [{ t: ultimoTurno.resposta.substring(0, 60) + (ultimoTurno.resposta.length > 60 ? '…' : ''), c: 'evento' }] }
+      ];
+      lines.forEach(function(line){
+        const div = document.createElement('div');
+        div.className = 'ut-line';
+        let html = '<span class="ut-label">' + line.label + ':</span>';
+        line.chips.forEach(function(chip){
+          html += '<span class="ut-chip ' + (chip.c || '') + '">' + chip.t + '</span>';
+        });
+        div.innerHTML = html;
+        cont.appendChild(div);
+      });
+    }
+
+  } else if(qual === 'hipo') {
+    titulo.textContent = '🧠 Hipocampo';
+    const V = window.V112;
+    const cells = [
+      { label: 'EVENTOS', num: V && V.eventos ? V.eventos.length : 0, cls: 'purple' },
+      { label: 'CAP.', num: 400 },
+      { label: 'CONS.', num: '0%' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'ajustes') {
+    titulo.textContent = '🔧 Ajustes de Emissão';
+    const critWrap = document.createElement('div');
+    critWrap.style.cssText = 'margin-bottom:10px;';
+    critWrap.innerHTML = '<div style="font-size:10px;color:#7d8b96;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">CRITÉRIO ATIVO</div>' +
+      '<select id="sel-criterio" style="width:100%; background:rgba(0,0,0,0.5); color:var(--accent1); border:1px solid var(--accent1); padding:7px 8px; border-radius:5px; font-size:11px; font-family:inherit; cursor:pointer;">' +
+      '<option value="ratio" selected style="background:#0f1426;">ratio (top1 > top2 × k)</option>' +
+      '<option value="media" style="background:#0f1426;">media (top1 > avg × k)</option>' +
+      '<option value="absoluto" style="background:#0f1426;">absoluto (top1 > k)</option>' +
+      '</select>';
+    cont.appendChild(critWrap);
+
+    const sliders = [
+      { id: 'k_ratio', label: 'k_ratio', min: 1.0, max: 5.0, step: 0.1, value: 1.8 },
+      { id: 'k_media', label: 'k_media', min: 1.0, max: 10.0, step: 0.1, value: 3.0 },
+      { id: 'k_absoluto', label: 'k_absoluto', min: 50, max: 500, step: 10, value: 200 }
+    ];
+    sliders.forEach(function(s){
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-bottom:10px; background:rgba(0,0,0,0.3); padding:7px 8px; border-radius:5px;';
+      wrap.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+          '<span style="font-size:10px;color:#d8e2ee;font-weight:bold;">' + s.label + ':</span>' +
+          '<span style="font-size:11px;color:var(--accent1);font-weight:bold;" id="val-' + s.id + '">' + s.value + '</span>' +
+        '</div>' +
+        '<input type="range" min="' + s.min + '" max="' + s.max + '" step="' + s.step + '" value="' + s.value + '" ' +
+          'oninput="document.getElementById(\'val-' + s.id + '\').textContent=this.value" ' +
+          'style="width:100%; accent-color:var(--accent1); cursor:pointer;">';
+      cont.appendChild(wrap);
+    });
+
+    const loopWrap = document.createElement('div');
+    loopWrap.style.cssText = 'background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; display:flex; justify-content:space-between; align-items:center; margin-top:5px;';
+    loopWrap.innerHTML =
+      '<span style="font-size:10px;color:#d8e2ee;font-weight:bold;">LOOP BACKGROUND:</span>' +
+      '<button id="btn-loop-bg" onclick="toggleLoopBg()" style="background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid #ef4444; padding:6px 12px; border-radius:5px; font-family:inherit; font-size:11px; font-weight:bold; cursor:pointer; min-width:80px;">' +
+        '⏸ pausado' +
+      '</button>';
+    cont.appendChild(loopWrap);
+
+  } else if(qual === 'self') {
+    titulo.textContent = '⭐ Self-Core (' + (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length) + ' fatos)';
+    if(selfFacts.sobre_si.length === 0 && selfFacts.sobre_usuario.length === 0) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Ainda não aprendi nada sobre mim ou você.<br><br>Diga "seu nome é X" ou "eu sou X" e eu guardo aqui!</div>';
+    } else {
+      if(selfFacts.sobre_si.length > 0) {
+        const s1 = document.createElement('div');
+        s1.className = 'self-section';
+        s1.innerHTML = '<div class="self-section-title">📌 Sobre si (' + selfFacts.sobre_si.length + ')</div>';
+        selfFacts.sobre_si.forEach(function(f){
+          s1.innerHTML += '<div class="self-fact">' + f.f + '<small>' + f.t + '</small></div>';
+        });
+        cont.appendChild(s1);
+      }
+      if(selfFacts.sobre_usuario.length > 0) {
+        const s2 = document.createElement('div');
+        s2.className = 'self-section';
+        s2.innerHTML = '<div class="self-section-title">👤 Sobre o usuário (' + selfFacts.sobre_usuario.length + ')</div>';
+        selfFacts.sobre_usuario.forEach(function(f){
+          s2.innerHTML += '<div class="self-fact usuario">' + f.f + '<small>' + f.t + '</small></div>';
+        });
+        cont.appendChild(s2);
+      }
+    }
+
+  } else if(qual === 'cand') {
+    titulo.textContent = '🎯 Candidatos';
+    if(!ultimoTurno || !ultimoTurno.r || !ultimoTurno.r._candidatos) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Sem candidatos ainda. Envie uma mensagem!</div>';
+    } else {
+      ultimoTurno.r._candidatos.forEach(function(c, i){
+        const div = document.createElement('div');
+        div.className = 'ut-line';
+        div.innerHTML = '<span class="ut-label">HIP ' + (i+1) + ':</span>' +
+          '<span class="ut-chip evento">' + (c.texto || c) + '</span>' +
+          (c.score ? '<span class="ut-chip score">' + c.score.toFixed(2) + '</span>' : '');
+        cont.appendChild(div);
+      });
+    }
+
+  } else if(qual === 'exp') {
+    titulo.textContent = '🧪 Experimentos (A-T)';
+    const grid = document.createElement('div');
+    grid.className = 'exp-grid';
+    const letras = 'ABCDEFGHIJKLMNOPQRST'.split('');
+    const experimentos = [
+      'oi', 'a é letra', '2 + 2 = 4', 'meu nome é douglas', 'qual meu nome?',
+      'média de [10, 20, 30, 40, 50]', 'bayes prior=0.01 sensibilidade=0.99 especificidade=0.95',
+      'qual rende mais: 1000 a 5% por 10 anos vs 2000 a 3% por 8 anos?',
+      'tanque vazando 5L/min com 100L',
+      'entrada 2 → saida 5',
+      'entrada 5 → saida 11',
+      'entrada 10 → saida 21',
+      'estado: x=0, soma=0, i=1',
+      'regra: enquanto i menor_que 11 faça [soma = soma + i, i = i + 1]',
+      'execute e mostre valor de soma',
+      'a causa b',
+      'b causa c',
+      'estado atual é c. onde começou?',
+      'analise metacognitiva',
+      'quem é você?'
+    ];
+    letras.forEach(function(L, i){
+      const btn = document.createElement('button');
+      btn.className = 'exp-btn';
+      btn.textContent = L;
+      btn.title = experimentos[i] || L;
+      btn.onclick = function(){
+        document.getElementById('input').value = experimentos[i] || L;
+        fecharPainel();
+        enviar();
+      };
+      grid.appendChild(btn);
+    });
+    cont.appendChild(grid);
+    const obs = document.createElement('div');
+    obs.style.cssText = 'font-size:9px; color:#7d8b96; margin-top:8px; padding:6px; background:rgba(0,0,0,0.3); border-radius:4px;';
+    obs.textContent = '20 experimentos pré-prontos. Toque numa letra pra executar.';
+    cont.appendChild(obs);
+  }
+
+  document.getElementById('painel').classList.add('open');
+  document.querySelectorAll('.ph-side-ic').forEach(function(ic){ ic.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+};
+
+window.fecharPainel = function() {
+  document.getElementById('painel').classList.remove('open');
+};
+
+// Toggle loop background
+window.toggleLoopBg = function() {
+  loopBgRodando = !loopBgRodando;
+  const btn = document.getElementById('btn-loop-bg');
+  if(!btn) return;
+  if(loopBgRodando) {
+    btn.innerHTML = '▶ rodando';
+    btn.style.background = 'rgba(34,197,94,0.2)';
+    btn.style.color = '#86efac';
+    btn.style.borderColor = '#22c55e';
+  } else {
+    btn.innerHTML = '⏸ pausado';
+    btn.style.background = 'rgba(239,68,68,0.2)';
+    btn.style.color = '#fca5a5';
+    btn.style.borderColor = '#ef4444';
+  }
+};
+
+// Atualizar badges
+function atualizarBadges() {
+  const V = window.V112;
+  if(!V) return;
+  document.getElementById('badge-rede').textContent = Object.keys(V.subredes||{}).length;
+  const tensao = V.amigdala_tensao || 0;
+  const badgeAmig = document.getElementById('badge-amig');
+  if(tensao > 50) {
+    badgeAmig.textContent = '!';
+    badgeAmig.className = 'ph-side-badge red';
+  } else {
+    badgeAmig.textContent = 'OK';
+    badgeAmig.className = 'ph-side-badge';
+  }
+  document.getElementById('badge-ut').textContent = turnoNumero;
+  document.getElementById('badge-hipo').textContent = V.eventos ? V.eventos.length : 0;
+  document.getElementById('badge-self').textContent = selfFacts.sobre_si.length + selfFacts.sobre_usuario.length;
 }
 
+// Arrastar chat (resize)
+(function setupChatResize(){
+  const handle = document.getElementById('chat-handle');
+  const chatSection = document.getElementById('chat-section');
+  let startY = 0, startH = 0;
+
+  function startDrag(e){
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    startH = chatSection.offsetHeight;
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('touchmove', doDrag, { passive: false });
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+    e.preventDefault();
+  }
+  function doDrag(e){
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const newH = startH - (y - startY);
+    const maxH = window.innerHeight * 0.7;
+    const minH = 130;
+    chatSection.style.height = Math.max(minH, Math.min(maxH, newH)) + 'px';
+    e.preventDefault();
+  }
+  function stopDrag(){
+    document.removeEventListener('mousemove', doDrag);
+    document.removeEventListener('touchmove', doDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchend', stopDrag);
+  }
+  handle.addEventListener('mousedown', startDrag);
+  handle.addEventListener('touchstart', startDrag, { passive: false });
+})();
+
+// Fechar paletas clicando fora
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('.ph-palette-popup') && !e.target.closest('.ph-btn-pal') && !e.target.closest('.ph-btn-pal-cerebro')) {
+    document.querySelectorAll('.ph-palette-popup.open').forEach(function(p){ p.classList.remove('open'); });
+  }
+});
+
+// Redesenhar cérebro ao redimensionar
+window.addEventListener('resize', desenharCerebro);
+
+// ═══ INIT ═══
 window.addEventListener('DOMContentLoaded', function() {
   try {
-    var r = arch_neural_init();
-    document.getElementById('stats').textContent = r.sub_redes + ' • ' + r.nodes;
-    document.getElementById('loading').style.display = 'none';
+    const r = arch_neural_init();
+
+    // Restaurar temas salvos
     try {
-      var tema = localStorage.getItem('arch_tema') || 'sci-fi';
-      setTema(tema);
-      var rend = localStorage.getItem('arch_render') || '2d';
-      setRender(rend);
-    } catch(e) {}
-    addMsg('brain', 'Olá! Sou o ARCH-NEURAL V15.1 — ' + r.sub_redes + ' sub-redes, ' + r.nodes + ' nós, num único arquivo de 4MB.\n\nToque no ☰ pra trocar tema, carregar cérebro do GitHub ou usar outras funções.', 'soc');
+      const tg = localStorage.getItem('arch_tema_geral');
+      if(tg && TEMAS_GERAL[tg]) {
+        const t = TEMAS_GERAL[tg];
+        document.body.style.setProperty('--bg1', t.bg1);
+        document.body.style.setProperty('--bg2', t.bg2);
+        document.body.style.setProperty('--accent1', t.accent1);
+        document.body.style.setProperty('--accent2', t.accent2);
+      }
+      const tc = localStorage.getItem('arch_tema_cerebro');
+      if(tc && TEMAS_CEREBRO[tc]) {
+        const t = TEMAS_CEREBRO[tc];
+        document.body.style.setProperty('--neuron1', t.n1);
+        document.body.style.setProperty('--neuron2', t.n2);
+        document.body.style.setProperty('--neuron3', t.n3);
+        document.body.style.setProperty('--neuron4', t.n4);
+      }
+    } catch(e){}
+
+    document.getElementById('loading').style.display = 'none';
+    addMsg('brain', 'Olá! Sou o LAB_ARCH-NEURAL V15.1.\n' + r.sub_redes + ' sub-redes, ' + r.nodes + ' nós.\n\nToque no ☰ pra ações, 🎨 pra paletas, ícones laterais pra ver dados, ou simplesmente fale comigo!');
+    atualizarBadges();
     desenharCerebro();
-    loopCanvas();
   } catch(e) {
-    document.getElementById('loading').innerHTML = '<div style="color:#ff8888;padding:20px;text-align:center">⚠ ' + e.message + '</div>';
+    document.getElementById('loading').innerHTML = '<div style="color:#ff8888;padding:20px;text-align:center">⚠ Erro: ' + e.message + '</div>';
   }
 });
 </script>
+
 </body>
 </html>

@@ -1,5 +1,5 @@
-LICENÇA PROPRIETÁRIA — ARCH-NEURAL CORTEX V15
-==============================================
+LICENÇA PROPRIETÁRIA — LAB_ARCH-NEURAL CORTEX V15.1
+====================================================
 
 Copyright © 2026 Douglas Corrêa Cavasso
 Todos os direitos reservados.
@@ -56,10 +56,6 @@ prévio e autorização por escrito do autor:
   Email: douglas.cavasso@gmail.com
   GitHub: https://github.com/douglascorreacavasso
 
-A autorização pode ser concedida ou negada a critério exclusivo do
-autor, podendo envolver acordos comerciais, royalties, ou condições
-específicas de uso.
-
 
 5. PROTEÇÃO CONTRA TREINAMENTO DE IA
 --------------------------------------
@@ -71,49 +67,28 @@ incluindo mas não limitado a: LLMs, modelos de linguagem, redes
 neurais, sistemas de aprendizado profundo, sistemas de aprendizado
 por reforço, modelos de difusão, ou agentes autônomos.
 
-Uso indevido para os fins acima viola esta licença e poderá ser
-objeto de medidas legais cabíveis.
-
 
 6. ATRIBUIÇÃO OBRIGATÓRIA
 ---------------------------
 Em qualquer uso permitido (seção 2), a atribuição ao autor deve
-constar de forma visível, com a seguinte formulação mínima:
+constar de forma visível:
 
-  "ARCH-NEURAL Cortex V15 — Douglas Corrêa Cavasso (2026)
+  "LAB_ARCH-NEURAL Cortex V15.1 — Douglas Corrêa Cavasso (2026)
    https://github.com/douglascorreacavasso"
-
-Para citação acadêmica formal:
-
-  Cavasso, D. C. (2026). ARCH-NEURAL Cortex V15: A modular
-  cognitive architecture with real Turing engine and statistical
-  reasoning. Software repository, GitHub.
 
 
 7. ISENÇÃO DE GARANTIA
 ------------------------
-O software é fornecido "COMO ESTÁ", sem garantia de qualquer
-tipo, expressa ou implícita, incluindo mas não se limitando a
-garantias de comercialização, adequação a propósito específico e
-não-violação. Em nenhuma hipótese o autor será responsável por
-qualquer reivindicação, danos ou outras responsabilidades.
+O software é fornecido "COMO ESTÁ", sem garantia de qualquer tipo.
 
 
 8. JURISDIÇÃO
 ---------------
 Esta licença é regida pelas leis da República Federativa do
-Brasil. Qualquer disputa será resolvida no foro da comarca de
-Curitiba, Paraná, Brasil.
-
-
-9. ALTERAÇÃO DA LICENÇA
--------------------------
-O autor reserva-se o direito de alterar os termos desta licença
-em versões futuras do software, sem retroatividade sobre versões
-anteriormente distribuídas.
+Brasil. Foro: Curitiba, Paraná, Brasil.
 
 
 ─────────────────────────────────────────────────────────────────
-Última atualização: 27 de maio de 2026
 Versão da licença: 1.0
+Última atualização: 27 de maio de 2026
 ─────────────────────────────────────────────────────────────────

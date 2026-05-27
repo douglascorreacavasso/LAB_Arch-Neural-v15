@@ -1,91 +1,200 @@
-# 🧠 ARCH-NEURAL V15.1 FINAL
+# 🧠 LAB_ARCH-NEURAL V15.1 FINAL
 
-**Cérebro cognitivo modular — Anatomia + Fisiologia + Cérebro Serializado num único arquivo JavaScript.**
+**Autor:** Douglas Corrêa Cavasso
+**Versão:** V15.1 FINAL (Maio/2026)
+**Licença:** Proprietária — todos os direitos reservados
+**Contato:** douglas.cavasso@gmail.com
+**GitHub:** [github.com/douglascorreacavasso](https://github.com/douglascorreacavasso)
 
-> **Autor:** Douglas Corrêa Cavasso
-> **Contato:** douglas.cavasso@gmail.com
-> **GitHub:** [github.com/douglascorreacavasso](https://github.com/douglascorreacavasso)
-> **Versão:** V15.1 FINAL (Maio/2026)
-> **Licença:** Proprietária — todos os direitos reservados
+🇺🇸 [English version](README.en.md) · 📋 [Aplicações e casos de uso](APLICACOES.md) · 🚀 [Como publicar no GitHub](PUBLICAR.md)
 
-🇺🇸 [English version](README.en.md)
+---
+
+> *Um cérebro modular cognitivo em JavaScript puro. Roda no navegador. Sem APIs externas. Sem chamadas LLM. Sem Python. Em UM ÚNICO ARQUIVO de 4MB.*
 
 ---
 
 ## 🎯 Filosofia
 
-O cérebro é **UMA coisa só**. Não tem "código fora do cérebro" e "JSON dentro do cérebro" — é uma estrutura única com regiões especializadas. Igual o cérebro humano: córtex motor é anatomia E fisiologia juntos, não separados em arquivos.
+O cérebro é **UMA coisa só**. Não tem "código fora do cérebro" e "JSON dentro do cérebro" — é uma estrutura única com regiões especializadas. Igual o cérebro humano.
 
-Por isso a V15.1 FINAL entrega **`arch_neural_v15_final.js`** — **um único arquivo de 4MB** com tudo dentro:
+`arch_neural_v15_final.js` (4.2 MB) contém **TUDO** empilhado em 14 regiões cronológicas:
 
-- ✅ Estrutura do grafo (anatomia)
-- ✅ Motor de execução (fisiologia)
-- ✅ Reflexos sociais
-- ✅ Córtex Turing (variáveis, loops, condicionais)
-- ✅ Córtex Cognitivo (hipóteses, simulação, analogia, eng-reversa, metacognição)
-- ✅ Córtex Estatístico (10 motores matemáticos REAIS)
-- ✅ Auto-modificação (aprendiz, válvula, evolução biológica)
-- ✅ **Cérebro serializado embutido** (115 sub-redes, 2400+ nós)
-
-**14 regiões empilhadas em ordem cronológica do projeto, num único arquivo.**
-
-Não chama APIs externas. Não usa LLM. Não precisa de internet. Tudo roda no navegador, JavaScript puro, **totalmente offline e determinístico**.
+```
+01. v112_core              ← anatomia do grafo
+02. v112_brain             ← motor de execução
+03. v151_logica_prog
+04. v152_afastamentos
+05. v153_auto_mod_necessidade
+06. v154_aprendiz_meta
+07. v155_valvula_escape
+08. v156_evolucao
+09. v158_reflexos_sociais
+10. v15_cortex_logico      ← córtex Turing completo
+11. v159_cortex_cognitivo  ← córtex cognitivo (base)
+12. v159b_motores          ← 6 motores cognitivos + árbitro
+13. v160_estatistico       ← 10 motores estatísticos REAIS
+14. CEREBRO_DATA           ← cérebro serializado embutido (115 sub-redes, 2414 nós)
+```
 
 ---
 
-## 🚀 Como usar
+## 🚀 Como usar — DETECÇÃO AUTOMÁTICA Desktop/Mobile
 
-### 🌐 Demo online (no navegador, sem instalar nada)
+### ⭐ Use SEMPRE o `index.html` — ele detecta automaticamente o dispositivo
 
-👉 **[https://douglascorreacavasso.github.io/arch-neural-cortex-v15/](https://douglascorreacavasso.github.io/arch-neural-cortex-v15/)**
+Basta abrir o **`index.html`** em qualquer navegador:
 
-(disponível após você ativar GitHub Pages no repositório — instruções em [PUBLICAR.md](PUBLICAR.md))
+- 💻 **Desktop / tablet grande:** carrega a versão completa com cérebro 3D + 11 faixas anatômicas + painéis laterais
+- 📱 **Celular / tela pequena (<768px) / user-agent mobile:** redireciona automaticamente para `mobile.html` — UI touch-friendly otimizada
 
-### 💻 Desktop (interface completa)
+### 🔀 Como funciona a detecção:
 
-```bash
-git clone https://github.com/douglascorreacavasso/arch-neural-cortex-v15.git
-cd arch-neural-cortex-v15
-# Abra index.html no navegador, ou:
-python3 -m http.server 8000
-# Acesse http://localhost:8000
+No topo do `index.html`, um pequeno script detecta o dispositivo **antes** de carregar o cérebro (4MB):
+
+```javascript
+// Se for mobile OU tela < 768px → redireciona pra mobile.html
+var mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+var smallScreen = window.innerWidth < 768;
+if(mobileUA || smallScreen) {
+  location.replace('mobile.html');
+}
 ```
 
-### 📱 Mobile (interface touch-friendly)
+Isso economiza memória/processamento em celulares antigos — não carrega o canvas pesado do desktop.
 
-Abra `mobile.html` no celular ou tablet. **Mesma capacidade do cérebro**, UI otimizada pra toque, com:
-- Menu de **5 paletas de cores** (Sci-Fi, Matrix, Solar, Borboleta, Cyber)
-- Toggle **2D/3D** (com aviso de desempenho)
-- Botão **carregar cérebro do GitHub** ou manual do seu PC
-- Abas flutuantes: meditar, árvore, resetar, salvar, importar, mesclar
+### 🛑 Forçar versão desktop no celular
 
-### 🧪 Rodar baterias de teste (Node.js)
+Se quiser forçar a versão desktop num celular (debug, demonstração), adicione `?desktop=1` na URL:
 
-```bash
-cd baterias
-node bateria_reflexos_sociais.js  # 340/340 = 100%
-node bateria_estatistica.js       # 157/157 = 100%
-node bateria_integracao.js        # 50/50 = 100%
-node bateria_nivel_deus.js        # 20/20 = 100%
 ```
+https://seu-site.com/index.html?desktop=1
+```
+
+### 🌐 Acesso direto via GitHub Pages
+
+Quando o projeto estiver publicado:
+
+```
+https://douglascorreacavasso.github.io/arch-neural-cortex-v15/
+```
+
+Abre automaticamente na versão correta pro dispositivo de quem acessa.
+
+---
+
+## 📱 Interface Mobile (`mobile.html`)
+
+A versão mobile foi desenhada do zero pra ser **realmente touch-friendly**:
+
+### Layout
+- **Cérebro 3D no centro** (60% da tela superior), com botões F/L/↻ (frontal/lateral/girar)
+- **Ícones laterais grandes** (38px) com badges live mostrando status
+- **Legenda anatômica** flutuante à esquerda — clique pra recolher (vira ícone ℹ)
+- **Chat embaixo** com barra de arrastar (resize vertical)
+
+### Ícones laterais (direita)
+| Ícone | Painel |
+|---|---|
+| 🕸️ | Estado da Rede (nós, arestas, sub-redes, SENS, TÁLAMO, HIPO, GABA, etc) |
+| 🚨 | Amígdala (estado, tensão, gatilhos) |
+| UT | Último Turno (input, resposta, candidatos, motores ativados) |
+| 🧠 | Hipocampo (eventos, frases preservadas) |
+| 🔧 | Ajustes de Emissão (critério dropdown + sliders k_ratio/k_media/k_absoluto + botão loop bg) |
+| ⭐ | Self-Core (fatos aprendidos sobre si + sobre o usuário) |
+| 🎯 | Candidatos de resposta |
+| 🧪 | 20 Experimentos (A-T) — atalhos prontos pra testar |
+
+### Botões do header
+- **☰** — Drawer lateral com ações (ensinar 240, meditar, salvar, carregar, etc)
+- **🎨** — Paleta geral da interface (10 cores: Sci-Fi, Matrix, Solar, Borboleta, Cyber, Fogo, Oceano, Floresta, Rosa Neon, Dourado)
+- **🧠 colorido** — Paleta SÓ dos aglomerados do cérebro (10 variações: Padrão, Arco-íris, Frio, Quente, Neon, Terra, Pastel, Mono Azul/Verde/Roxo)
+
+### Botões da área do cérebro
+- **F** — Vista frontal
+- **L** — Vista lateral (comprime horizontalmente)
+- **↻** — Botão giro com 3 estados:
+  - 1º clique → gira **horizontal** (eixo Y, indicador `↻H` teal)
+  - 2º clique → gira **vertical** (eixo X, indicador `↻V` roxo)
+  - 3º clique → **PARA** onde está (não volta ao zero)
+
+### Animações vivas
+- **Piscada de status:** quando algum valor da legenda muda (ex: amígdala sobe, núcleos cria módulo), os números **piscam em amarelo/laranja** — efeito tipo "level up de personagem"
+- **Badges live:** os badges dos ícones laterais atualizam em tempo real conforme você interage
+
+### Persistência
+Tema escolhido salva em `localStorage` — persiste entre sessões.
+
+---
+
+## 💻 Interface Desktop (`index.html`)
+
+Quando aberto num desktop, mostra a UI completa do laboratório:
+
+- **Cérebro 3D** com 11 faixas anatômicas (canvas grande)
+- **Painel "Estado da Rede"** lateral (NÓS, ARESTAS, TURNO, SENS, TÁLAMO, HIPO, GABA, CÓRTEX, AMIG, NÚCLEOS, MOTORA, BROCA)
+- **Painel "Pesos Semânticos Calculados"**
+- **Painel "Palavras na Rede (top 12)"**
+- **Painel "Último Turno"** com Self-Core, 3 Candidatos de Resposta, Ajustes de Emissão
+- **Painel "Amígdala"** com tensão em tempo real
+- **Painel "Eventos no Hipocampo"** (frases preservadas)
+- **Sidebar de Experimentos** com 11 testes pré-prontos
+- **Botões originais:** ensinar 240, meditar, salvar, carregar, juntar, árvore, Y, log JSON, log TXT, reset
+- **Barra V15.1 nova:** 5 paletas (Sci-Fi, Matrix, Solar, Borboleta, Cyber) + 🌐 carregar do GitHub + 📂 carregar manual
 
 ---
 
 ## 📊 Validação completa
 
-Todas as baterias rodadas contra o arquivo único `arch_neural_v15_final.js`:
+Todas as baterias rodam contra `arch_neural_v15_final.js`:
 
-| Bateria | Score | O que valida |
-|---|---|---|
-| Reflexos sociais | **340/340 = 100%** ✅ | 20 padrões × 5 contextos emocionais |
-| Estatística | **157/157 = 100%** 🏆 | 10 motores matemáticos com execução real |
-| Integração entre módulos | **50/50 = 100%** 🏆 | Roteamento, não-invasão, encadeamento |
-| Nível DEUS (2× mais difícil) | **20/20 = 100%** 🏆🏆 | Bayes raro, paradoxo aniversário, (x+1)², ANOVA 4 grupos |
-| **TOTAL** | **567/567 = 100%** | |
+| Bateria | Score |
+|---|---|
+| Reflexos sociais | **340/340 = 100%** ✅ |
+| Estatística | **157/157 = 100%** 🏆 |
+| Integração entre módulos | **50/50 = 100%** 🏆 |
+| Nível DEUS (2× mais difícil) | **20/20 = 100%** 🏆🏆 |
+| **TOTAL** | **567/567 = 100%** |
+
+```bash
+cd baterias
+node bateria_reflexos_sociais.js
+node bateria_estatistica.js
+node bateria_integracao.js
+node bateria_nivel_deus.js
+```
 
 ---
 
-## 🎯 O que ele consegue fazer
+## 🚀 Como instalar e rodar
+
+### Modo simples (sem servidor)
+
+1. **Clone ou baixe** este repositório
+2. **Abra o `index.html`** num navegador moderno (Chrome, Firefox, Safari, Edge)
+3. Pronto — funciona offline 100%
+
+### Modo com servidor local (recomendado pra mobile via Wi-Fi)
+
+```bash
+git clone https://github.com/douglascorreacavasso/arch-neural-cortex-v15.git
+cd arch-neural-cortex-v15
+python3 -m http.server 8000
+```
+
+Depois, no PC abre `http://localhost:8000/index.html`. No celular conectado à mesma rede, abre `http://SEU-IP-LOCAL:8000/index.html` — o sistema redireciona pra `mobile.html` automaticamente.
+
+### Modo online (GitHub Pages)
+
+Veja [PUBLICAR.md](PUBLICAR.md) pro passo-a-passo de subir no GitHub e ativar Pages. Depois fica acessível em:
+
+```
+https://douglascorreacavasso.github.io/arch-neural-cortex-v15/
+```
+
+---
+
+## 🎯 O que sabe fazer
 
 ### Motor Turing (variáveis, loops, condicionais, funções)
 ```
@@ -95,20 +204,13 @@ Todas as baterias rodadas contra o arquivo único `arch_neural_v15_final.js`:
   → soma = 55
 ```
 
-### Córtex cognitivo (hipóteses + simulação)
+### Córtex cognitivo
 ```
 > qual rende mais: 1000 com taxa 5% por 10 anos vs 2000 com taxa 3% por 8 anos?
   → Melhor opção: Investimento 2 (rende 2533.54). Diferença de 904.65.
 ```
 
-### Analogia estrutural (8 padrões reconhecidos)
-```
-> tanque com 200L vazando 8L/min, quanto tempo até zerar?
-  → Padrão reconhecido: decremento_ate_zero — variável diminui até zero.
-    Fórmula sugerida: tempo = quantidade_inicial / taxa_decremento
-```
-
-### Engenharia reversa (linear, quadrática, estrutural)
+### Engenharia reversa
 ```
 > entrada 2 → saida 5
 > entrada 5 → saida 11
@@ -116,81 +218,11 @@ Todas as baterias rodadas contra o arquivo único `arch_neural_v15_final.js`:
   → Regra inferida: f(x) = 2*x + 1 (tipo linear, acerto 100%)
 ```
 
-### Estatística (matemática real, não alucinação de LLM)
+### Estatística determinística
 ```
-> média de [10, 20, 30, 40, 50]
-  → Análise descritiva (n=5): média=30, mediana=30, desvio=15.81, IQR=20...
-
 > bayes prior=0.01 sensibilidade=0.99 especificidade=0.95
-  → P(D|+) = 0.1667 (16.67%) — baixa probabilidade real apesar do teste +
+  → P(D|+) = 0.1667 (16.67%) — paradoxo doença rara resolvido exato
 ```
-
-### Raciocínio causal reverso
-```
-> a causa b
-> b causa c
-> c causa d
-> estado atual é d. onde começou?
-  → começou em: a
-```
-
----
-
-## 🧱 Arquitetura — 14 regiões empilhadas
-
-```
-01. v112_core              ← Anatomia do grafo (V112.nodes, edges, subredes)
-02. v112_brain             ← Motor de execução (v112_processar, propagação)
-03. v151_logica_prog       ← Lógica/programação inicial
-04. v152_afastamentos      ← Sub-redes especializadas (caso RH)
-05. v153_auto_mod          ← Aprendiz emergencial (cria handlers sob falha)
-06. v154_aprendiz_meta     ← Meta-aprendiz (5 estratégias)
-07. v155_valvula_escape    ← Válvula de escape (libera sob sobrecarga)
-08. v156_evolucao          ← Evolução biológica (pesos de arestas)
-09. v158_reflexos_sociais  ← Reflexos sociais (20 padrões)
-10. v15_cortex_logico      ← ★ Córtex Turing completo
-11. v159_cortex_cognitivo  ← ★ Córtex cognitivo (base)
-12. v159b_motores          ← ★ 6 motores cognitivos + árbitro
-13. v160_estatistico       ← ★ 10 motores estatísticos
-14. CEREBRO_DATA           ← ★ Cérebro JSON serializado embutido
-```
-
-**Hemisférios com inibição lateral GABA:**
-- `H_LING` (linguístico/social, x < 200)
-- `H_MAT` (matemático/lógico, x ≥ 200)
-- `B_corpo_caloso` roteia entre hemisférios
-
----
-
-## 🔬 Os 10 motores estatísticos (matemática real)
-
-| Motor | Implementa | Validado contra |
-|---|---|---|
-| E1 Descritivo | n, média, mediana, moda, var, sd, IQR, assimetria, curtose, CV | Cálculo manual |
-| E2 Distribuições | Normal/Binomial/Poisson/t/F/Chi²/Beta/Gamma/Exp/Uniforme | erf via Abramowitz 7.1.26; gamma via Lanczos |
-| E3 Testes de hipótese | t-teste (1 amostra, indep, pareado), ANOVA, chi², Mann-Whitney | Tabelas t, F, chi² |
-| E4 Correlação | Pearson, Spearman (via ranks) | Reproduz Anscombe r=0.816 |
-| E5 Regressão | Linear simples (slope, intercepto, R², SE) | Recupera coeficientes sob ruído |
-| E6 Bayesiano | Atualização simples, cadeia sequencial, Fator de Bayes | Paradoxo doença rara: 0.1667 exato |
-| E7 Monte Carlo | 10k+ simulações, bootstrap, percentis, VaR | Box-Muller, paradoxo aniversário |
-| E8 Série temporal | SMA, EMA, decomposição, previsão linear | Projeção exata em série linear |
-| E9 Cruzamento | Inner join, group-by, contingência 2×2, OR, lift | Tabulação cruzada |
-| E10 Validador | Adequação de n, validade de p, outlier IQR 1.5× | Sanity check após cada análise |
-
----
-
-## 🧠 Os 6 motores cognitivos
-
-| Motor | Função | Exemplo |
-|---|---|---|
-| M1 Gerador de hipóteses | Gera 2-4 hipóteses antes de agir | "X vs Y" → 3 hipóteses |
-| M2 Simulador mental | Roda hipóteses sobre clone de estado — real não muda | Juros compostos |
-| M3 Busca de analogia | Reconhece 8 padrões estruturais | "tanque vazando" → decremento |
-| M4 Engenheiro reverso | Linear (Cramer), quadrático (Gauss), estrutural | 3 pares → f(x) = 2x+1 |
-| M5 Metacognição | Lê próprias estatísticas, identifica motor fraco | Auto-treino |
-| M6 Observador estrutural | Bigramas/trigramas sobre histórico | Antecipa user |
-
-O **N_árbitro** roteia entre motores e **se recusa a invadir** inputs claramente Turing.
 
 ---
 
@@ -198,15 +230,18 @@ O **N_árbitro** roteia entre motores e **se recusa a invadir** inputs clarament
 
 ```
 arch-neural-cortex-v15/
-├── README.md                      # Português (este)
-├── README.en.md                   # English
-├── LICENSE                        # Licença proprietária
+├── README.md                    # Este arquivo (português)
+├── README.en.md                 # English version
+├── LICENSE                      # Licença proprietária
+├── APLICACOES.md                # Casos de uso, para que serve, mercados
+├── PUBLICAR.md                  # Como subir no GitHub + GitHub Pages
+├── DESCRICAO_GITHUB.md          # Textos prontos pra About do GitHub
 ├── .gitignore
-├── PUBLICAR.md                    # Como ativar GitHub Pages
 │
-├── arch_neural_v15_final.js       ★ ARQUIVO ÚNICO (4MB) — TUDO está aqui
-├── index.html                     ★ UI desktop (com 5 paletas)
-├── mobile.html                    ★ UI mobile (com menu, paletas, abas)
+├── arch_neural_v15_final.js     ⭐ 4.2 MB — TUDO num único arquivo
+├── cerebro_V15.json             # Cérebro pré-treinado (carga via "do GitHub")
+├── index.html                   # Desktop + detecção mobile automática
+├── mobile.html                  # Mobile touch-friendly otimizada
 │
 └── baterias/
     ├── bateria_reflexos_sociais.js  (340 testes)
@@ -217,52 +252,11 @@ arch-neural-cortex-v15/
 
 ---
 
-## 🎨 Paletas de cores (no mobile e desktop)
-
-A interface tem 5 temas pré-configurados:
-
-| Tema | Cores | Estilo |
-|---|---|---|
-| 🌌 Sci-Fi | Azul + Roxo | Default — futurista |
-| 💚 Matrix | Preto + Verde neon | Visual hacker |
-| 🌅 Solar | Laranja + Âmbar | Quente, contrastado |
-| 🦋 Borboleta | Azul + Violeta | Suave, sci-fi clean |
-| 💎 Cyber | Ciano + Magenta | Cyberpunk neon |
-
-A escolha é salva em `localStorage` — persiste entre sessões.
-
----
-
-## 🎓 Filosofia técnica
-
-> *"Um cérebro que sabe o que não sabe, recusa-se a inventar, valida-se antes de responder."*
-
-Esta base de código rejeita explicitamente três modos comuns de falha de IA:
-
-1. **Alucinação em matemática** — todo resultado estatístico é calculado a partir de princípios fundamentais, nunca gerado por plausibilidade.
-2. **Vazamento de domínio** — módulos respeitam o território uns dos outros via inibição lateral.
-3. **Opacidade de caixa-preta** — cada nó, cada peso, cada regra é inspecionável.
-
-**Versionamento append-only:** o código nunca apaga, sempre acumula. Cada versão preserva a anterior.
-
----
-
-## 🛣️ Roadmap (V16+)
-
-- [ ] **Aprendizado por leitura** — ingerir documentos, extrair conceitos, criar nós/arestas
-- [ ] **Curiosidade ativa** — exploração em idle, formação autônoma de perguntas
-- [ ] **Motor lógico simbólico** — silogismo, modus ponens/tollens
-- [ ] **Persistência além de JSON** — porte para NEREAL (Python + SQLite)
-- [ ] **Memória cross-conversação**
-- [ ] **Capacidades multimodais** — visão, áudio, interação com tela
-
----
-
 ## 📜 Licença
 
-**Proprietária — Todos os direitos reservados**
+**Proprietária — todos os direitos reservados.**
 
-Este software é propriedade intelectual de Douglas Corrêa Cavasso. Uso permitido para estudo pessoal, aprendizado e citação acadêmica com atribuição. Uso comercial, redistribuição e treinamento de IAs são proibidos sem autorização expressa.
+Este software é propriedade intelectual de Douglas Corrêa Cavasso. Uso permitido para estudo pessoal, aprendizado e citação acadêmica com atribuição. **Uso comercial, redistribuição e treinamento de IAs são proibidos sem autorização expressa.**
 
 Ver [LICENSE](LICENSE) para termos completos.
 
