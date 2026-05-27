@@ -127,6 +127,23 @@ Tema escolhido salva em `localStorage` — persiste entre sessões.
 
 ---
 
+## 🎓 Sistema de Treinamento Progressivo
+
+A versão mobile tem um **botão de ensinar PROGRESSIVO** que evolui a cada clique:
+
+| Aperto | Pacote | Quantidade | Acumulado | Conteúdo |
+|---|---|---|---|---|
+| **1º** | `treino_240.json` | 240 frases | 240 | Básico: alfabeto, números, cores, animais, comidas |
+| **2º** | `treino_500.json` | 500+ frases | ~750 | Médio: profissões, comparações + **gírias WhatsApp** (tb, vc, blz, vlw) |
+| **3º** | `treino_1000.json` | 800+ frases | ~1550 | Avançado: ciência, raciocínio, narrativas |
+| **4º** | `treino_2000.json` | ~1000 frases | ~2550 | Comunicação real: gírias, kkk, "te amo" |
+| **5º** | `treino_5000.json` | 5000 frases | ~7550 | **TUDO**: conversas pares, typos, abreviações, como lidar com palavras erradas |
+| **6º** | — | — | — | 🎉 **"AGORA ENSINE VOCÊ! PREGUIÇOSO!!!"** (botão some, mensagem brincalhona aparece) |
+
+A cada aperto, o botão **muda o label** mostrando o próximo pacote disponível. Treinamento é assíncrono em batches pra não travar a UI, com progresso em toast.
+
+---
+
 ## 💻 Interface Desktop (`index.html`)
 
 Quando aberto num desktop, mostra a UI completa do laboratório:

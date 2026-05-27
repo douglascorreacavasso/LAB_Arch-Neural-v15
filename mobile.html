@@ -673,7 +673,8 @@
     <div class="ph-drawer-item" onclick="acao_carregar_github()">📂 carregar do GitHub</div>
     <div class="ph-drawer-item" onclick="acao_carregar_manual()">📥 importar JSON manual</div>
     <div class="ph-drawer-item" onclick="acao_juntar()">🔀 juntar/mesclar</div>
-    <div class="ph-drawer-item" onclick="acao_arvore()">🌳 árvore</div>
+    <div class="ph-drawer-item" onclick="acao_arvore()">🌲 árvore radial</div>
+    <div class="ph-drawer-item" onclick="acao_y()">🌳 Y (bifurcado)</div>
     <div class="ph-drawer-item" onclick="acao_log_json()">📋 log JSON</div>
     <div class="ph-drawer-item" onclick="acao_log_txt()">📄 log TXT</div>
     <div class="ph-drawer-item" onclick="acao_reset()" style="color:#fca5a5;">🔄 reset</div>
@@ -809,6 +810,14 @@ let ultimoTurno = null;
 // Zoom e pan do cérebro (gestos)
 let zoom = 1.0;
 let panX = 0, panY = 0;
+// Visualização ativa — nós ativos, recém-nascidos, motores, córtex (igual desktop)
+let viz = {
+  ativos: new Set(),
+  nascidos: new Set(),
+  motoresAtivos: new Set(),
+  corticais: new Set(),
+  frame: 0
+};
 
 // ═══ TEMAS ═══
 const TEMAS_GERAL = {
@@ -897,6 +906,45 @@ function enviar() {
 
       // Atualizar badges + cérebro
       atualizarBadges();
+
+      // ═══ ATIVAR PULSE DO CÉREBRO (igual desktop) ═══
+      try {
+        // Tokens da resposta → nós ativos
+        if(r && r.tokens && typeof window.v112_node_by_text === 'function') {
+          const ativos = new Set();
+          for(const t of r.tokens) {
+            const n = window.v112_node_by_text(t);
+            if(n) ativos.add(n.id);
+          }
+          viz.ativos = ativos;
+        }
+        // Nascidos
+        if(r && r.nascidos) viz.nascidos = new Set(r.nascidos);
+        // Motores ativados
+        if(r && r.motores_ativos) {
+          viz.motoresAtivos = new Set(r.motores_ativos.map(function(m){ return m.id; }));
+        }
+        // Córtex ativos
+        if(r && r.cortex_ativos) {
+          viz.corticais = new Set(r.cortex_ativos.map(function(c){ return c.id; }));
+        }
+        // Inicia loop de animação se há atividade
+        iniciarAnimacao();
+        // Limpa depois (igual desktop)
+        setTimeout(function(){
+          viz.ativos = new Set();
+          viz.motoresAtivos = new Set();
+          viz.corticais = new Set();
+          desenharCerebro();
+        }, 3500);
+        setTimeout(function(){
+          viz.nascidos = new Set();
+          desenharCerebro();
+        }, 5000);
+      } catch(e) {
+        console.log('[viz] erro ao conectar:', e.message);
+      }
+
       desenharCerebro();
 
       // Piscar valores da legenda
@@ -1075,12 +1123,6 @@ function sumirBotaoEnsinar() {
   });
 }
 
-window.acao_meditar = function() {
-  fecharDrawer();
-  toast('🧘 Meditando (consolidando)...');
-  setTimeout(function(){ toast('✓ Meditação completa'); }, 1500);
-};
-
 window.acao_salvar = function() {
   fecharDrawer();
   if(typeof window.v112_exportar !== 'function') { toast('❌ Não disponível'); return; }
@@ -1097,7 +1139,7 @@ window.acao_salvar = function() {
 
 window.acao_carregar_github = function() {
   fecharDrawer();
-  const url = 'cerebro_V15.json';  // local primeiro (mesma pasta)
+  const url = 'cerebro_V15.json';
   toast('⏳ Baixando cérebro...');
   fetch(url).then(function(r){
     if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -1105,6 +1147,7 @@ window.acao_carregar_github = function() {
   }).then(function(c){
     window.v112_importar(c);
     toast('✓ Cérebro carregado (' + c.nodes.length + ' nós)');
+    addMsg('brain', '✅ cérebro carregado do GitHub: ' + c.nodes.length + ' nós, ' + c.edges.length + ' arestas');
     atualizarBadges();
     desenharCerebro();
   }).catch(function(e){ toast('❌ ' + e.message); });
@@ -1123,6 +1166,7 @@ window.acao_carregar_manual = function() {
         const c = JSON.parse(r.result);
         window.v112_importar(c);
         toast('✓ ' + f.name);
+        addMsg('brain', '✅ cérebro carregado de ' + f.name + ' (substituiu o atual)');
         atualizarBadges();
         desenharCerebro();
       } catch(err){ toast('❌ ' + err.message); }
@@ -1132,10 +1176,189 @@ window.acao_carregar_manual = function() {
   inp.click();
 };
 
-window.acao_juntar = function() { fecharDrawer(); toast('🔀 Mesclar — em V16'); };
-window.acao_arvore = function() { fecharDrawer(); toast('🌳 Árvore — em V16'); };
-window.acao_log_json = function() { fecharDrawer(); toast('📋 Log JSON'); };
-window.acao_log_txt = function() { fecharDrawer(); toast('📄 Log TXT'); };
+window.acao_meditar = function() {
+  fecharDrawer();
+  if(typeof window.v112_sleep_replay !== 'function') {
+    toast('❌ Função meditar não disponível');
+    addMsg('brain', '❌ v112_sleep_replay não está carregada.');
+    return;
+  }
+  toast('💤 Entrando em meditação...');
+  addMsg('brain', '💤 entrando em meditação...');
+  setTimeout(function(){
+    try {
+      const log = window.v112_sleep_replay(40);
+      const msg = '💤 acordei! ' + log.fortalecidas + ' ligações fortalecidas, ' +
+                  log.dormindo + ' dormindo. NENHUMA aresta deletada.';
+      addMsg('brain', msg);
+      toast('✓ Meditação concluída');
+      atualizarBadges();
+      desenharCerebro();
+      piscarLegenda();
+    } catch(e) {
+      addMsg('brain', '❌ erro na meditação: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 300);
+};
+
+// ═══ MESCLAR: FUNDIR cérebro do arquivo no atual (NÃO substituir) ═══
+window.acao_juntar = function() {
+  fecharDrawer();
+  if(typeof window.v112_importar_merge !== 'function') {
+    toast('❌ Função mesclar não disponível');
+    addMsg('brain', '❌ v112_importar_merge não está carregada nesta versão.');
+    return;
+  }
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    toast('⏳ Lendo ' + f.name + '...');
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        const s = JSON.parse(ev.target.result);
+        // Stats antes do merge
+        const nosAntes = window.V112 ? window.V112.nodes.length : 0;
+        const arestasAntes = window.V112 ? window.V112.edges.length : 0;
+
+        const res = window.v112_importar_merge(s);
+        if(res && res.ok) {
+          const nosDepois = window.V112.nodes.length;
+          const arestasDepois = window.V112.edges.length;
+          const novos = nosDepois - nosAntes;
+          const novasArestas = arestasDepois - arestasAntes;
+
+          if(res.modo === 'primeiro_carregamento') {
+            addMsg('brain', '✅ primeiro cérebro carregado de "' + f.name + '" (próximas vezes vai FUNDIR).');
+            toast('✅ Carregado');
+          } else {
+            const ss = res.stats || {};
+            const msg = '🔀 FUNDIDO com "' + f.name + '"!\n' +
+                        '+ ' + (ss.nos_novos || novos) + ' nós novos\n' +
+                        '+ ' + (ss.arestas_novas || novasArestas) + ' arestas novas\n' +
+                        '+ ' + (ss.eventos || 0) + ' eventos\n' +
+                        '+ ' + (ss.dna_novo || 0) + ' DNA novos\n' +
+                        'TOTAL agora: ' + nosDepois + ' nós, ' + arestasDepois + ' arestas';
+            addMsg('brain', msg);
+            toast('🔀 Fundido! +' + (ss.nos_novos || novos) + ' nós');
+          }
+          atualizarBadges();
+          desenharCerebro();
+          piscarLegenda();
+        } else {
+          const motivo = (res && res.motivo) || 'arquivo inválido';
+          addMsg('brain', '❌ merge falhou: ' + motivo);
+          toast('❌ ' + motivo);
+        }
+      } catch(err) {
+        addMsg('brain', '❌ erro ao mesclar: ' + err.message);
+        toast('❌ ' + err.message);
+      }
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+};
+
+// ═══ ÁRVORE RADIAL (8 braços) ═══
+window.acao_arvore = function() {
+  fecharDrawer();
+  if(typeof window.v112_reposicionar_em_arvore !== 'function') {
+    toast('❌ Função árvore não disponível');
+    addMsg('brain', '❌ v112_reposicionar_em_arvore não está carregada.');
+    return;
+  }
+  toast('🌲 Reposicionando em árvore radial...');
+  setTimeout(function(){
+    try {
+      const r = window.v112_reposicionar_em_arvore();
+      addMsg('brain', '🌲 árvore radial aplicada: ' + (r.info || 'OK'));
+      toast('✓ Árvore radial');
+      // Resetar visualização pra ver bem
+      zoom = 1.0; panX = 0; panY = 0;
+      desenharCerebro();
+    } catch(e) {
+      addMsg('brain', '❌ erro: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 100);
+};
+
+// ═══ Y BIFURCADO (clássico) ═══
+window.acao_y = function() {
+  fecharDrawer();
+  if(typeof window.v112_reposicionar_em_Y !== 'function') {
+    toast('❌ Função Y não disponível');
+    addMsg('brain', '❌ v112_reposicionar_em_Y não está carregada.');
+    return;
+  }
+  toast('🌳 Reposicionando em Y...');
+  setTimeout(function(){
+    try {
+      const r = window.v112_reposicionar_em_Y();
+      addMsg('brain', '🌳 estrutura Y aplicada: ' + (r.info || 'OK'));
+      toast('✓ Y bifurcado');
+      zoom = 1.0; panX = 0; panY = 0;
+      desenharCerebro();
+    } catch(e) {
+      addMsg('brain', '❌ erro: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 100);
+};
+
+window.acao_log_json = function() {
+  fecharDrawer();
+  if(!window.V112) { toast('❌ Sem dados'); return; }
+  try {
+    const log = {
+      timestamp: new Date().toISOString(),
+      turno: turnoNumero,
+      nos: window.V112.nodes.length,
+      arestas: window.V112.edges.length,
+      eventos: (window.V112.eventos || []).length,
+      ultimo_turno: ultimoTurno,
+      self_facts: selfFacts
+    };
+    const blob = new Blob([JSON.stringify(log, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'log_' + Date.now() + '.json';
+    a.click();
+    toast('✓ Log JSON salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
+
+window.acao_log_txt = function() {
+  fecharDrawer();
+  if(!window.V112) { toast('❌ Sem dados'); return; }
+  try {
+    let txt = '=== LAB_ARCH-NEURAL V15.1 — LOG ===\n';
+    txt += 'Data: ' + new Date().toLocaleString() + '\n';
+    txt += 'Turno: ' + turnoNumero + '\n';
+    txt += 'Nós: ' + window.V112.nodes.length + '\n';
+    txt += 'Arestas: ' + window.V112.edges.length + '\n';
+    txt += 'Eventos: ' + (window.V112.eventos || []).length + '\n';
+    txt += '\n=== SELF-CORE ===\n';
+    txt += 'Sobre si: ' + selfFacts.sobre_si.map(function(f){return f.f;}).join(' | ') + '\n';
+    txt += 'Sobre usuário: ' + selfFacts.sobre_usuario.map(function(f){return f.f;}).join(' | ') + '\n';
+    if(ultimoTurno) {
+      txt += '\n=== ÚLTIMO TURNO ===\n';
+      txt += 'Input: ' + ultimoTurno.input + '\n';
+      txt += 'Resposta: ' + ultimoTurno.resposta + '\n';
+    }
+    const blob = new Blob([txt], {type: 'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'log_' + Date.now() + '.txt';
+    a.click();
+    toast('✓ Log TXT salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
 window.acao_reset = function() {
   fecharDrawer();
   if(!confirm('Limpar chat?')) return;
@@ -1258,7 +1481,7 @@ function animarGiroVertical() {
   girarAnimRef = requestAnimationFrame(animarGiroVertical);
 }
 
-// ═══ CANVAS DO CÉREBRO ═══
+// ═══ CANVAS DO CÉREBRO (estilo desktop — cores por camada + pulse) ═══
 function desenharCerebro() {
   const canvas = document.getElementById('brain-canvas');
   if(!canvas) return;
@@ -1278,95 +1501,211 @@ function desenharCerebro() {
     return;
   }
 
+  viz.frame++;
+
   const nodes = window.V112.nodes;
   const cx = W / 2 + panX, cy = H / 2 + panY;
-  const baseScale = Math.min(W, H) * 0.0024 * zoom;
+  const baseScale = Math.min(W, H) * 0.0028 * zoom;
 
   const styles = getComputedStyle(document.body);
-  const a1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
-  const a2 = styles.getPropertyValue('--accent2').trim() || '#a78bfa';
-  const n1 = styles.getPropertyValue('--neuron1').trim() || '#5eead4';
-  const n2 = styles.getPropertyValue('--neuron2').trim() || '#a78bfa';
-  const n3 = styles.getPropertyValue('--neuron3').trim() || '#fbbf24';
-  const n4 = styles.getPropertyValue('--neuron4').trim() || '#ef4444';
+  const accent1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
 
-  function corNo(n) {
-    if(n.tipo === 'subrede') return n2;
-    if(n._categoria === 'cognitivo') return n2;
-    if(n._categoria === 'estatistico') return n3;
-    if(n.tipo === 'sensorial') return n1;
-    if(n.tipo === 'motor') return n4;
-    return a1;
+  // Cores por camada — igual o desktop
+  function corCamada(n) {
+    if(n.camada === 'self_core') return '#fbbf24';
+    if(n.camada === 'sensorial') return '#5eead4';
+    if(n.camada === 'talamo') return '#06b6d4';
+    if(n.camada === 'hipocampo') return '#ec4899';
+    if(n.camada === 'cortex') return '#a78bfa';
+    if(n.camada === 'amigdala') return '#ef4444';
+    if(n.camada === 'gaba') return '#fbbf24';
+    if(n.camada === 'nucleos_acao') return '#84cc16';
+    if(n.camada === 'motora') return '#fb923c';
+    if(n.camada === 'broca') return '#f97316';
+    if(n.camada === 'subrede' || n.camada === 'subrede_sat') {
+      // Cores temáticas pra sub-redes (versão simplificada do desktop)
+      const txt = n.text || '';
+      if(/B_(planejamento|objetivo|prioridade|controle_exec)/.test(txt)) return '#fcd34d';
+      if(/B_(identidade|simulacao|autobiografia)/.test(txt)) return '#5eead4';
+      if(/B_atencao/.test(txt)) return '#fafafa';
+      return '#a78bfa';
+    }
+    if(n.tipo === 'subrede') return '#a78bfa';
+    return accent1;
   }
 
-  // Aplicar rotação
-  function transform(pos) {
+  // Rotação 3D
+  function project(pos) {
     let x = pos[0], y = pos[1], z = pos[2];
-    // Rotação Y (horizontal)
     if(anguloY !== 0) {
       const cos = Math.cos(anguloY), sin = Math.sin(anguloY);
       const nx = x * cos - z * sin;
       const nz = x * sin + z * cos;
       x = nx; z = nz;
     }
-    // Rotação X (vertical)
     if(anguloX !== 0) {
       const cos = Math.cos(anguloX), sin = Math.sin(anguloX);
       const ny = y * cos - z * sin;
       const nz = y * sin + z * cos;
       y = ny; z = nz;
     }
-    return [x, y, z];
+    const scaleZ = 1 / (1 + z * 0.001);
+    return [x, y, z, scaleZ];
   }
 
-  // Vista (lateral comprime X)
   const sx = vistaAtual === 'lateral' ? 0.5 : 1;
 
   // Glow de fundo
-  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.4);
-  grad.addColorStop(0, a1 + '20');
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.45);
+  grad.addColorStop(0, accent1 + '25');
   grad.addColorStop(1, 'transparent');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // Edges (sample)
-  if(window.V112.edges) {
-    ctx.lineWidth = 0.3;
-    ctx.strokeStyle = a1 + '15';
-    const maxEdges = Math.min(300, window.V112.edges.length);
-    const step = Math.ceil(window.V112.edges.length / maxEdges);
-    for(let i = 0; i < window.V112.edges.length; i += step) {
-      const e = window.V112.edges[i];
-      const nA = nodes.find(function(n){ return n.id === e.from; });
-      const nB = nodes.find(function(n){ return n.id === e.to; });
-      if(!nA || !nB || !nA.pos || !nB.pos) continue;
-      const pA = transform(nA.pos);
-      const pB = transform(nB.pos);
-      ctx.beginPath();
-      ctx.moveTo(cx + pA[0] * baseScale * sx, cy + pA[2] * baseScale);
-      ctx.lineTo(cx + pB[0] * baseScale * sx, cy + pB[2] * baseScale);
-      ctx.stroke();
-    }
+  // Cachear projeções
+  const proj = new Map();
+  for(const n of nodes) {
+    if(!n.pos) continue;
+    const p = project(n.pos);
+    proj.set(n.id, [
+      cx + p[0] * baseScale * sx,
+      cy + p[2] * baseScale,
+      p[2],
+      p[3]
+    ]);
   }
 
-  // Nós
-  const maxNodes = Math.min(900, nodes.length);
-  const step = Math.ceil(nodes.length / maxNodes);
-  for(let i = 0; i < nodes.length; i += step) {
-    const n = nodes[i];
-    if(!n.pos) continue;
-    const p = transform(n.pos);
-    const x = cx + p[0] * baseScale * sx;
-    const y = cy + p[2] * baseScale;
-    const size = n.tipo === 'subrede' ? 2.8 : 1.1;
+  // ═══ ARESTAS — mais visíveis e coloridas por tipo ═══
+  if(window.V112.edges) {
+    const maxEdges = Math.min(500, window.V112.edges.length);
+    const step = Math.max(1, Math.ceil(window.V112.edges.length / maxEdges));
+    for(let i = 0; i < window.V112.edges.length; i += step) {
+      const e = window.V112.edges[i];
+      const pA = proj.get(e.from);
+      const pB = proj.get(e.to);
+      if(!pA || !pB) continue;
 
-    ctx.fillStyle = corNo(n);
-    ctx.globalAlpha = n.tipo === 'subrede' ? 0.95 : 0.55;
+      // Cor da aresta por tipo
+      let corAresta = accent1;
+      let alpha = 0.25;
+      if(e.tipo === 'mielinizada') { corAresta = '#c4b5fd'; alpha = 0.5; }
+      else if(e.tipo === 'temporal') { corAresta = '#fbbf24'; alpha = 0.4; }
+      else if(e.tipo === 'cronologica') { corAresta = '#ec4899'; alpha = 0.35; }
+      else if(e.tipo === 'anatomica') { corAresta = '#4ade80'; alpha = 0.3; }
+
+      // Aresta envolvendo nó ativo/nascido fica BEM mais visível
+      const conectaAtivo = viz.ativos.has(e.from) || viz.ativos.has(e.to) ||
+                            viz.nascidos.has(e.from) || viz.nascidos.has(e.to);
+      if(conectaAtivo) { alpha = 0.85; }
+
+      ctx.strokeStyle = corAresta;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = conectaAtivo ? 1.5 : Math.min(2, 0.6 + (e.peso || 0) * 0.1);
+      ctx.beginPath();
+      ctx.moveTo(pA[0], pA[1]);
+      ctx.lineTo(pB[0], pB[1]);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ═══ NÓS — back-to-front com cores por camada e tamanhos variáveis ═══
+  const ordenado = nodes.slice().sort(function(a, b){
+    const pa = proj.get(a.id), pb = proj.get(b.id);
+    if(!pa || !pb) return 0;
+    return pb[2] - pa[2];
+  });
+
+  for(const n of ordenado) {
+    const p = proj.get(n.id);
+    if(!p) continue;
+    const [x, y, z, scaleZ] = p;
+
+    const ativo = viz.ativos.has(n.id);
+    const nasceu = viz.nascidos.has(n.id);
+    const motor_at = viz.motoresAtivos.has(n.id);
+    const cortex_at = viz.corticais.has(n.id);
+
+    // Cor do nó
+    let cor = corCamada(n);
+    if(nasceu) cor = '#ec4899';        // rosa pulsante pra nascidos
+    else if(ativo) cor = '#fbbf24';    // amarelo pra ativos
+    else if(motor_at) cor = '#fb923c'; // laranja pra motores
+    else if(cortex_at) cor = '#c4b5fd';// roxo claro pra córtex
+
+    // Tamanho por camada (igual desktop)
+    let size = 2.2 * scaleZ;
+    if(n.camada === 'self_core') size = 14 * scaleZ * (1 + Math.sin(viz.frame * 0.1) * 0.15);
+    else if(n.camada === 'sensorial' && n.text) size = 4 * scaleZ;
+    else if(n.camada === 'hipocampo' && n._eh_evento) size = 5 * scaleZ;
+    else if(n.camada === 'cortex') size = 2.5 * scaleZ;
+    else if(n.camada === 'motora') size = 3.2 * scaleZ;
+    else if(n.camada === 'amigdala') size = 3 * scaleZ;
+    else if(n.camada === 'subrede') size = 7 * scaleZ;
+    else if(n.camada === 'subrede_sat') size = 5 * scaleZ;
+    else if(n.camada === 'hemisferio') size = 10 * scaleZ;
+
+    // [B_atencao] pulsa
+    if(n.text === '[B_atencao]') size = 9 * scaleZ * (1 + Math.sin(viz.frame * 0.15) * 0.2);
+
+    // Massa influencia tamanho de palavras-nó
+    if(n.text && n.camada !== 'self_core' && n.mass) {
+      size *= Math.min(2.5, 0.8 + n.mass * 0.15);
+    }
+
+    // PULSE pra nascidos/ativos — MUITO MAIOR
+    if(nasceu) size *= 2.5 + Math.sin(viz.frame * 0.2) * 0.5;
+    else if(ativo || motor_at) size *= 1.8;
+
+    // Tamanho mínimo pra ser visível no mobile
+    size = Math.max(1.8, size);
+
+    ctx.fillStyle = cor;
+    ctx.globalAlpha = (nasceu || ativo || motor_at || cortex_at) ? 1 : Math.min(0.95, 0.45 + scaleZ * 0.5);
+
+    // Glow pra nascidos/ativos
+    if(nasceu || ativo) {
+      ctx.shadowColor = cor;
+      ctx.shadowBlur = nasceu ? 15 : 8;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
+
+    // Anel pulsante pra nascidos
+    if(nasceu) {
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(236,72,153,0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, size + 6 + Math.sin(viz.frame * 0.2) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
+}
+
+// ═══ LOOP DE ANIMAÇÃO ═══
+// Quando tem nós ativos/nascidos, redesenha continuamente pra mostrar o pulse
+let animLoopRef = null;
+function loopAnimacao() {
+  const temAtividade = viz.ativos.size > 0 || viz.nascidos.size > 0 ||
+                       viz.motoresAtivos.size > 0 || viz.corticais.size > 0;
+  if(temAtividade) {
+    desenharCerebro();
+    animLoopRef = requestAnimationFrame(loopAnimacao);
+  } else {
+    animLoopRef = null;
+  }
+}
+function iniciarAnimacao() {
+  if(!animLoopRef) loopAnimacao();
 }
 
 // ═══ PAINÉIS ═══
