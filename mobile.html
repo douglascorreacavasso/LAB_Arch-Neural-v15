@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>LAB_ARCH-NEURAL V15.1 — Douglas Corrêa Cavasso</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ui-monospace, monospace;
+    color: #e6edf3;
+    display: flex; flex-direction: column;
+    height: 100vh; height: 100dvh;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+    transition: background 0.3s;
+    --bg1: #0a0e1a;
+    --bg2: #1a1f3a;
+    --accent1: #5eead4;
+    --accent2: #a78bfa;
+    --neuron1: #5eead4;
+    --neuron2: #a78bfa;
+    --neuron3: #fbbf24;
+    --neuron4: #ef4444;
+  }
+
+  /* ═══ HEADER ═══ */
+  .ph-header {
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    padding: 9px 10px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid rgba(94,234,212,0.2);
+    flex-shrink: 0; z-index: 50;
+  }
+  .ph-title {
+    font-size: 12px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ph-btn-icon {
+    width: 32px; height: 32px;
+    background: rgba(94,234,212,0.15);
+    border-radius: 50%; border: 1px solid var(--accent1);
+    color: var(--accent1);
+    font-size: 15px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .ph-btn-icon:active { transform: scale(0.92); }
+  .ph-actions { display: flex; gap: 6px; align-items: center; }
+  .ph-btn-pal {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000;
+    border-radius: 50%; border: 0;
+    font-size: 15px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .ph-btn-pal-cerebro {
+    width: 32px; height: 32px;
+    background: conic-gradient(from 0deg, #ff4444, #ffaa00, #5eead4, #a78bfa, #ff4444);
+    color: #fff;
+    border-radius: 50%; border: 0;
+    font-size: 14px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; position: relative;
+  }
+  .ph-btn-pal-cerebro::after {
+    content: '🧠'; position: absolute; font-size: 13px;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.8));
+  }
+
+  /* ═══ CÉREBRO ═══ */
+  .ph-brain-area {
+    flex: 1; position: relative; overflow: hidden;
+  }
+  #brain-canvas {
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .ph-brain-3d-btns {
+    position: absolute; top: 8px; right: 56px;
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .ph-brain-3d-btn {
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: #b8c8e0;
+    padding: 5px 9px; border-radius: 5px;
+    font-size: 10px; cursor: pointer;
+    font-family: inherit; font-weight: bold;
+    min-width: 28px;
+  }
+  .ph-brain-3d-btn.active {
+    background: rgba(94,234,212,0.25);
+    color: var(--accent1);
+    border-color: var(--accent1);
+  }
+  .ph-brain-3d-btn:active { transform: scale(0.92); }
+
+  /* ═══ LEGENDA ANATÔMICA (transparente, esquerda) ═══ */
+  .ph-legenda {
+    position: absolute; top: 8px; left: 8px;
+    background: transparent;
+    padding: 8px 10px;
+    font-size: 9px; line-height: 1.5;
+    color: #e6edf3; z-index: 8;
+    max-width: 168px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    text-shadow: 0 0 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9);
+  }
+  .ph-legenda-row {
+    display: flex; align-items: center; gap: 5px;
+    padding: 1px 0;
+  }
+  .ph-legenda-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 4px currentColor;
+  }
+  .ph-legenda-row .v {
+    color: #b0bac4;
+    transition: color 0.3s;
+  }
+  .ph-legenda-divider {
+    margin: 5px 0; padding-top: 5px;
+    font-size: 8px; color: #7d8b96;
+  }
+  .ph-legenda-divider .l1 { color: #ec4899; }
+  .ph-legenda-divider .l2 { color: #fbbf24; }
+  .ph-legenda-divider .l3 { color: #c4b5fd; }
+  .ph-legenda-divider .l4 { color: #4ade80; }
+  .ph-legenda-icon-collapsed { display: none; color: var(--accent1); font-size: 18px; padding: 4px; }
+  .ph-legenda.collapsed {
+    padding: 4px 8px;
+  }
+  .ph-legenda.collapsed .ph-legenda-content { display: none; }
+  .ph-legenda.collapsed .ph-legenda-icon-collapsed { display: block; }
+
+  /* Animação piscada quando valor muda */
+  @keyframes piscar-mudanca {
+    0%, 100% { color: #b0bac4; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
+    25% { color: #fbbf24; text-shadow: 0 0 8px #fbbf24, 0 0 4px #fbbf24; }
+    50% { color: #ff8c00; text-shadow: 0 0 12px #ff8c00, 0 0 6px #ff8c00; }
+    75% { color: #fbbf24; text-shadow: 0 0 8px #fbbf24, 0 0 4px #fbbf24; }
+  }
+  .piscou .v {
+    animation: piscar-mudanca 0.8s ease-in-out 3;
+  }
+
+  /* ═══ ÍCONES LATERAIS DIREITA ═══ */
+  .ph-side-icons {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 48px; background: rgba(0,0,0,0.55);
+    display: flex; flex-direction: column;
+    padding: 8px 5px; gap: 7px;
+    border-left: 1px solid rgba(94,234,212,0.2);
+    z-index: 10;
+    overflow-y: auto;
+  }
+  .ph-side-icons::-webkit-scrollbar { width: 2px; }
+  .ph-side-icons::-webkit-scrollbar-thumb { background: var(--accent1); }
+  .ph-side-ic {
+    width: 38px; height: 38px;
+    background: rgba(60,80,130,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; cursor: pointer;
+    transition: all 0.2s; color: #d8e2ee;
+    border: 2px solid transparent;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .ph-side-ic:active { transform: scale(0.92); }
+  .ph-side-ic.active {
+    background: rgba(94,234,212,0.25);
+    color: var(--accent1);
+    border-color: var(--accent1);
+    box-shadow: 0 0 10px rgba(94,234,212,0.5);
+  }
+
+  /* ═══ RESPONSIVO — telas pequenas ═══ */
+  /* Tela média (≤ 700px de altura): ícones um pouco menores */
+  @media (max-height: 700px) {
+    .ph-side-icons { width: 42px; padding: 5px 3px; gap: 5px; }
+    .ph-side-ic { width: 34px; height: 34px; font-size: 17px; }
+  }
+  /* Tela pequena (≤ 600px altura): ícones bem compactos */
+  @media (max-height: 600px) {
+    .ph-side-icons { width: 36px; padding: 4px 2px; gap: 4px; }
+    .ph-side-ic { width: 28px; height: 28px; font-size: 14px; border-width: 1.5px; }
+    .ph-side-badge { font-size: 7px; padding: 0 3px; min-width: 12px; top: -2px; right: -2px; border-width: 1px; }
+    .ph-side-divider { margin: 1px 3px; }
+  }
+  /* Tela muito pequena (≤ 520px altura): mínimo legível */
+  @media (max-height: 520px) {
+    .ph-side-icons { width: 32px; padding: 3px 1px; gap: 3px; }
+    .ph-side-ic { width: 26px; height: 26px; font-size: 13px; }
+  }
+  /* Largura mínima também */
+  @media (max-width: 360px) {
+    .ph-side-icons { width: 38px; }
+    .ph-side-ic { width: 30px; height: 30px; font-size: 15px; }
+    .ph-brain-3d-btns { right: 44px; }
+  }
+  .ph-side-badge {
+    position: absolute; top: -3px; right: -3px;
+    background: #22c55e; color: #000;
+    font-size: 8px; font-weight: bold;
+    border-radius: 8px; padding: 1px 4px;
+    border: 1.5px solid #000;
+    min-width: 16px; text-align: center;
+    pointer-events: none;
+  }
+  .ph-side-badge.red { background: #ef4444; color: #fff; }
+  .ph-side-badge.yellow { background: #fbbf24; color: #000; }
+  .ph-side-badge.purple { background: var(--accent2); color: #000; }
+  .ph-side-badge.teal { background: var(--accent1); color: #000; }
+  .ph-side-divider {
+    height: 1px; background: rgba(94,234,212,0.15);
+    margin: 2px 4px; flex-shrink: 0;
+  }
+
+  /* ═══ CHAT ═══ */
+  .ph-chat {
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(94,234,212,0.2);
+    flex-shrink: 0; display: flex; flex-direction: column;
+    height: 34%;
+    min-height: 130px;
+    max-height: 70%;
+    position: relative;
+  }
+  .ph-chat-handle {
+    height: 14px; display: flex; align-items: center; justify-content: center;
+    cursor: ns-resize; flex-shrink: 0; user-select: none;
+    touch-action: none;
+  }
+  .ph-chat-handle::before {
+    content: ''; width: 44px; height: 3px;
+    background: var(--accent1); border-radius: 2px;
+    opacity: 0.5;
+  }
+  .ph-chat-content {
+    flex: 1; overflow-y: auto; padding: 4px 8px 0;
+    font-size: 12px;
+    -webkit-overflow-scrolling: touch;
+    user-select: text; -webkit-user-select: text;
+  }
+  .ph-msg-u {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000; padding: 6px 10px; border-radius: 14px 14px 3px 14px;
+    max-width: 80%; margin-left: auto; margin-bottom: 6px;
+    font-weight: 500;
+    word-wrap: break-word;
+  }
+  .ph-msg-b {
+    background: rgba(40,50,80,0.7); color: #e0e6f0;
+    padding: 6px 10px; border-radius: 14px 14px 14px 3px;
+    max-width: 80%; margin-bottom: 6px;
+    border: 1px solid rgba(94,234,212,0.15);
+    word-wrap: break-word; white-space: pre-wrap;
+  }
+  .ph-msg-tag {
+    font-size: 9px; padding: 1px 6px;
+    border-radius: 3px; display: inline-block;
+    margin-top: 3px; margin-bottom: 4px;
+  }
+  .ph-msg-tag.cog { background: rgba(167,139,250,0.2); color: #b48fff; }
+  .ph-msg-tag.est { background: rgba(94,234,212,0.2); color: var(--accent1); }
+  .ph-msg-tag.soc { background: rgba(255,180,120,0.2); color: #ffb478; }
+  .ph-msg-tag.tur { background: rgba(120,220,150,0.2); color: #78dc96; }
+
+  .ph-input {
+    padding: 6px 8px 8px; display: flex; gap: 6px;
+    border-top: 1px solid rgba(94,234,212,0.15);
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  .ph-input-field {
+    flex: 1; background: rgba(20,25,45,0.8);
+    border: 1px solid rgba(94,234,212,0.3);
+    border-radius: 16px; padding: 6px 12px;
+    color: #b8c8e0; font-size: 12px;
+    line-height: 1.4; outline: none;
+    -webkit-user-select: text; user-select: text;
+    -webkit-appearance: none;
+    font-family: inherit;
+  }
+  .ph-input-field:focus { border-color: var(--accent1); }
+  .ph-input-btn {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #000; border-radius: 50%; border: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .ph-input-btn:active { transform: scale(0.92); }
+
+  /* ═══ DRAWER HAMBURGUER ═══ */
+  .ph-drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 99; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .ph-drawer-overlay.show { opacity: 1; pointer-events: auto; }
+  .ph-drawer {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 78%; max-width: 320px;
+    background: linear-gradient(135deg, #0f1426, #1a2138);
+    border-right: 2px solid var(--accent1);
+    padding: 14px 12px; z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ph-drawer.open { transform: translateX(0); }
+  .ph-drawer h4 {
+    color: var(--accent1); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    margin: 12px 0 6px;
+  }
+  .ph-drawer-item {
+    padding: 10px 12px; background: rgba(60,80,130,0.3);
+    border-radius: 6px; margin-bottom: 4px;
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; color: #d8e2ee;
+  }
+  .ph-drawer-item:active { background: rgba(94,234,212,0.15); }
+  .ph-drawer-close {
+    float: right; background: transparent; color: #7d8b96;
+    border: 0; font-size: 22px; cursor: pointer;
+    padding: 0 6px;
+  }
+
+  /* ═══ PALETA POPUP ═══ */
+  .ph-palette-popup {
+    position: absolute; top: 50px; right: 8px;
+    background: linear-gradient(135deg, #0f1426, #1a2138);
+    border: 1px solid var(--accent1); border-radius: 10px;
+    padding: 10px; z-index: 60; min-width: 170px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    display: none;
+    max-height: 70vh; overflow-y: auto;
+  }
+  .ph-palette-popup.open { display: block; }
+  .ph-palette-popup h5 {
+    color: var(--accent1); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 8px;
+  }
+  .ph-pal-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 6px; border-radius: 5px;
+    cursor: pointer; margin-bottom: 2px;
+    transition: background 0.15s;
+  }
+  .ph-pal-row:active { background: rgba(94,234,212,0.15); }
+  .ph-pal-row.active { background: rgba(94,234,212,0.2); }
+  .ph-pal-swatch {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+  .ph-pal-label { font-size: 11px; color: #d8e2ee; }
+
+  /* ═══ PAINEL OVERLAY ═══ */
+  .ph-panel-overlay {
+    position: absolute; left: 8px; right: 56px;
+    top: 50px; max-height: calc(100% - 60px);
+    background: linear-gradient(135deg, rgba(15,20,38,0.92), rgba(26,33,56,0.92));
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--accent1);
+    border-radius: 12px;
+    z-index: 30; padding: 10px;
+    display: none; flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    -webkit-overflow-scrolling: touch;
+  }
+  .ph-panel-overlay.open { display: flex; }
+  .ph-panel-overlay h3 {
+    color: var(--accent1); font-size: 13px;
+    margin-bottom: 8px; display: flex; justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(94,234,212,0.2);
+    padding-bottom: 6px;
+  }
+  .ph-panel-close {
+    background: rgba(239,68,68,0.2); color: #fca5a5;
+    border: 1px solid #ef4444; border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; font-weight: bold;
+  }
+  .ph-panel-close:active { transform: scale(0.9); }
+
+  /* Quadradinhos coloridos */
+  .data-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  .data-cell {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(94,234,212,0.2);
+    border-radius: 6px;
+    padding: 7px 5px;
+    text-align: center;
+  }
+  .data-cell .num {
+    font-size: 14px; font-weight: bold;
+    color: var(--accent1);
+    line-height: 1.1;
+  }
+  .data-cell .label {
+    font-size: 8px; color: #7d8b96;
+    text-transform: uppercase;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+  .data-cell.purple .num { color: var(--accent2); }
+  .data-cell.red .num { color: #ef4444; }
+  .data-cell.yellow .num { color: #fbbf24; }
+  .data-cell.green .num { color: #22c55e; }
+
+  /* Último Turno */
+  .ut-line {
+    background: rgba(0,0,0,0.3);
+    border-radius: 5px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    line-height: 1.6;
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  }
+  .ut-line .ut-label {
+    color: #7d8b96; font-weight: bold;
+    font-size: 9px;
+    min-width: 56px;
+  }
+  .ut-chip {
+    display: inline-block;
+    background: rgba(94,234,212,0.15);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: var(--accent1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .ut-chip.cortex { background: rgba(167,139,250,0.15); border-color: var(--accent2); color: var(--accent2); }
+  .ut-chip.motor  { background: rgba(251,191,36,0.15); border-color: #fbbf24; color: #fbbf24; }
+  .ut-chip.evento { background: rgba(34,197,94,0.15); border-color: #22c55e; color: #4ade80; }
+  .ut-chip.token  { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #fca5a5; }
+  .ut-chip.score  { background: rgba(0,0,0,0.5); color: #7d8b96; font-size: 8px; padding: 0 4px; }
+
+  /* Self-Core */
+  .self-section { margin-bottom: 10px; }
+  .self-section-title {
+    font-size: 10px; color: var(--accent2);
+    font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid rgba(167,139,250,0.2);
+  }
+  .self-fact {
+    font-size: 10px; padding: 4px 7px;
+    background: rgba(0,0,0,0.3);
+    border-left: 2px solid var(--accent1);
+    border-radius: 3px;
+    margin-bottom: 3px;
+    color: #d8e2ee;
+  }
+  .self-fact.usuario { border-left-color: var(--accent2); }
+  .self-fact small {
+    display: block; font-size: 8px;
+    color: #7d8b96; margin-top: 1px;
+  }
+
+  /* Experimentos grid */
+  .exp-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+  .exp-btn {
+    background: rgba(94,234,212,0.1);
+    border: 1px solid rgba(94,234,212,0.3);
+    color: var(--accent1);
+    font-size: 13px; font-weight: bold;
+    padding: 10px 0; border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .exp-btn:active {
+    background: rgba(94,234,212,0.3);
+    transform: scale(0.95);
+  }
+
+  /* ═══ LOADING ═══ */
+  #loading {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 100%);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 9999;
+  }
+  #loading .spinner {
+    width: 60px; height: 60px;
+    border: 4px solid rgba(94,234,212,0.2);
+    border-top-color: var(--accent1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  #loading .text { color: var(--accent1); font-size: 14px; text-align: center; }
+  #loading .subtext { color: #5a6a8a; font-size: 11px; margin-top: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ═══ TOAST ═══ */
+  #toast {
+    position: fixed; top: 70px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: white;
+    padding: 10px 16px; border-radius: 8px;
+    font-size: 13px; z-index: 4000;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; max-width: 90%; text-align: center;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Desktop responsive (caso abra acidentalmente no PC) */
+  @media (min-width: 768px) {
+    body { max-width: 480px; margin: 0 auto; border-left: 1px solid #2b3340; border-right: 1px solid #2b3340; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="text">Acordando o cérebro...</div>
+  <div class="subtext">115 sub-redes • 2400+ neurônios</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- HEADER -->
+<div class="ph-header">
+  <div style="display:flex; gap:6px; align-items:center;">
+    <div class="ph-btn-icon" onclick="abrirDrawer()">☰</div>
+    <div class="ph-title">LAB_ARCH-NEURAL V15.1</div>
+  </div>
+  <div class="ph-actions">
+    <button class="ph-btn-pal" onclick="togglePaleta('geral', event)" title="Paleta geral">🎨</button>
+    <button class="ph-btn-pal-cerebro" onclick="togglePaleta('cerebro', event)" title="Paleta cérebro"></button>
+  </div>
+</div>
+
+<!-- ÁREA CENTRAL -->
+<div style="flex:1; position:relative; display:flex; min-height:0;">
+
+  <div class="ph-brain-area">
+
+    <!-- LEGENDA ANATÔMICA (transparente, clica em qualquer lugar pra recolher) -->
+    <div class="ph-legenda" id="legenda" onclick="toggleLegenda()">
+      <div class="ph-legenda-icon-collapsed">ℹ</div>
+      <div class="ph-legenda-content">
+        <div class="ph-legenda-row" data-key="self">
+          <div class="ph-legenda-dot" style="background:#fbbf24"></div>
+          <b>SELF-CORE</b> <span class="v">(0,0,0) — EU</span>
+        </div>
+        <div class="ph-legenda-row" data-key="sens">
+          <div class="ph-legenda-dot" style="background:#5eead4"></div>
+          sensorial (+200) <span class="v">— 500</span>
+        </div>
+        <div class="ph-legenda-row" data-key="talamo">
+          <div class="ph-legenda-dot" style="background:#a78bfa"></div>
+          tálamo (+150) <span class="v">— 20 roteador</span>
+        </div>
+        <div class="ph-legenda-row" data-key="hipo">
+          <div class="ph-legenda-dot" style="background:#22c55e"></div>
+          hipocampo (+100) <span class="v">— 400 + eventos</span>
+        </div>
+        <div class="ph-legenda-row" data-key="gaba">
+          <div class="ph-legenda-dot" style="background:#fbbf24"></div>
+          GABA (+50) <span class="v">— 10 inibidor</span>
+        </div>
+        <div class="ph-legenda-row" data-key="cortex">
+          <div class="ph-legenda-dot" style="background:#a78bfa"></div>
+          córtex (0) <span class="v">— 400</span>
+        </div>
+        <div class="ph-legenda-row" data-key="amig">
+          <div class="ph-legenda-dot" style="background:#ef4444"></div>
+          amígdala (0 off) <span class="v">— 50 emocional</span>
+        </div>
+        <div class="ph-legenda-row" data-key="nucleos">
+          <div class="ph-legenda-dot" style="background:#84cc16"></div>
+          núcleos ação (-50) <span class="v">— 30 ignição</span>
+        </div>
+        <div class="ph-legenda-row" data-key="motora">
+          <div class="ph-legenda-dot" style="background:#fb923c"></div>
+          motora (-150) <span class="v">— 200</span>
+        </div>
+        <div class="ph-legenda-row" data-key="broca">
+          <div class="ph-legenda-dot" style="background:#f97316"></div>
+          Broca (-200) <span class="v">— 100 saída</span>
+        </div>
+        <div class="ph-legenda-divider">
+          <span class="l1">━ cronológica</span><span> · </span>
+          <span class="l2">━ temporal</span><br>
+          <span class="l3">━ mielinizada</span><span> · </span>
+          <span class="l4">━ anatômica</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões 3D F/L/Girar -->
+    <div class="ph-brain-3d-btns">
+      <button class="ph-brain-3d-btn active" onclick="setVista('frontal', event)">F</button>
+      <button class="ph-brain-3d-btn" onclick="setVista('lateral', event)">L</button>
+      <button class="ph-brain-3d-btn" id="btn-modo" onclick="toggleModoExibicao(event)" title="Criança (núcleos grandes) / Adulto (limpo)">C</button>
+      <button class="ph-brain-3d-btn" id="btn-girar" onclick="toggleGirar(event)">↻</button>
+    </div>
+
+    <!-- Canvas do cérebro (será renderizado por JS lendo V112) -->
+    <canvas id="brain-canvas"></canvas>
+  </div>
+
+  <!-- ÍCONES LATERAIS -->
+  <div class="ph-side-icons">
+    <div class="ph-side-ic active" onclick="abrirPainel('rede', event)" title="Estado da Rede">
+      🕸️
+      <span class="ph-side-badge teal" id="badge-rede">—</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('amigdala', event)" title="Amígdala">
+      🚨
+      <span class="ph-side-badge" id="badge-amig">OK</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('ut', event)" title="Último Turno">
+      <span style="font-size:11px; font-weight:bold; color:inherit;">UT</span>
+      <span class="ph-side-badge yellow" id="badge-ut">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('hipo', event)" title="Hipocampo">
+      🧠
+      <span class="ph-side-badge purple" id="badge-hipo">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('ajustes', event)" title="Ajustes">🔧</div>
+    <div class="ph-side-ic" onclick="abrirPainel('self', event)" title="Self-Core">
+      ⭐
+      <span class="ph-side-badge purple" id="badge-self">0</span>
+    </div>
+    <div class="ph-side-ic" onclick="abrirPainel('cand', event)" title="Candidatos">
+      🎯
+    </div>
+    <div class="ph-side-divider"></div>
+    <div class="ph-side-ic" onclick="abrirPainel('exp', event)" title="Experimentos">🧪</div>
+  </div>
+
+  <!-- DRAWER -->
+  <div class="ph-drawer-overlay" id="drawer-ov" onclick="fecharDrawer()"></div>
+  <div class="ph-drawer" id="drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="color:var(--accent1);font-size:13px;font-weight:bold;">⚡ AÇÕES</div>
+      <button class="ph-drawer-close" onclick="fecharDrawer()">×</button>
+    </div>
+    <div class="ph-drawer-item" onclick="acao_ensinar240()">📌 carregar cérebro + ensinar 240</div>
+    <div class="ph-drawer-item" onclick="acao_meditar()">🧘 meditar</div>
+    <div class="ph-drawer-item" onclick="acao_salvar()">💾 salvar cérebro</div>
+    <div class="ph-drawer-item" onclick="acao_carregar_manual()">📥 importar JSON manual</div>
+    <div class="ph-drawer-item" onclick="acao_juntar()">🔀 juntar/mesclar</div>
+    <div class="ph-drawer-item" onclick="acao_arvore()">🌲 árvore radial</div>
+    <div class="ph-drawer-item" onclick="acao_y()">🌳 Y (bifurcado)</div>
+    <div class="ph-drawer-item" onclick="acao_log_json()">📋 log JSON</div>
+    <div class="ph-drawer-item" onclick="acao_log_txt()">📄 log TXT</div>
+    <div class="ph-drawer-item" onclick="acao_reset()" style="color:#fca5a5;">🔄 reset</div>
+    <div class="ph-drawer-item" onclick="acao_desktop()" style="color:var(--accent2);">🖥️ versão desktop</div>
+  </div>
+
+  <!-- PALETA GERAL -->
+  <div class="ph-palette-popup" id="paleta-geral" style="right:46px;">
+    <h5>🎨 PALETA GERAL</h5>
+    <div class="ph-pal-row active" onclick="aplicarTema('geral','sci-fi', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#5eead4,#a78bfa)"></div>
+      <div class="ph-pal-label">Sci-Fi</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','matrix', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#00ff66,#00cc44)"></div>
+      <div class="ph-pal-label">Matrix</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','solar', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff8c00,#ffb84d)"></div>
+      <div class="ph-pal-label">Solar</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','borboleta', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#4488ff,#8866ff)"></div>
+      <div class="ph-pal-label">Borboleta</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','cyber', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#00ffff,#ff00ff)"></div>
+      <div class="ph-pal-label">Cyber</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','fogo', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff4444,#ffaa00)"></div>
+      <div class="ph-pal-label">Fogo</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','oceano', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#0077be,#00d4ff)"></div>
+      <div class="ph-pal-label">Oceano</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','floresta', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#2d5016,#7cb342)"></div>
+      <div class="ph-pal-label">Floresta</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','rosa', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ff1493,#ffb6c1)"></div>
+      <div class="ph-pal-label">Rosa Neon</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('geral','dourado', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#ffd700,#daa520)"></div>
+      <div class="ph-pal-label">Dourado</div>
+    </div>
+  </div>
+
+  <!-- PALETA CEREBRO -->
+  <div class="ph-palette-popup" id="paleta-cerebro">
+    <h5>🧠 SÓ AGLOMERADOS</h5>
+    <div class="ph-pal-row active" onclick="aplicarTema('cerebro','padrao', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#5eead4,#a78bfa,#fbbf24,#ef4444)"></div>
+      <div class="ph-pal-label">Padrão</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','arco-iris', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(red,orange,yellow,green,blue,purple)"></div>
+      <div class="ph-pal-label">Arco-íris</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','frio', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#00ffff,#0077be,#4488ff,#8866ff)"></div>
+      <div class="ph-pal-label">Frio</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','quente', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#ff4444,#ffaa00,#ffd700,#ff1493)"></div>
+      <div class="ph-pal-label">Quente</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','neon', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#00ff66,#ff00ff,#00ffff,#ffff00)"></div>
+      <div class="ph-pal-label">Neon</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','terra', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#7cb342,#daa520,#cc8855,#2d5016)"></div>
+      <div class="ph-pal-label">Terra</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','pastel', event)">
+      <div class="ph-pal-swatch" style="background:conic-gradient(#ffb6c1,#a78bfa,#5eead4,#ffd700)"></div>
+      <div class="ph-pal-label">Pastel</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-azul', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#88ddff,#0077be,#003366,#001144)"></div>
+      <div class="ph-pal-label">Mono Azul</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-verde', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#88ff99,#22c55e,#15803d,#052e16)"></div>
+      <div class="ph-pal-label">Mono Verde</div>
+    </div>
+    <div class="ph-pal-row" onclick="aplicarTema('cerebro','mono-roxo', event)">
+      <div class="ph-pal-swatch" style="background:linear-gradient(135deg,#e9d5ff,#a78bfa,#6d28d9,#2e1065)"></div>
+      <div class="ph-pal-label">Mono Roxo</div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="ph-panel-overlay" id="painel">
+    <h3>
+      <span id="painel-titulo">🕸️ Estado da Rede</span>
+      <button class="ph-panel-close" onclick="fecharPainel()">×</button>
+    </h3>
+    <div id="painel-conteudo"></div>
+  </div>
+
+</div>
+
+<!-- CHAT -->
+<div class="ph-chat" id="chat-section">
+  <div class="ph-chat-handle" id="chat-handle"></div>
+  <div class="ph-chat-content" id="chat-content"></div>
+  <div class="ph-input">
+    <input id="input" class="ph-input-field" type="text" placeholder="fale com o cérebro..." autocomplete="off" autocapitalize="off">
+    <button class="ph-input-btn" onclick="enviar()">→</button>
+  </div>
+</div>
+
+<!-- ARQUIVO ÚNICO (4MB com tudo) -->
+<script src="arch_neural_v15_final.js"></script>
+
+<script>
+'use strict';
+
+// ═══ ESTADO ═══
+let girarState = 0; // 0=parado, 1=horizontal, 2=vertical
+let girarAnimRef = null;
+let anguloY = 0, anguloX = 0;
+let vistaAtual = 'frontal';
+let loopBgRodando = false;
+let selfFacts = { sobre_si: [], sobre_usuario: [] };
+let turnoNumero = 0;
+let ultimoTurno = null;
+// Zoom e pan do cérebro (gestos)
+let zoom = 0.7;
+let panX = 0, panY = 0;
+// Modo de exibição: 'crianca' (núcleos maiores) ou 'adulto' (menor/limpo)
+let modoExibicao = 'crianca';
+// Visualização ativa — nós ativos, recém-nascidos, motores, córtex (igual desktop)
+let viz = {
+  ativos: new Set(),
+  nascidos: new Set(),
+  motoresAtivos: new Set(),
+  corticais: new Set(),
+  frame: 0
+};
+
+// ═══ TEMAS ═══
+const TEMAS_GERAL = {
+  'sci-fi':    { bg1: '#0a0e1a', bg2: '#1a1f3a', accent1: '#5eead4', accent2: '#a78bfa' },
+  'matrix':    { bg1: '#000000', bg2: '#001a00', accent1: '#00ff66', accent2: '#00cc44' },
+  'solar':     { bg1: '#1a0d00', bg2: '#3a2008', accent1: '#ff8c00', accent2: '#ffb84d' },
+  'borboleta': { bg1: '#0a0e2a', bg2: '#2a1a4a', accent1: '#4488ff', accent2: '#8866ff' },
+  'cyber':     { bg1: '#001a1a', bg2: '#1a0033', accent1: '#00ffff', accent2: '#ff00ff' },
+  'fogo':      { bg1: '#1a0500', bg2: '#3a1000', accent1: '#ff4444', accent2: '#ffaa00' },
+  'oceano':    { bg1: '#001a2a', bg2: '#003355', accent1: '#0077be', accent2: '#00d4ff' },
+  'floresta':  { bg1: '#0a1500', bg2: '#1a2d00', accent1: '#7cb342', accent2: '#2d5016' },
+  'rosa':      { bg1: '#2a0015', bg2: '#4a0033', accent1: '#ff1493', accent2: '#ffb6c1' },
+  'dourado':   { bg1: '#1a1500', bg2: '#3a2d00', accent1: '#ffd700', accent2: '#daa520' }
+};
+const TEMAS_CEREBRO = {
+  'padrao':     { n1: '#5eead4', n2: '#a78bfa', n3: '#fbbf24', n4: '#ef4444' },
+  'arco-iris':  { n1: '#ef4444', n2: '#ff8c00', n3: '#fbbf24', n4: '#22c55e' },
+  'frio':       { n1: '#00ffff', n2: '#0077be', n3: '#4488ff', n4: '#8866ff' },
+  'quente':     { n1: '#ff4444', n2: '#ffaa00', n3: '#ffd700', n4: '#ff1493' },
+  'neon':       { n1: '#00ff66', n2: '#ff00ff', n3: '#00ffff', n4: '#ffff00' },
+  'terra':      { n1: '#7cb342', n2: '#daa520', n3: '#cc8855', n4: '#2d5016' },
+  'pastel':     { n1: '#ffb6c1', n2: '#a78bfa', n3: '#5eead4', n4: '#ffd700' },
+  'mono-azul':  { n1: '#88ddff', n2: '#0077be', n3: '#003366', n4: '#001144' },
+  'mono-verde': { n1: '#88ff99', n2: '#22c55e', n3: '#15803d', n4: '#052e16' },
+  'mono-roxo':  { n1: '#e9d5ff', n2: '#a78bfa', n3: '#6d28d9', n4: '#2e1065' }
+};
+
+// ═══ TOAST ═══
+function toast(msg, dur) {
+  dur = dur || 2500;
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, dur);
+}
+
+// ═══ CHAT ═══
+function addMsg(quem, texto, tag) {
+  const chat = document.getElementById('chat-content');
+  const div = document.createElement('div');
+  div.className = 'ph-msg-' + (quem === 'user' ? 'u' : 'b');
+  div.textContent = texto;
+  chat.appendChild(div);
+  if(tag) {
+    const tagDiv = document.createElement('div');
+    tagDiv.className = 'ph-msg-tag ' + tag;
+    const labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing'};
+    tagDiv.textContent = labelMap[tag] || tag;
+    chat.appendChild(tagDiv);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function enviar() {
+  const inp = document.getElementById('input');
+  const texto = inp.value.trim();
+  if(!texto) return;
+  inp.value = '';
+  addMsg('user', texto);
+
+  setTimeout(function() {
+    try {
+      const r = window.v112_processar(texto);
+      const resposta = (r && r.resposta) || '(sem resposta)';
+      let tag = null;
+      if(r && r._cognitivo) tag = 'cog';
+      else if(r && r._estatistico) tag = 'est';
+      else if(r && r.reflexo_social) tag = 'soc';
+      else if(r && r.resposta) tag = 'tur';
+      addMsg('brain', resposta, tag);
+
+      turnoNumero++;
+      ultimoTurno = { input: texto, resposta: resposta, tag: tag, r: r };
+
+      // Detectar e armazenar fatos sobre si/usuário
+      const lower = texto.toLowerCase();
+      if(/meu nome é|eu sou|moro em|trabalho|gosto/.test(lower)) {
+        selfFacts.sobre_usuario.push({ f: texto, t: 'turno ' + turnoNumero });
+        document.getElementById('badge-self').textContent = (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length);
+      } else if(/seu nome é|você é/.test(lower)) {
+        selfFacts.sobre_si.push({ f: texto, t: 'turno ' + turnoNumero });
+        document.getElementById('badge-self').textContent = (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length);
+      }
+
+      // Atualizar badges + cérebro
+      atualizarBadges();
+
+      // ═══ ATIVAR PULSE DO CÉREBRO (igual desktop) ═══
+      try {
+        // Tokens da resposta → nós ativos
+        if(r && r.tokens && typeof window.v112_node_by_text === 'function') {
+          const ativos = new Set();
+          for(const t of r.tokens) {
+            const n = window.v112_node_by_text(t);
+            if(n) ativos.add(n.id);
+          }
+          viz.ativos = ativos;
+        }
+        // Nascidos
+        if(r && r.nascidos) viz.nascidos = new Set(r.nascidos);
+        // Motores ativados
+        if(r && r.motores_ativos) {
+          viz.motoresAtivos = new Set(r.motores_ativos.map(function(m){ return m.id; }));
+        }
+        // Córtex ativos
+        if(r && r.cortex_ativos) {
+          viz.corticais = new Set(r.cortex_ativos.map(function(c){ return c.id; }));
+        }
+        // Inicia loop de animação se há atividade
+        iniciarAnimacao();
+        // Limpa depois (igual desktop)
+        setTimeout(function(){
+          viz.ativos = new Set();
+          viz.motoresAtivos = new Set();
+          viz.corticais = new Set();
+          desenharCerebro();
+        }, 3500);
+        setTimeout(function(){
+          viz.nascidos = new Set();
+          desenharCerebro();
+        }, 5000);
+      } catch(e) {
+        console.log('[viz] erro ao conectar:', e.message);
+      }
+
+      desenharCerebro();
+
+      // Piscar valores da legenda
+      piscarLegenda();
+    } catch(e) {
+      addMsg('brain', '⚠ erro: ' + e.message);
+    }
+  }, 30);
+}
+
+document.getElementById('input').addEventListener('keypress', function(e) {
+  if(e.key === 'Enter') enviar();
+});
+
+// ═══ DRAWER ═══
+window.abrirDrawer = function() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-ov').classList.add('show');
+};
+window.fecharDrawer = function() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-ov').classList.remove('show');
+};
+
+// ═══ AÇÕES DO DRAWER ═══
+// Sistema de treino progressivo: 240 → 500 → 1000 → 2000 → 5000 → acabou
+let nivelEnsino = 0;
+const PACOTES_TREINO = [
+  { nivel: 1, arquivo: 'treinos/treino_240.json',  qtd: 240,  label: '📌 carregar cérebro + ensinar 240' },
+  { nivel: 2, arquivo: 'treinos/treino_500.json',  qtd: 500,  label: '📌 ensinar +500 (médio)' },
+  { nivel: 3, arquivo: 'treinos/treino_1000.json', qtd: 1000, label: '📌 ensinar +1000 (avançado)' },
+  { nivel: 4, arquivo: 'treinos/treino_2000.json', qtd: 2000, label: '📌 ensinar +2000 (gírias)' },
+  { nivel: 5, arquivo: 'treinos/treino_5000.json', qtd: 5000, label: '📌 ensinar +5000 (conversa real)' }
+];
+
+window.acao_ensinar240 = function() {
+  fecharDrawer();
+
+  if(nivelEnsino >= PACOTES_TREINO.length) {
+    // 6º aperto: já ensinou tudo. Mostra mensagem brincalhona.
+    mostrarMensagemPreguicoso();
+    return;
+  }
+
+  // ═══ 1º APERTO: carregar cérebro do GitHub ANTES de treinar ═══
+  if(nivelEnsino === 0) {
+    toast('⏳ Carregando cérebro base do GitHub...');
+    addMsg('brain', '⏳ baixando cérebro base do GitHub primeiro...');
+    fetch('cerebro_V15.json')
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(c){
+        try {
+          window.v112_importar(c);
+          addMsg('brain', '✅ cérebro base carregado: ' + c.nodes.length + ' nós, ' + c.edges.length + ' arestas.\n⏳ Agora vou aprender as 240 frases básicas...');
+          atualizarBadges();
+          desenharCerebro();
+          // Agora treina o pacote 240
+          treinarPacoteAtual();
+        } catch(e) {
+          addMsg('brain', '❌ erro ao importar cérebro: ' + e.message);
+          toast('❌ ' + e.message);
+        }
+      })
+      .catch(function(e){
+        // Se falhar (ex: rodando localmente sem servidor), avisa e treina mesmo assim
+        addMsg('brain', '⚠ não consegui baixar do GitHub (' + e.message + '). Treinando direto no cérebro embutido...');
+        treinarPacoteAtual();
+      });
+    return;
+  }
+
+  // Demais apertos: só treina o pacote
+  treinarPacoteAtual();
+};
+
+// Função auxiliar: treina o pacote atual conforme nivelEnsino
+function treinarPacoteAtual() {
+  const pacote = PACOTES_TREINO[nivelEnsino];
+  toast('⏳ Carregando pacote de ' + pacote.qtd + ' frases...');
+
+  fetch(pacote.arquivo)
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data){
+      const frases = data.frases || [];
+      toast('⏳ Treinando ' + frases.length + ' frases... pode demorar');
+
+      // Processa em batches assíncronos pra não travar UI
+      let i = 0;
+      let processadas = 0;
+      const batchSize = 30;
+
+      function processarBatch() {
+        const fim = Math.min(i + batchSize, frases.length);
+        for(; i < fim; i++) {
+          try {
+            window.v112_processar(frases[i]);
+            processadas++;
+          } catch(e){}
+        }
+        if(i < frases.length) {
+          if(i % 200 < batchSize) {
+            toast('⏳ ' + i + '/' + frases.length + ' (' + Math.floor(i*100/frases.length) + '%)', 1000);
+          }
+          setTimeout(processarBatch, 10);
+        } else {
+          // Terminou
+          nivelEnsino++;
+          atualizarLabelBotaoEnsinar();
+          atualizarBadges();
+          desenharCerebro();
+          piscarLegenda();
+
+          if(nivelEnsino >= PACOTES_TREINO.length) {
+            toast('🎓 Pacote ' + pacote.qtd + ' completo! TREINAMENTO TOTAL FINALIZADO!', 4000);
+            addMsg('brain', '🎓 Treinamento completo!\nAprendi ' + processadas + ' frases neste último pacote.\nAgora sei comunicar de verdade!\n\nPróximo aperto vai te avisar uma coisa... 😏');
+          } else {
+            toast('✓ ' + processadas + ' frases aprendidas! Próximo: ' + PACOTES_TREINO[nivelEnsino].qtd, 3500);
+            addMsg('brain', '✓ Pacote ' + pacote.qtd + ' aprendido!\nAgora sei mais ' + processadas + ' frases.\nClica de novo pro próximo nível!');
+          }
+        }
+      }
+      processarBatch();
+    })
+    .catch(function(e){
+      toast('❌ ' + e.message);
+      addMsg('brain', '❌ Não consegui carregar o pacote "' + PACOTES_TREINO[nivelEnsino].arquivo + '": ' + e.message);
+    });
+}
+
+function atualizarLabelBotaoEnsinar() {
+  const itens = document.querySelectorAll('.ph-drawer-item');
+  itens.forEach(function(item){
+    if(item.textContent.includes('ensinar')) {
+      if(nivelEnsino >= PACOTES_TREINO.length) {
+        item.innerHTML = '🎓 acabou! (clica pra ver)';
+        item.style.color = '#fbbf24';
+        item.style.fontWeight = 'bold';
+      } else {
+        item.innerHTML = PACOTES_TREINO[nivelEnsino].label;
+      }
+    }
+  });
+}
+
+function mostrarMensagemPreguicoso() {
+  // Cria overlay com mensagem grande
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.3s; cursor:pointer;';
+
+  const msg = document.createElement('div');
+  msg.style.cssText = 'text-align:center; max-width:90%; animation:bounceIn 0.6s ease-out;';
+  msg.innerHTML =
+    '<div style="font-size:60px; margin-bottom:20px;">😤</div>' +
+    '<div style="font-size:28px; font-weight:900; color:#fbbf24; text-shadow:0 0 20px #fbbf24, 0 4px 8px rgba(0,0,0,0.9); line-height:1.3; letter-spacing:1px;">' +
+      'AGORA ENSINE VOCÊ!' +
+    '</div>' +
+    '<div style="font-size:36px; font-weight:900; color:#ef4444; text-shadow:0 0 25px #ef4444, 0 4px 8px rgba(0,0,0,0.9); margin-top:15px; letter-spacing:2px;">' +
+      'PREGUIÇOSO !!!' +
+    '</div>' +
+    '<div style="font-size:14px; color:#a8b8c8; margin-top:30px; opacity:0.7;">' +
+      '(toque pra fechar — ou aguarde)' +
+    '</div>';
+
+  // Adiciona animações se ainda não existem
+  if(!document.getElementById('preguicoso-anim')) {
+    const style = document.createElement('style');
+    style.id = 'preguicoso-anim';
+    style.textContent =
+      '@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }' +
+      '@keyframes bounceIn { 0% { transform:scale(0.3); opacity:0; } 50% { transform:scale(1.1); } 70% { transform:scale(0.95); } 100% { transform:scale(1); opacity:1; } }' +
+      '@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }';
+    document.head.appendChild(style);
+  }
+
+  overlay.appendChild(msg);
+  document.body.appendChild(overlay);
+
+  // Fecha ao clicar
+  overlay.onclick = function() {
+    overlay.style.animation = 'fadeOut 0.5s';
+    setTimeout(function(){ overlay.remove(); sumirBotaoEnsinar(); }, 500);
+  };
+
+  // Some sozinho após 5 segundos
+  setTimeout(function(){
+    if(overlay.parentNode) {
+      overlay.style.animation = 'fadeOut 0.5s';
+      setTimeout(function(){
+        if(overlay.parentNode) overlay.remove();
+        sumirBotaoEnsinar();
+      }, 500);
+    }
+  }, 5000);
+}
+
+function sumirBotaoEnsinar() {
+  // Esconde o botão de ensinar definitivamente
+  const itens = document.querySelectorAll('.ph-drawer-item');
+  itens.forEach(function(item){
+    if(item.textContent.includes('acabou') || item.textContent.includes('ensinar')) {
+      item.style.display = 'none';
+    }
+  });
+}
+
+window.acao_salvar = function() {
+  fecharDrawer();
+  if(typeof window.v112_exportar !== 'function') { toast('❌ Não disponível'); return; }
+  try {
+    const data = window.v112_exportar();
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cerebro_V15_' + Date.now() + '.json';
+    a.click();
+    toast('✓ Cérebro salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
+
+window.acao_carregar_github = function() {
+  fecharDrawer();
+  const url = 'cerebro_V15.json';
+  toast('⏳ Baixando cérebro...');
+  fetch(url).then(function(r){
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(c){
+    window.v112_importar(c);
+    toast('✓ Cérebro carregado (' + c.nodes.length + ' nós)');
+    addMsg('brain', '✅ cérebro carregado do GitHub: ' + c.nodes.length + ' nós, ' + c.edges.length + ' arestas');
+    atualizarBadges();
+    desenharCerebro();
+  }).catch(function(e){ toast('❌ ' + e.message); });
+};
+
+window.acao_carregar_manual = function() {
+  fecharDrawer();
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = function(){
+      try {
+        const c = JSON.parse(r.result);
+        window.v112_importar(c);
+        toast('✓ ' + f.name);
+        addMsg('brain', '✅ cérebro carregado de ' + f.name + ' (substituiu o atual)');
+        atualizarBadges();
+        desenharCerebro();
+      } catch(err){ toast('❌ ' + err.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+};
+
+window.acao_meditar = function() {
+  fecharDrawer();
+  if(typeof window.v112_sleep_replay !== 'function') {
+    toast('❌ Função meditar não disponível');
+    addMsg('brain', '❌ v112_sleep_replay não está carregada.');
+    return;
+  }
+  toast('💤 Entrando em meditação...');
+  addMsg('brain', '💤 entrando em meditação...');
+  setTimeout(function(){
+    try {
+      const log = window.v112_sleep_replay(40);
+      const msg = '💤 acordei! ' + log.fortalecidas + ' ligações fortalecidas, ' +
+                  log.dormindo + ' dormindo. NENHUMA aresta deletada.';
+      addMsg('brain', msg);
+      toast('✓ Meditação concluída');
+      atualizarBadges();
+      desenharCerebro();
+      piscarLegenda();
+    } catch(e) {
+      addMsg('brain', '❌ erro na meditação: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 300);
+};
+
+// ═══ MESCLAR: FUNDIR cérebro do arquivo no atual (NÃO substituir) ═══
+window.acao_juntar = function() {
+  fecharDrawer();
+  if(typeof window.v112_importar_merge !== 'function') {
+    toast('❌ Função mesclar não disponível');
+    addMsg('brain', '❌ v112_importar_merge não está carregada nesta versão.');
+    return;
+  }
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    toast('⏳ Lendo ' + f.name + '...');
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        const s = JSON.parse(ev.target.result);
+        // Stats antes do merge
+        const nosAntes = window.V112 ? window.V112.nodes.length : 0;
+        const arestasAntes = window.V112 ? window.V112.edges.length : 0;
+
+        const res = window.v112_importar_merge(s);
+        if(res && res.ok) {
+          const nosDepois = window.V112.nodes.length;
+          const arestasDepois = window.V112.edges.length;
+          const novos = nosDepois - nosAntes;
+          const novasArestas = arestasDepois - arestasAntes;
+
+          if(res.modo === 'primeiro_carregamento') {
+            addMsg('brain', '✅ primeiro cérebro carregado de "' + f.name + '" (próximas vezes vai FUNDIR).');
+            toast('✅ Carregado');
+          } else {
+            const ss = res.stats || {};
+            const msg = '🔀 FUNDIDO com "' + f.name + '"!\n' +
+                        '+ ' + (ss.nos_novos || novos) + ' nós novos\n' +
+                        '+ ' + (ss.arestas_novas || novasArestas) + ' arestas novas\n' +
+                        '+ ' + (ss.eventos || 0) + ' eventos\n' +
+                        '+ ' + (ss.dna_novo || 0) + ' DNA novos\n' +
+                        'TOTAL agora: ' + nosDepois + ' nós, ' + arestasDepois + ' arestas';
+            addMsg('brain', msg);
+            toast('🔀 Fundido! +' + (ss.nos_novos || novos) + ' nós');
+          }
+          atualizarBadges();
+          desenharCerebro();
+          piscarLegenda();
+        } else {
+          const motivo = (res && res.motivo) || 'arquivo inválido';
+          addMsg('brain', '❌ merge falhou: ' + motivo);
+          toast('❌ ' + motivo);
+        }
+      } catch(err) {
+        addMsg('brain', '❌ erro ao mesclar: ' + err.message);
+        toast('❌ ' + err.message);
+      }
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+};
+
+// ═══ ÁRVORE RADIAL (8 braços) ═══
+window.acao_arvore = function() {
+  fecharDrawer();
+  if(typeof window.v112_reposicionar_em_arvore !== 'function') {
+    toast('❌ Função árvore não disponível');
+    addMsg('brain', '❌ v112_reposicionar_em_arvore não está carregada.');
+    return;
+  }
+  toast('🌲 Reposicionando em árvore radial...');
+  setTimeout(function(){
+    try {
+      const r = window.v112_reposicionar_em_arvore();
+      addMsg('brain', '🌲 árvore radial aplicada: ' + (r.info || 'OK'));
+      toast('✓ Árvore radial');
+      // Resetar visualização pra ver bem
+      zoom = 1.0; panX = 0; panY = 0;
+      desenharCerebro();
+    } catch(e) {
+      addMsg('brain', '❌ erro: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 100);
+};
+
+// ═══ Y BIFURCADO (clássico) ═══
+window.acao_y = function() {
+  fecharDrawer();
+  if(typeof window.v112_reposicionar_em_Y !== 'function') {
+    toast('❌ Função Y não disponível');
+    addMsg('brain', '❌ v112_reposicionar_em_Y não está carregada.');
+    return;
+  }
+  toast('🌳 Reposicionando em Y...');
+  setTimeout(function(){
+    try {
+      const r = window.v112_reposicionar_em_Y();
+      addMsg('brain', '🌳 estrutura Y aplicada: ' + (r.info || 'OK'));
+      toast('✓ Y bifurcado');
+      zoom = 1.0; panX = 0; panY = 0;
+      desenharCerebro();
+    } catch(e) {
+      addMsg('brain', '❌ erro: ' + e.message);
+      toast('❌ ' + e.message);
+    }
+  }, 100);
+};
+
+window.acao_log_json = function() {
+  fecharDrawer();
+  if(!window.V112) { toast('❌ Sem dados'); return; }
+  try {
+    const log = {
+      timestamp: new Date().toISOString(),
+      turno: turnoNumero,
+      nos: window.V112.nodes.length,
+      arestas: window.V112.edges.length,
+      eventos: (window.V112.eventos || []).length,
+      ultimo_turno: ultimoTurno,
+      self_facts: selfFacts
+    };
+    const blob = new Blob([JSON.stringify(log, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'log_' + Date.now() + '.json';
+    a.click();
+    toast('✓ Log JSON salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
+
+window.acao_log_txt = function() {
+  fecharDrawer();
+  if(!window.V112) { toast('❌ Sem dados'); return; }
+  try {
+    let txt = '=== LAB_ARCH-NEURAL V15.1 — LOG ===\n';
+    txt += 'Data: ' + new Date().toLocaleString() + '\n';
+    txt += 'Turno: ' + turnoNumero + '\n';
+    txt += 'Nós: ' + window.V112.nodes.length + '\n';
+    txt += 'Arestas: ' + window.V112.edges.length + '\n';
+    txt += 'Eventos: ' + (window.V112.eventos || []).length + '\n';
+    txt += '\n=== SELF-CORE ===\n';
+    txt += 'Sobre si: ' + selfFacts.sobre_si.map(function(f){return f.f;}).join(' | ') + '\n';
+    txt += 'Sobre usuário: ' + selfFacts.sobre_usuario.map(function(f){return f.f;}).join(' | ') + '\n';
+    if(ultimoTurno) {
+      txt += '\n=== ÚLTIMO TURNO ===\n';
+      txt += 'Input: ' + ultimoTurno.input + '\n';
+      txt += 'Resposta: ' + ultimoTurno.resposta + '\n';
+    }
+    const blob = new Blob([txt], {type: 'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'log_' + Date.now() + '.txt';
+    a.click();
+    toast('✓ Log TXT salvo');
+  } catch(e){ toast('❌ ' + e.message); }
+};
+window.acao_reset = function() {
+  fecharDrawer();
+  if(!confirm('Limpar chat?')) return;
+  document.getElementById('chat-content').innerHTML = '';
+  toast('Chat limpo');
+};
+window.acao_desktop = function() {
+  location.href = 'index.html?desktop=1';
+};
+
+// ═══ PALETA ═══
+window.togglePaleta = function(qual, ev) {
+  const outra = qual === 'geral' ? 'cerebro' : 'geral';
+  document.getElementById('paleta-' + outra).classList.remove('open');
+  document.getElementById('paleta-' + qual).classList.toggle('open');
+  if(ev) ev.stopPropagation();
+};
+
+window.aplicarTema = function(qual, nome, ev) {
+  if(qual === 'geral') {
+    const t = TEMAS_GERAL[nome]; if(!t) return;
+    document.body.style.setProperty('--bg1', t.bg1);
+    document.body.style.setProperty('--bg2', t.bg2);
+    document.body.style.setProperty('--accent1', t.accent1);
+    document.body.style.setProperty('--accent2', t.accent2);
+    try { localStorage.setItem('arch_tema_geral', nome); } catch(e){}
+  } else {
+    const t = TEMAS_CEREBRO[nome]; if(!t) return;
+    document.body.style.setProperty('--neuron1', t.n1);
+    document.body.style.setProperty('--neuron2', t.n2);
+    document.body.style.setProperty('--neuron3', t.n3);
+    document.body.style.setProperty('--neuron4', t.n4);
+    try { localStorage.setItem('arch_tema_cerebro', nome); } catch(e){}
+    desenharCerebro();
+  }
+  const popup = document.getElementById('paleta-' + qual);
+  popup.querySelectorAll('.ph-pal-row').forEach(function(r){ r.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+  toast('🎨 ' + nome);
+  setTimeout(function(){ popup.classList.remove('open'); }, 200);
+};
+
+// ═══ LEGENDA ═══
+window.toggleLegenda = function() {
+  document.getElementById('legenda').classList.toggle('collapsed');
+};
+
+function piscarLegenda() {
+  // Piscar 2-3 itens aleatórios da legenda
+  const keys = ['sens','talamo','hipo','gaba','cortex','amig','nucleos','motora','broca'];
+  const escolhidos = [];
+  const n = Math.floor(Math.random() * 3) + 1;
+  for(let i = 0; i < n; i++) {
+    escolhidos.push(keys[Math.floor(Math.random() * keys.length)]);
+  }
+  escolhidos.forEach(function(k){
+    const row = document.querySelector('[data-key="' + k + '"]');
+    if(!row) return;
+    row.classList.remove('piscou');
+    void row.offsetWidth;
+    row.classList.add('piscou');
+  });
+}
+
+// ═══ BOTÃO GIRAR ═══
+window.setVista = function(qual, ev) {
+  document.querySelectorAll('.ph-brain-3d-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+  if(girarAnimRef) { cancelAnimationFrame(girarAnimRef); girarAnimRef = null; }
+  girarState = 0;
+  vistaAtual = qual;
+  anguloY = 0; anguloX = 0;
+  const btnGirar = document.getElementById('btn-girar');
+  btnGirar.textContent = '↻';
+  btnGirar.style.color = '';
+  btnGirar.style.borderColor = '';
+  desenharCerebro();
+};
+
+// ═══ TOGGLE MODO EXIBIÇÃO: Criança (núcleos grandes) ↔ Adulto (limpo) ═══
+window.toggleModoExibicao = function(ev) {
+  modoExibicao = modoExibicao === 'crianca' ? 'adulto' : 'crianca';
+  const btn = document.getElementById('btn-modo');
+  if(modoExibicao === 'crianca') {
+    btn.textContent = 'C';
+    btn.title = 'Criança (núcleos grandes) — clica pra modo Adulto';
+    btn.style.color = '#fbbf24';
+    btn.style.borderColor = '#fbbf24';
+    toast('🧒 modo Criança — núcleos grandes');
+  } else {
+    btn.textContent = 'A';
+    btn.title = 'Adulto (limpo) — clica pra modo Criança';
+    btn.style.color = '#a78bfa';
+    btn.style.borderColor = '#a78bfa';
+    toast('🧑 modo Adulto — visão limpa');
+  }
+  desenharCerebro();
+};
+
+window.toggleGirar = function(ev) {
+  const btnGirar = document.getElementById('btn-girar');
+  girarState = (girarState + 1) % 3;
+
+  if(girarState === 0) {
+    if(girarAnimRef) cancelAnimationFrame(girarAnimRef);
+    girarAnimRef = null;
+    btnGirar.style.color = '';
+    btnGirar.style.borderColor = '';
+    btnGirar.classList.remove('active');
+    btnGirar.textContent = '↻';
+  } else if(girarState === 1) {
+    btnGirar.classList.add('active');
+    btnGirar.style.color = '#5eead4';
+    btnGirar.style.borderColor = '#5eead4';
+    btnGirar.textContent = '↻H';
+    if(!girarAnimRef) animarGiroHorizontal();
+  } else {
+    if(girarAnimRef) { cancelAnimationFrame(girarAnimRef); girarAnimRef = null; }
+    btnGirar.style.color = '#a78bfa';
+    btnGirar.style.borderColor = '#a78bfa';
+    btnGirar.textContent = '↻V';
+    animarGiroVertical();
+  }
+  document.querySelectorAll('.ph-brain-3d-btn').forEach(function(b){
+    if(b !== btnGirar) b.classList.remove('active');
+  });
+};
+
+function animarGiroHorizontal() {
+  if(girarState !== 1) return;
+  anguloY += 0.012;
+  desenharCerebro();
+  girarAnimRef = requestAnimationFrame(animarGiroHorizontal);
+}
+
+function animarGiroVertical() {
+  if(girarState !== 2) return;
+  anguloX += 0.012;
+  desenharCerebro();
+  girarAnimRef = requestAnimationFrame(animarGiroVertical);
+}
+
+// ═══ CANVAS DO CÉREBRO (estilo desktop — cores por camada + pulse) ═══
+function desenharCerebro() {
+  const canvas = document.getElementById('brain-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if(!window.V112 || !window.V112.nodes || window.V112.nodes.length === 0) {
+    ctx.fillStyle = '#5a6a8a';
+    ctx.font = '11px monospace';
+    ctx.fillText('aguardando cérebro...', 10, 30);
+    return;
+  }
+
+  viz.frame++;
+
+  const nodes = window.V112.nodes;
+  const cx = W / 2 + panX, cy = H / 2 + panY;
+  const baseScale = Math.min(W, H) * 0.0028 * zoom;
+
+  const styles = getComputedStyle(document.body);
+  const accent1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
+
+  // Cores por camada — igual o desktop
+  function corCamada(n) {
+    if(n.camada === 'self_core') return '#fbbf24';
+    if(n.camada === 'sensorial') return '#5eead4';
+    if(n.camada === 'talamo') return '#06b6d4';
+    if(n.camada === 'hipocampo') return '#ec4899';
+    if(n.camada === 'cortex') return '#a78bfa';
+    if(n.camada === 'amigdala') return '#ef4444';
+    if(n.camada === 'gaba') return '#fbbf24';
+    if(n.camada === 'nucleos_acao') return '#84cc16';
+    if(n.camada === 'motora') return '#fb923c';
+    if(n.camada === 'broca') return '#f97316';
+    if(n.camada === 'subrede' || n.camada === 'subrede_sat') {
+      // Cores temáticas pra sub-redes (versão simplificada do desktop)
+      const txt = n.text || '';
+      if(/B_(planejamento|objetivo|prioridade|controle_exec)/.test(txt)) return '#fcd34d';
+      if(/B_(identidade|simulacao|autobiografia)/.test(txt)) return '#5eead4';
+      if(/B_atencao/.test(txt)) return '#fafafa';
+      return '#a78bfa';
+    }
+    if(n.tipo === 'subrede') return '#a78bfa';
+    return accent1;
+  }
+
+  // Rotação 3D
+  function project(pos) {
+    let x = pos[0], y = pos[1], z = pos[2];
+    if(anguloY !== 0) {
+      const cos = Math.cos(anguloY), sin = Math.sin(anguloY);
+      const nx = x * cos - z * sin;
+      const nz = x * sin + z * cos;
+      x = nx; z = nz;
+    }
+    if(anguloX !== 0) {
+      const cos = Math.cos(anguloX), sin = Math.sin(anguloX);
+      const ny = y * cos - z * sin;
+      const nz = y * sin + z * cos;
+      y = ny; z = nz;
+    }
+    const scaleZ = 1 / (1 + z * 0.001);
+    return [x, y, z, scaleZ];
+  }
+
+  const sx = vistaAtual === 'lateral' ? 0.5 : 1;
+
+  // Glow de fundo
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.45);
+  grad.addColorStop(0, accent1 + '25');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Cachear projeções
+  const proj = new Map();
+  for(const n of nodes) {
+    if(!n.pos) continue;
+    const p = project(n.pos);
+    proj.set(n.id, [
+      cx + p[0] * baseScale * sx,
+      cy + p[2] * baseScale,
+      p[2],
+      p[3]
+    ]);
+  }
+
+  // ═══ ARESTAS — mais visíveis e coloridas por tipo ═══
+  if(window.V112.edges) {
+    const maxEdges = Math.min(500, window.V112.edges.length);
+    const step = Math.max(1, Math.ceil(window.V112.edges.length / maxEdges));
+    for(let i = 0; i < window.V112.edges.length; i += step) {
+      const e = window.V112.edges[i];
+      const pA = proj.get(e.from);
+      const pB = proj.get(e.to);
+      if(!pA || !pB) continue;
+
+      // Cor da aresta por tipo
+      let corAresta = accent1;
+      let alpha = 0.25;
+      if(e.tipo === 'mielinizada') { corAresta = '#c4b5fd'; alpha = 0.5; }
+      else if(e.tipo === 'temporal') { corAresta = '#fbbf24'; alpha = 0.4; }
+      else if(e.tipo === 'cronologica') { corAresta = '#ec4899'; alpha = 0.35; }
+      else if(e.tipo === 'anatomica') { corAresta = '#4ade80'; alpha = 0.3; }
+
+      // Aresta envolvendo nó ativo/nascido fica BEM mais visível
+      const conectaAtivo = viz.ativos.has(e.from) || viz.ativos.has(e.to) ||
+                            viz.nascidos.has(e.from) || viz.nascidos.has(e.to);
+      if(conectaAtivo) { alpha = 0.85; }
+
+      ctx.strokeStyle = corAresta;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = conectaAtivo ? 1.5 : Math.min(2, 0.6 + (e.peso || 0) * 0.1);
+      ctx.beginPath();
+      ctx.moveTo(pA[0], pA[1]);
+      ctx.lineTo(pB[0], pB[1]);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ═══ NÓS — back-to-front com cores por camada e tamanhos variáveis ═══
+  const ordenado = nodes.slice().sort(function(a, b){
+    const pa = proj.get(a.id), pb = proj.get(b.id);
+    if(!pa || !pb) return 0;
+    return pb[2] - pa[2];
+  });
+
+  for(const n of ordenado) {
+    const p = proj.get(n.id);
+    if(!p) continue;
+    const [x, y, z, scaleZ] = p;
+
+    const ativo = viz.ativos.has(n.id);
+    const nasceu = viz.nascidos.has(n.id);
+    const motor_at = viz.motoresAtivos.has(n.id);
+    const cortex_at = viz.corticais.has(n.id);
+
+    // Cor do nó
+    let cor = corCamada(n);
+    if(nasceu) cor = '#ec4899';        // rosa pulsante pra nascidos
+    else if(ativo) cor = '#fbbf24';    // amarelo pra ativos
+    else if(motor_at) cor = '#fb923c'; // laranja pra motores
+    else if(cortex_at) cor = '#c4b5fd';// roxo claro pra córtex
+
+    // Tamanho por camada (igual desktop)
+    let size = 2.2 * scaleZ;
+    if(n.camada === 'self_core') size = 14 * scaleZ * (1 + Math.sin(viz.frame * 0.1) * 0.15);
+    else if(n.camada === 'sensorial' && n.text) size = 4 * scaleZ;
+    else if(n.camada === 'hipocampo' && n._eh_evento) size = 5 * scaleZ;
+    else if(n.camada === 'cortex') size = 2.5 * scaleZ;
+    else if(n.camada === 'motora') size = 3.2 * scaleZ;
+    else if(n.camada === 'amigdala') size = 3 * scaleZ;
+    else if(n.camada === 'subrede') size = 7 * scaleZ;
+    else if(n.camada === 'subrede_sat') size = 5 * scaleZ;
+    else if(n.camada === 'hemisferio') size = 10 * scaleZ;
+
+    // [B_atencao] pulsa
+    if(n.text === '[B_atencao]') size = 9 * scaleZ * (1 + Math.sin(viz.frame * 0.15) * 0.2);
+
+    // Massa influencia tamanho de palavras-nó
+    if(n.text && n.camada !== 'self_core' && n.mass) {
+      size *= Math.min(2.5, 0.8 + n.mass * 0.15);
+    }
+
+    // PULSE pra nascidos/ativos — MUITO MAIOR
+    if(nasceu) size *= 2.5 + Math.sin(viz.frame * 0.2) * 0.5;
+    else if(ativo || motor_at) size *= 1.8;
+
+    // Multiplicador por modo de exibição
+    // Adulto: tudo 60% menor (visão limpa). Criança: tamanho atual (grandão).
+    if(modoExibicao === 'adulto') size *= 0.6;
+
+    // Tamanho mínimo pra ser visível no mobile
+    size = Math.max(1.4, size);
+
+    ctx.fillStyle = cor;
+    ctx.globalAlpha = (nasceu || ativo || motor_at || cortex_at) ? 1 : Math.min(0.95, 0.45 + scaleZ * 0.5);
+
+    // Glow pra nascidos/ativos
+    if(nasceu || ativo) {
+      ctx.shadowColor = cor;
+      ctx.shadowBlur = nasceu ? 15 : 8;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Anel pulsante pra nascidos
+    if(nasceu) {
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(236,72,153,0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, size + 6 + Math.sin(viz.frame * 0.2) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ═══ LOOP DE ANIMAÇÃO ═══
+// Quando tem nós ativos/nascidos, redesenha continuamente pra mostrar o pulse
+let animLoopRef = null;
+function loopAnimacao() {
+  const temAtividade = viz.ativos.size > 0 || viz.nascidos.size > 0 ||
+                       viz.motoresAtivos.size > 0 || viz.corticais.size > 0;
+  if(temAtividade) {
+    desenharCerebro();
+    animLoopRef = requestAnimationFrame(loopAnimacao);
+  } else {
+    animLoopRef = null;
+  }
+}
+function iniciarAnimacao() {
+  if(!animLoopRef) loopAnimacao();
+}
+
+// ═══ PAINÉIS ═══
+window.abrirPainel = function(qual, ev) {
+  const cont = document.getElementById('painel-conteudo');
+  const titulo = document.getElementById('painel-titulo');
+  cont.innerHTML = '';
+
+  if(qual === 'rede') {
+    titulo.textContent = '🕸️ Estado da Rede';
+    const V = window.V112;
+    const cells = [
+      { label: 'NÓS', num: V ? V.nodes.length : '—' },
+      { label: 'ARESTAS', num: V ? V.edges.length : '—', cls: 'purple' },
+      { label: 'SUB-REDES', num: V ? Object.keys(V.subredes||{}).length : '—' },
+      { label: 'TURNO', num: turnoNumero },
+      { label: 'SENS', num: '500', cls: 'yellow' },
+      { label: 'TÁLAMO', num: '20' },
+      { label: 'HIPO', num: '400', cls: 'purple' },
+      { label: 'GABA', num: '10', cls: 'yellow' },
+      { label: 'CÓRTEX', num: '400' },
+      { label: 'AMIG', num: V ? (V.amigdala_tensao || 0) : 0, cls: 'red' },
+      { label: 'NÚCLEOS', num: '30' },
+      { label: 'BROCA', num: '100' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'amigdala') {
+    titulo.textContent = '🚨 Amígdala';
+    const V = window.V112;
+    const estado = V ? (V.amigdala_estado || 'calma') : 'calma';
+    const tensao = V ? (V.amigdala_tensao || 0).toFixed(1) : '0.0';
+    const cells = [
+      { label: 'ESTADO', num: estado.toUpperCase(), cls: estado === 'calma' ? 'green' : 'red' },
+      { label: 'TENSÃO', num: tensao + '/100' },
+      { label: 'FALLBACKS', num: V ? (V.fallbacks_consecutivos || 0) : 0, cls: 'yellow' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'ut') {
+    titulo.textContent = '⚡ Último Turno';
+    if(!ultimoTurno) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Nenhum turno ainda. Envie uma mensagem!</div>';
+    } else {
+      const tipoLabel = ultimoTurno.tag === 'cog' ? '🧠 cognitivo' : ultimoTurno.tag === 'est' ? '📊 estatístico' : ultimoTurno.tag === 'soc' ? '💬 social' : '⚙️ turing';
+      const lines = [
+        { label: 'TURNO', chips: [{ t: turnoNumero, c: '' }, { t: tipoLabel, c: 'evento' }] },
+        { label: 'INPUT', chips: [{ t: '"' + ultimoTurno.input + '"', c: 'token' }] },
+        { label: 'RESPOSTA', chips: [{ t: ultimoTurno.resposta.substring(0, 60) + (ultimoTurno.resposta.length > 60 ? '…' : ''), c: 'evento' }] }
+      ];
+      lines.forEach(function(line){
+        const div = document.createElement('div');
+        div.className = 'ut-line';
+        let html = '<span class="ut-label">' + line.label + ':</span>';
+        line.chips.forEach(function(chip){
+          html += '<span class="ut-chip ' + (chip.c || '') + '">' + chip.t + '</span>';
+        });
+        div.innerHTML = html;
+        cont.appendChild(div);
+      });
+    }
+
+  } else if(qual === 'hipo') {
+    titulo.textContent = '🧠 Hipocampo';
+    const V = window.V112;
+    const cells = [
+      { label: 'EVENTOS', num: V && V.eventos ? V.eventos.length : 0, cls: 'purple' },
+      { label: 'CAP.', num: 400 },
+      { label: 'CONS.', num: '0%' }
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'data-grid';
+    cells.forEach(function(c){
+      const d = document.createElement('div');
+      d.className = 'data-cell ' + (c.cls || '');
+      d.innerHTML = '<div class="num">' + c.num + '</div><div class="label">' + c.label + '</div>';
+      grid.appendChild(d);
+    });
+    cont.appendChild(grid);
+
+  } else if(qual === 'ajustes') {
+    titulo.textContent = '🔧 Ajustes de Emissão';
+    const critWrap = document.createElement('div');
+    critWrap.style.cssText = 'margin-bottom:10px;';
+    critWrap.innerHTML = '<div style="font-size:10px;color:#7d8b96;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">CRITÉRIO ATIVO</div>' +
+      '<select id="sel-criterio" style="width:100%; background:rgba(0,0,0,0.5); color:var(--accent1); border:1px solid var(--accent1); padding:7px 8px; border-radius:5px; font-size:11px; font-family:inherit; cursor:pointer;">' +
+      '<option value="ratio" selected style="background:#0f1426;">ratio (top1 > top2 × k)</option>' +
+      '<option value="media" style="background:#0f1426;">media (top1 > avg × k)</option>' +
+      '<option value="absoluto" style="background:#0f1426;">absoluto (top1 > k)</option>' +
+      '</select>';
+    cont.appendChild(critWrap);
+
+    const sliders = [
+      { id: 'k_ratio', label: 'k_ratio', min: 1.0, max: 5.0, step: 0.1, value: 1.8 },
+      { id: 'k_media', label: 'k_media', min: 1.0, max: 10.0, step: 0.1, value: 3.0 },
+      { id: 'k_absoluto', label: 'k_absoluto', min: 50, max: 500, step: 10, value: 200 }
+    ];
+    sliders.forEach(function(s){
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-bottom:10px; background:rgba(0,0,0,0.3); padding:7px 8px; border-radius:5px;';
+      wrap.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+          '<span style="font-size:10px;color:#d8e2ee;font-weight:bold;">' + s.label + ':</span>' +
+          '<span style="font-size:11px;color:var(--accent1);font-weight:bold;" id="val-' + s.id + '">' + s.value + '</span>' +
+        '</div>' +
+        '<input type="range" min="' + s.min + '" max="' + s.max + '" step="' + s.step + '" value="' + s.value + '" ' +
+          'oninput="document.getElementById(\'val-' + s.id + '\').textContent=this.value" ' +
+          'style="width:100%; accent-color:var(--accent1); cursor:pointer;">';
+      cont.appendChild(wrap);
+    });
+
+    const loopWrap = document.createElement('div');
+    loopWrap.style.cssText = 'background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; display:flex; justify-content:space-between; align-items:center; margin-top:5px;';
+    loopWrap.innerHTML =
+      '<span style="font-size:10px;color:#d8e2ee;font-weight:bold;">LOOP BACKGROUND:</span>' +
+      '<button id="btn-loop-bg" onclick="toggleLoopBg()" style="background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid #ef4444; padding:6px 12px; border-radius:5px; font-family:inherit; font-size:11px; font-weight:bold; cursor:pointer; min-width:80px;">' +
+        '⏸ pausado' +
+      '</button>';
+    cont.appendChild(loopWrap);
+
+  } else if(qual === 'self') {
+    titulo.textContent = '⭐ Self-Core (' + (selfFacts.sobre_si.length + selfFacts.sobre_usuario.length) + ' fatos)';
+    if(selfFacts.sobre_si.length === 0 && selfFacts.sobre_usuario.length === 0) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Ainda não aprendi nada sobre mim ou você.<br><br>Diga "seu nome é X" ou "eu sou X" e eu guardo aqui!</div>';
+    } else {
+      if(selfFacts.sobre_si.length > 0) {
+        const s1 = document.createElement('div');
+        s1.className = 'self-section';
+        s1.innerHTML = '<div class="self-section-title">📌 Sobre si (' + selfFacts.sobre_si.length + ')</div>';
+        selfFacts.sobre_si.forEach(function(f){
+          s1.innerHTML += '<div class="self-fact">' + f.f + '<small>' + f.t + '</small></div>';
+        });
+        cont.appendChild(s1);
+      }
+      if(selfFacts.sobre_usuario.length > 0) {
+        const s2 = document.createElement('div');
+        s2.className = 'self-section';
+        s2.innerHTML = '<div class="self-section-title">👤 Sobre o usuário (' + selfFacts.sobre_usuario.length + ')</div>';
+        selfFacts.sobre_usuario.forEach(function(f){
+          s2.innerHTML += '<div class="self-fact usuario">' + f.f + '<small>' + f.t + '</small></div>';
+        });
+        cont.appendChild(s2);
+      }
+    }
+
+  } else if(qual === 'cand') {
+    titulo.textContent = '🎯 Candidatos';
+    if(!ultimoTurno || !ultimoTurno.r || !ultimoTurno.r._candidatos) {
+      cont.innerHTML = '<div style="font-size:11px;color:#7d8b96;text-align:center;padding:20px;">Sem candidatos ainda. Envie uma mensagem!</div>';
+    } else {
+      ultimoTurno.r._candidatos.forEach(function(c, i){
+        const div = document.createElement('div');
+        div.className = 'ut-line';
+        div.innerHTML = '<span class="ut-label">HIP ' + (i+1) + ':</span>' +
+          '<span class="ut-chip evento">' + (c.texto || c) + '</span>' +
+          (c.score ? '<span class="ut-chip score">' + c.score.toFixed(2) + '</span>' : '');
+        cont.appendChild(div);
+      });
+    }
+
+  } else if(qual === 'exp') {
+    titulo.textContent = '🧪 Experimentos (A-T)';
+    const grid = document.createElement('div');
+    grid.className = 'exp-grid';
+    const letras = 'ABCDEFGHIJKLMNOPQRST'.split('');
+    const experimentos = [
+      'oi', 'a é letra', '2 + 2 = 4', 'meu nome é douglas', 'qual meu nome?',
+      'média de [10, 20, 30, 40, 50]', 'bayes prior=0.01 sensibilidade=0.99 especificidade=0.95',
+      'qual rende mais: 1000 a 5% por 10 anos vs 2000 a 3% por 8 anos?',
+      'tanque vazando 5L/min com 100L',
+      'entrada 2 → saida 5',
+      'entrada 5 → saida 11',
+      'entrada 10 → saida 21',
+      'estado: x=0, soma=0, i=1',
+      'regra: enquanto i menor_que 11 faça [soma = soma + i, i = i + 1]',
+      'execute e mostre valor de soma',
+      'a causa b',
+      'b causa c',
+      'estado atual é c. onde começou?',
+      'analise metacognitiva',
+      'quem é você?'
+    ];
+    letras.forEach(function(L, i){
+      const btn = document.createElement('button');
+      btn.className = 'exp-btn';
+      btn.textContent = L;
+      btn.title = experimentos[i] || L;
+      btn.onclick = function(){
+        document.getElementById('input').value = experimentos[i] || L;
+        fecharPainel();
+        enviar();
+      };
+      grid.appendChild(btn);
+    });
+    cont.appendChild(grid);
+    const obs = document.createElement('div');
+    obs.style.cssText = 'font-size:9px; color:#7d8b96; margin-top:8px; padding:6px; background:rgba(0,0,0,0.3); border-radius:4px;';
+    obs.textContent = '20 experimentos pré-prontos. Toque numa letra pra executar.';
+    cont.appendChild(obs);
+  }
+
+  document.getElementById('painel').classList.add('open');
+  document.querySelectorAll('.ph-side-ic').forEach(function(ic){ ic.classList.remove('active'); });
+  if(ev) ev.currentTarget.classList.add('active');
+};
+
+window.fecharPainel = function() {
+  document.getElementById('painel').classList.remove('open');
+};
+
+// Toggle loop background
+window.toggleLoopBg = function() {
+  loopBgRodando = !loopBgRodando;
+  const btn = document.getElementById('btn-loop-bg');
+  if(!btn) return;
+  if(loopBgRodando) {
+    btn.innerHTML = '▶ rodando';
+    btn.style.background = 'rgba(34,197,94,0.2)';
+    btn.style.color = '#86efac';
+    btn.style.borderColor = '#22c55e';
+  } else {
+    btn.innerHTML = '⏸ pausado';
+    btn.style.background = 'rgba(239,68,68,0.2)';
+    btn.style.color = '#fca5a5';
+    btn.style.borderColor = '#ef4444';
+  }
+};
+
+// Atualizar badges
+function atualizarBadges() {
+  const V = window.V112;
+  if(!V) return;
+  document.getElementById('badge-rede').textContent = Object.keys(V.subredes||{}).length;
+  const tensao = V.amigdala_tensao || 0;
+  const badgeAmig = document.getElementById('badge-amig');
+  if(tensao > 50) {
+    badgeAmig.textContent = '!';
+    badgeAmig.className = 'ph-side-badge red';
+  } else {
+    badgeAmig.textContent = 'OK';
+    badgeAmig.className = 'ph-side-badge';
+  }
+  document.getElementById('badge-ut').textContent = turnoNumero;
+  document.getElementById('badge-hipo').textContent = V.eventos ? V.eventos.length : 0;
+  document.getElementById('badge-self').textContent = selfFacts.sobre_si.length + selfFacts.sobre_usuario.length;
+}
+
+// Arrastar chat (resize)
+(function setupChatResize(){
+  const handle = document.getElementById('chat-handle');
+  const chatSection = document.getElementById('chat-section');
+  let startY = 0, startH = 0;
+
+  function startDrag(e){
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    startH = chatSection.offsetHeight;
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('touchmove', doDrag, { passive: false });
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+    e.preventDefault();
+  }
+  function doDrag(e){
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const newH = startH - (y - startY);
+    const maxH = window.innerHeight * 0.7;
+    const minH = 130;
+    chatSection.style.height = Math.max(minH, Math.min(maxH, newH)) + 'px';
+    e.preventDefault();
+  }
+  function stopDrag(){
+    document.removeEventListener('mousemove', doDrag);
+    document.removeEventListener('touchmove', doDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchend', stopDrag);
+  }
+  handle.addEventListener('mousedown', startDrag);
+  handle.addEventListener('touchstart', startDrag, { passive: false });
+})();
+
+// ═══ GESTOS NO CÉREBRO: arrastar = girar | pinça = zoom | duplo-toque = reset ═══
+(function setupBrainGestures(){
+  const canvas = document.getElementById('brain-canvas');
+  if(!canvas) return;
+
+  let isDragging = false;
+  let lastX = 0, lastY = 0;
+  let pinchStart = 0;
+  let zoomStart = 1;
+  let lastTap = 0;
+  let movedDuringDrag = false;
+
+  // Bloqueia gestos nativos do navegador no canvas (pra não rolar tela)
+  canvas.style.touchAction = 'none';
+
+  function onTouchStart(e) {
+    if(e.touches.length === 1) {
+      // 1 dedo = arrastar pra girar
+      isDragging = true;
+      movedDuringDrag = false;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+
+      // Para a animação se estiver girando
+      if(girarState !== 0) {
+        girarState = 0;
+        if(girarAnimRef) { cancelAnimationFrame(girarAnimRef); girarAnimRef = null; }
+        const btnGirar = document.getElementById('btn-girar');
+        btnGirar.textContent = '↻';
+        btnGirar.style.color = '';
+        btnGirar.style.borderColor = '';
+        btnGirar.classList.remove('active');
+      }
+    } else if(e.touches.length === 2) {
+      // 2 dedos = pinça pra zoom
+      isDragging = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchStart = Math.sqrt(dx*dx + dy*dy);
+      zoomStart = zoom;
+    }
+    e.preventDefault();
+  }
+
+  function onTouchMove(e) {
+    if(e.touches.length === 1 && isDragging) {
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const dx = x - lastX;
+      const dy = y - lastY;
+      if(Math.abs(dx) > 2 || Math.abs(dy) > 2) movedDuringDrag = true;
+      // Arrastar horizontal = roda Y, vertical = roda X
+      anguloY += dx * 0.01;
+      anguloX += dy * 0.01;
+      lastX = x; lastY = y;
+      desenharCerebro();
+    } else if(e.touches.length === 2) {
+      // Pinça = zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(pinchStart > 0) {
+        const novoZoom = zoomStart * (dist / pinchStart);
+        zoom = Math.max(0.3, Math.min(5.0, novoZoom));
+        desenharCerebro();
+      }
+    }
+    e.preventDefault();
+  }
+
+  function onTouchEnd(e) {
+    // Detecta duplo-toque pra resetar zoom/pan
+    if(!movedDuringDrag && e.touches.length === 0) {
+      const agora = Date.now();
+      if(agora - lastTap < 300) {
+        zoom = 1.0; panX = 0; panY = 0;
+        anguloY = 0; anguloX = 0;
+        desenharCerebro();
+        toast('🔄 cérebro resetado');
+        lastTap = 0;
+      } else {
+        lastTap = agora;
+      }
+    }
+    isDragging = false;
+    pinchStart = 0;
+  }
+
+  canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+  canvas.addEventListener('touchend', onTouchEnd);
+
+  // Mouse (pra testar no desktop)
+  canvas.addEventListener('mousedown', function(e){
+    isDragging = true;
+    movedDuringDrag = false;
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  canvas.addEventListener('mousemove', function(e){
+    if(!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    if(Math.abs(dx) > 2 || Math.abs(dy) > 2) movedDuringDrag = true;
+    anguloY += dx * 0.01;
+    anguloX += dy * 0.01;
+    lastX = e.clientX; lastY = e.clientY;
+    desenharCerebro();
+  });
+  canvas.addEventListener('mouseup', function(){ isDragging = false; });
+  canvas.addEventListener('mouseleave', function(){ isDragging = false; });
+
+  // Scroll do mouse = zoom (desktop)
+  canvas.addEventListener('wheel', function(e){
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    zoom = Math.max(0.3, Math.min(5.0, zoom * delta));
+    desenharCerebro();
+  }, { passive: false });
+})();
+
+// Fechar paletas clicando fora
+document.addEventListener('click', function(e) {
+  if(!e.target.closest('.ph-palette-popup') && !e.target.closest('.ph-btn-pal') && !e.target.closest('.ph-btn-pal-cerebro')) {
+    document.querySelectorAll('.ph-palette-popup.open').forEach(function(p){ p.classList.remove('open'); });
+  }
+});
+
+// Redesenhar cérebro ao redimensionar
+window.addEventListener('resize', desenharCerebro);
+
+// ═══ INIT ═══
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    const r = arch_neural_init();
+
+    // Restaurar temas salvos
+    try {
+      const tg = localStorage.getItem('arch_tema_geral');
+      if(tg && TEMAS_GERAL[tg]) {
+        const t = TEMAS_GERAL[tg];
+        document.body.style.setProperty('--bg1', t.bg1);
+        document.body.style.setProperty('--bg2', t.bg2);
+        document.body.style.setProperty('--accent1', t.accent1);
+        document.body.style.setProperty('--accent2', t.accent2);
+      }
+      const tc = localStorage.getItem('arch_tema_cerebro');
+      if(tc && TEMAS_CEREBRO[tc]) {
+        const t = TEMAS_CEREBRO[tc];
+        document.body.style.setProperty('--neuron1', t.n1);
+        document.body.style.setProperty('--neuron2', t.n2);
+        document.body.style.setProperty('--neuron3', t.n3);
+        document.body.style.setProperty('--neuron4', t.n4);
+      }
+    } catch(e){}
+
+    document.getElementById('loading').style.display = 'none';
+    addMsg('brain', 'Olá! Sou o LAB_ARCH-NEURAL V15.1.\n' + r.sub_redes + ' sub-redes, ' + r.nodes + ' nós.\n\nToque no ☰ pra ações, 🎨 pra paletas, ícones laterais pra ver dados, ou simplesmente fale comigo!');
+    atualizarBadges();
+    desenharCerebro();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<div style="color:#ff8888;padding:20px;text-align:center">⚠ Erro: ' + e.message + '</div>';
+  }
+});
+</script>
+
+</body>
+</html>
