@@ -1,0 +1,119 @@
+LICENÇA PROPRIETÁRIA — ARCH-NEURAL CORTEX V15
+==============================================
+
+Copyright © 2026 Douglas Corrêa Cavasso
+Todos os direitos reservados.
+
+Contato: douglas.cavasso@gmail.com
+GitHub: https://github.com/douglascorreacavasso
+
+
+1. PROPRIEDADE INTELECTUAL
+---------------------------
+Este software, sua arquitetura cognitiva, os algoritmos de raciocínio
+estruturado (motor Turing real, córtex cognitivo, motores estatísticos
+determinísticos), a topologia de sub-redes neurais simbólicas, o sistema
+de auto-modificação (aprendiz emergencial, válvula de escape, evolução
+biológica), o conjunto de testes adversariais (baterias diabólica, Ω,
+nível deus, integração) e todos os arquivos contidos neste repositório
+são propriedade intelectual exclusiva de Douglas Corrêa Cavasso.
+
+
+2. USO PERMITIDO (sem autorização prévia)
+-------------------------------------------
+São permitidos os seguintes usos, desde que mantida a atribuição
+ao autor original em qualquer derivação:
+
+  a) Estudo pessoal do código e da arquitetura
+  b) Aprendizado individual e educacional não-comercial
+  c) Citação acadêmica (com atribuição obrigatória, ver seção 6)
+  d) Execução local em máquina pessoal para fins de avaliação
+  e) Fork no GitHub para estudo, desde que não republicado
+
+
+3. USO PROIBIDO (sem autorização expressa por escrito)
+--------------------------------------------------------
+São EXPRESSAMENTE PROIBIDOS, sem autorização prévia do autor:
+
+  a) Uso comercial, direto ou indireto
+  b) Redistribuição pública sob qualquer forma
+  c) Modificação para uso público ou comercial
+  d) Inclusão em produtos ou serviços (gratuitos ou pagos)
+  e) Remoção, alteração ou ocultação da atribuição ao autor
+  f) Treinamento de modelos de IA, LLMs, redes neurais ou
+     qualquer sistema de aprendizado de máquina utilizando este
+     código, arquitetura ou conjunto de testes
+  g) Engenharia reversa para criação de produto concorrente
+  h) Uso em pesquisa publicada sem coautoria ou citação formal
+     do autor original
+
+
+4. SOLICITAÇÃO DE AUTORIZAÇÃO
+------------------------------
+Para qualquer uso que extrapole a seção 2, é necessário contato
+prévio e autorização por escrito do autor:
+
+  Email: douglas.cavasso@gmail.com
+  GitHub: https://github.com/douglascorreacavasso
+
+A autorização pode ser concedida ou negada a critério exclusivo do
+autor, podendo envolver acordos comerciais, royalties, ou condições
+específicas de uso.
+
+
+5. PROTEÇÃO CONTRA TREINAMENTO DE IA
+--------------------------------------
+Este código, sua arquitetura, seu conjunto de testes e qualquer
+arquivo deste repositório NÃO PODEM ser utilizados como dado de
+treinamento, fine-tuning, RLHF, distillation, ou qualquer outro
+método de aprendizado para modelos de inteligência artificial,
+incluindo mas não limitado a: LLMs, modelos de linguagem, redes
+neurais, sistemas de aprendizado profundo, sistemas de aprendizado
+por reforço, modelos de difusão, ou agentes autônomos.
+
+Uso indevido para os fins acima viola esta licença e poderá ser
+objeto de medidas legais cabíveis.
+
+
+6. ATRIBUIÇÃO OBRIGATÓRIA
+---------------------------
+Em qualquer uso permitido (seção 2), a atribuição ao autor deve
+constar de forma visível, com a seguinte formulação mínima:
+
+  "ARCH-NEURAL Cortex V15 — Douglas Corrêa Cavasso (2026)
+   https://github.com/douglascorreacavasso"
+
+Para citação acadêmica formal:
+
+  Cavasso, D. C. (2026). ARCH-NEURAL Cortex V15: A modular
+  cognitive architecture with real Turing engine and statistical
+  reasoning. Software repository, GitHub.
+
+
+7. ISENÇÃO DE GARANTIA
+------------------------
+O software é fornecido "COMO ESTÁ", sem garantia de qualquer
+tipo, expressa ou implícita, incluindo mas não se limitando a
+garantias de comercialização, adequação a propósito específico e
+não-violação. Em nenhuma hipótese o autor será responsável por
+qualquer reivindicação, danos ou outras responsabilidades.
+
+
+8. JURISDIÇÃO
+---------------
+Esta licença é regida pelas leis da República Federativa do
+Brasil. Qualquer disputa será resolvida no foro da comarca de
+Curitiba, Paraná, Brasil.
+
+
+9. ALTERAÇÃO DA LICENÇA
+-------------------------
+O autor reserva-se o direito de alterar os termos desta licença
+em versões futuras do software, sem retroatividade sobre versões
+anteriormente distribuídas.
+
+
+─────────────────────────────────────────────────────────────────
+Última atualização: 27 de maio de 2026
+Versão da licença: 1.0
+─────────────────────────────────────────────────────────────────

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>ARCH-NEURAL V15.1 — Douglas Corrêa Cavasso</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--bg1, #0a0e1a) 0%, var(--bg2, #1a1f3a) 100%);
+    color: var(--ink, #e0e6f0);
+    display: flex; flex-direction: column; height: 100vh; height: 100dvh; transition: background 0.3s; }
+
+  header { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    padding: 10px 12px; border-bottom: 1px solid rgba(100,150,255,0.2);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
+  header h1 { font-size: 15px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent1, #64c8ff), var(--accent2, #b48fff));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .stats { font-size: 10px; color: var(--ink-dim, #7a8aab); }
+  #menu-btn { background: rgba(100,150,255,0.15); border: 1px solid rgba(100,150,255,0.3);
+    color: var(--ink, #e0e6f0); width: 36px; height: 36px; border-radius: 50%;
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; }
+  #menu-btn:active { transform: scale(0.92); }
+
+  #brain-canvas-wrap { background: rgba(0,0,0,0.3); padding: 0; flex-shrink: 0;
+    position: relative; height: 35vh; min-height: 200px; max-height: 350px;
+    border-bottom: 1px solid rgba(100,150,255,0.15); overflow: hidden; }
+  #brain-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  .canvas-info { position: absolute; top: 6px; left: 8px;
+    font-size: 9px; color: var(--ink-dim, #7a8aab);
+    background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; pointer-events: none; }
+  .canvas-mode { position: absolute; top: 6px; right: 8px;
+    display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 3px; border-radius: 6px; }
+  .canvas-mode button { background: transparent; border: 0; color: var(--ink-dim, #7a8aab);
+    padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+  .canvas-mode button.active { background: var(--accent1, #4f46e5); color: white; }
+
+  .float-tabs { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+    padding: 6px; border-radius: 24px; border: 1px solid rgba(100,150,255,0.3); }
+  .float-tab { background: transparent; border: 0; color: var(--ink, #e0e6f0);
+    width: 34px; height: 34px; border-radius: 50%; font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .float-tab:active { transform: scale(0.85); background: var(--accent1, #4f46e5); }
+
+  #chat { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+  .msg { margin-bottom: 10px; max-width: 92%; word-wrap: break-word; }
+  .msg-user { background: linear-gradient(135deg, var(--accent1, #2563eb), var(--accent2, #4f46e5));
+    color: white; margin-left: auto;
+    border-radius: 18px 18px 4px 18px; padding: 10px 14px; font-size: 14px; line-height: 1.4; }
+  .msg-brain { background: rgba(40, 50, 80, 0.6); color: var(--ink, #e0e6f0);
+    margin-right: auto; border-radius: 18px 18px 18px 4px; padding: 10px 14px;
+    font-size: 14px; line-height: 1.4; border: 1px solid rgba(100,150,255,0.15); white-space: pre-wrap; }
+  .tag { font-size: 9px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+  .tag-cog { background: rgba(180, 143, 255, 0.15); color: #b48fff; }
+  .tag-est { background: rgba(100, 200, 255, 0.15); color: #64c8ff; }
+  .tag-soc { background: rgba(255, 180, 120, 0.15); color: #ffb478; }
+  .tag-tur { background: rgba(120, 220, 150, 0.15); color: #78dc96; }
+
+  .pills { display: flex; gap: 6px; overflow-x: auto; padding: 6px 10px;
+    background: rgba(0,0,0,0.2); flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+  .pill { flex-shrink: 0; background: rgba(60, 80, 130, 0.4);
+    border: 1px solid rgba(100,150,255,0.2); color: var(--ink, #b8c8e0);
+    padding: 5px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+  .pill:active { background: rgba(100, 130, 200, 0.5); }
+
+  .input-area { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    padding: 8px 10px; border-top: 1px solid rgba(100,150,255,0.2);
+    display: flex; gap: 8px; flex-shrink: 0;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  #input { flex: 1; background: rgba(20, 25, 45, 0.8);
+    border: 1px solid rgba(100,150,255,0.3); border-radius: 22px;
+    padding: 10px 14px; color: var(--ink, white); font-size: 14px; outline: none; -webkit-appearance: none; }
+  #input:focus { border-color: var(--accent1, #64c8ff); }
+  #send { background: linear-gradient(135deg, var(--accent1, #4f46e5), var(--accent2, #7c3aed));
+    border: none; color: white; width: 42px; height: 42px; border-radius: 50%;
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: transform 0.1s; }
+  #send:active { transform: scale(0.92); }
+
+  #loading { position: fixed; inset: 0; background: #0a0e1a;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 5000; }
+  #loading .spinner { width: 60px; height: 60px;
+    border: 4px solid rgba(100,150,255,0.2); border-top-color: #64c8ff;
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+  #loading .text { color: #64c8ff; font-size: 14px; text-align: center; }
+  #loading .subtext { color: #5a6a8a; font-size: 11px; margin-top: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.85); color: white;
+    padding: 10px 16px; border-radius: 8px; font-size: 13px;
+    z-index: 4000; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; max-width: 90%; text-align: center; }
+  #toast.show { opacity: 1; }
+
+  #menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px); z-index: 3000;
+    display: none; align-items: flex-end; justify-content: center; }
+  #menu-overlay.show { display: flex; }
+  #menu-panel { background: linear-gradient(135deg, #0f1426, #1a2138);
+    border-top: 2px solid rgba(100,150,255,0.3);
+    border-radius: 18px 18px 0 0; padding: 20px;
+    width: 100%; max-width: 600px;
+    max-height: 85vh; overflow-y: auto;
+    animation: slide-up 0.3s ease; }
+  @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  #menu-panel h3 { color: var(--accent1, #64c8ff); font-size: 13px;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 14px 0 8px; opacity: 0.8; }
+  #menu-panel h3:first-of-type { margin-top: 0; }
+  .menu-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px; margin-bottom: 12px; }
+  .menu-btn { background: rgba(60, 80, 130, 0.5);
+    border: 1px solid rgba(100,150,255,0.2);
+    color: #e0e6f0; padding: 12px 8px;
+    border-radius: 10px; font-size: 12px;
+    cursor: pointer; text-align: center; transition: all 0.15s; }
+  .menu-btn:active { transform: scale(0.95); background: rgba(100,130,200,0.6); }
+  .menu-btn.active { background: linear-gradient(135deg, var(--accent1, #4f46e5), var(--accent2, #7c3aed));
+    border-color: var(--accent1, #64c8ff); color: white; font-weight: 600; }
+  .menu-btn .ico { display: block; font-size: 22px; margin-bottom: 4px; }
+  .menu-btn .sub { display: block; font-size: 10px; opacity: 0.7; margin-top: 2px; }
+  .menu-close { float: right; background: transparent; border: 0; color: #7a8aab;
+    font-size: 24px; cursor: pointer; padding: 0 8px; }
+  .menu-info { font-size: 11px; color: #7a8aab; line-height: 1.6; padding: 8px 0; }
+  .menu-info a { color: #b48fff; }
+
+  body.tema-sci-fi { --bg1: #0a0e1a; --bg2: #1a1f3a; --accent1: #4f46e5; --accent2: #7c3aed; --ink: #e0e6f0; --ink-dim: #7a8aab; }
+  body.tema-matrix { --bg1: #000000; --bg2: #001a00; --accent1: #00cc44; --accent2: #00ff66; --ink: #88ff99; --ink-dim: #00aa44; }
+  body.tema-matrix .msg-user { background: linear-gradient(135deg, #003300, #006600); }
+  body.tema-matrix .msg-brain { background: rgba(0, 40, 0, 0.6); border-color: rgba(0,255,100,0.2); color: #88ff99; }
+  body.tema-matrix #input { background: rgba(0,30,0,0.8); border-color: rgba(0,255,100,0.3); color: #88ff99; }
+  body.tema-matrix #send { background: linear-gradient(135deg, #006600, #00aa44); }
+  body.tema-solar { --bg1: #1a0d00; --bg2: #3a2008; --accent1: #ff8c00; --accent2: #ffb84d; --ink: #ffe6cc; --ink-dim: #cc8855; }
+  body.tema-solar .msg-user { background: linear-gradient(135deg, #cc6600, #ff8c00); }
+  body.tema-solar .msg-brain { background: rgba(80, 50, 20, 0.6); border-color: rgba(255,160,80,0.2); }
+  body.tema-solar #send { background: linear-gradient(135deg, #cc6600, #ff8c00); }
+  body.tema-borboleta { --bg1: #0a0e2a; --bg2: #2a1a4a; --accent1: #4488ff; --accent2: #8866ff; --ink: #ccd8ff; --ink-dim: #7a8acc; }
+  body.tema-borboleta .msg-user { background: linear-gradient(135deg, #3366cc, #6644cc); }
+  body.tema-borboleta .msg-brain { background: rgba(40, 30, 80, 0.6); border-color: rgba(140,120,255,0.2); }
+  body.tema-borboleta #send { background: linear-gradient(135deg, #3366cc, #6644cc); }
+  body.tema-cyber { --bg1: #001a1a; --bg2: #1a0033; --accent1: #00ffff; --accent2: #ff00ff; --ink: #aaffff; --ink-dim: #66cccc; }
+  body.tema-cyber .msg-user { background: linear-gradient(135deg, #008888, #006688); }
+  body.tema-cyber .msg-brain { background: rgba(0, 40, 40, 0.6); border-color: rgba(0,255,255,0.2); color: #aaffff; }
+  body.tema-cyber #input { color: #aaffff; border-color: rgba(0,255,255,0.3); }
+  body.tema-cyber #send { background: linear-gradient(135deg, #008888, #880088); }
+
+  @media (min-width: 768px) {
+    header h1 { font-size: 19px; } .stats { font-size: 12px; }
+    .msg { max-width: 75%; }
+    .msg-user, .msg-brain { font-size: 15px; padding: 12px 16px; }
+    #input { font-size: 15px; padding: 13px 18px; }
+    #chat { padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
+    .input-area { max-width: 900px; margin: 0 auto; width: 100%; padding: 12px 20px; }
+    .pills { max-width: 900px; margin: 0 auto; width: 100%; }
+    #brain-canvas-wrap { max-width: 900px; margin: 0 auto; width: 100%; }
+  }
+</style>
+</head>
+<body class="tema-sci-fi">
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="text">Acordando o cérebro...</div>
+  <div class="subtext">115 sub-redes • 2400+ neurônios</div>
+</div>
+
+<header>
+  <h1>🧠 ARCH-NEURAL V15.1</h1>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <div class="stats" id="stats">carregando...</div>
+    <button id="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+</header>
+
+<div id="toast"></div>
+
+<div id="brain-canvas-wrap">
+  <canvas id="brain-canvas"></canvas>
+  <div class="canvas-info" id="canvas-info">Modo 2D • 0 nós</div>
+  <div class="canvas-mode">
+    <button id="mode-2d" class="active" onclick="setRender('2d')">2D</button>
+    <button id="mode-3d" onclick="setRender('3d')">3D</button>
+  </div>
+  <div class="float-tabs">
+    <button class="float-tab" onclick="acaoMeditar()" title="Meditar">🧘</button>
+    <button class="float-tab" onclick="acaoArvore()" title="Árvore">🌳</button>
+    <button class="float-tab" onclick="acaoGirar()" title="Girar">🔃</button>
+    <button class="float-tab" onclick="acaoResetar()" title="Resetar chat">🔄</button>
+    <button class="float-tab" onclick="acaoSalvar()" title="Salvar">💾</button>
+    <button class="float-tab" onclick="document.getElementById('file-import').click()" title="Importar">📥</button>
+    <button class="float-tab" onclick="acaoMesclar()" title="Mesclar">🔀</button>
+  </div>
+</div>
+
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="acaoImportar(this.files[0])">
+
+<div id="menu-overlay" onclick="if(event.target===this) toggleMenu()">
+  <div id="menu-panel">
+    <button class="menu-close" onclick="toggleMenu()">×</button>
+
+    <h3>🎨 Paleta de Cores</h3>
+    <div class="menu-section">
+      <button class="menu-btn tema-btn" data-tema="sci-fi" onclick="setTema('sci-fi')"><span class="ico">🌌</span>Sci-Fi<span class="sub">azul · roxo</span></button>
+      <button class="menu-btn tema-btn" data-tema="matrix" onclick="setTema('matrix')"><span class="ico">💚</span>Matrix<span class="sub">preto · verde</span></button>
+      <button class="menu-btn tema-btn" data-tema="solar" onclick="setTema('solar')"><span class="ico">🌅</span>Solar<span class="sub">laranja · âmbar</span></button>
+      <button class="menu-btn tema-btn" data-tema="borboleta" onclick="setTema('borboleta')"><span class="ico">🦋</span>Borboleta<span class="sub">azul · violeta</span></button>
+      <button class="menu-btn tema-btn" data-tema="cyber" onclick="setTema('cyber')"><span class="ico">💎</span>Cyber<span class="sub">ciano · magenta</span></button>
+    </div>
+
+    <h3>🧠 Carregar Cérebro</h3>
+    <div class="menu-section">
+      <button class="menu-btn" onclick="carregarDoGithub()"><span class="ico">🌐</span>Do GitHub<span class="sub">pré-treinado</span></button>
+      <button class="menu-btn" onclick="carregarManual()"><span class="ico">📂</span>Manual<span class="sub">do seu PC</span></button>
+    </div>
+
+    <h3>👁️ Visualização</h3>
+    <div class="menu-section">
+      <button class="menu-btn" id="vis-2d" onclick="setRender('2d')"><span class="ico">🟦</span>2D<span class="sub">rápido</span></button>
+      <button class="menu-btn" id="vis-3d" onclick="setRender('3d')"><span class="ico">🟩</span>3D<span class="sub">⚠️ pesado</span></button>
+    </div>
+
+    <h3>ℹ️ Sobre</h3>
+    <div class="menu-info">
+      <b style="color:#b8c8e0">ARCH-NEURAL Cortex V15.1</b><br>
+      Autor: <b style="color:#64c8ff">Douglas Corrêa Cavasso</b><br>
+      📧 douglas.cavasso@gmail.com<br>
+      🐙 <a href="https://github.com/douglascorreacavasso" target="_blank">github.com/douglascorreacavasso</a><br>
+      Licença: Proprietária — todos os direitos reservados
+    </div>
+  </div>
+</div>
+
+<div class="pills">
+  <div class="pill" onclick="ex('oi')">👋 oi</div>
+  <div class="pill" onclick="ex('média de [10, 20, 30, 40, 50]')">📊 média</div>
+  <div class="pill" onclick="ex('bayes prior=0.01 sensibilidade=0.99 especificidade=0.95')">🎲 bayes</div>
+  <div class="pill" onclick="ex('qual rende mais: 1000 com taxa 5% por 10 anos vs 2000 com taxa 3% por 8 anos?')">💰 invest</div>
+  <div class="pill" onclick="ex('tanque vazando 5L/min com 100L')">💧 analogia</div>
+  <div class="pill" onclick="exSeq(['entrada 2 → saida 5','entrada 5 → saida 11','entrada 10 → saida 21'])">🔬 eng-rev</div>
+  <div class="pill" onclick="exSeq(['estado: x=0, s=0, i=1','regra: enquanto i menor_que 11 faça [s = s + i, i = i + 1]','execute e mostre valor de s'])">⚙️ soma</div>
+  <div class="pill" onclick="ex('analise metacognitiva')">🪞 metacog</div>
+  <div class="pill" onclick="ex('quem é você?')">🤖 quem</div>
+</div>
+
+<div id="chat"></div>
+
+<div class="input-area">
+  <input id="input" type="text" placeholder="fale com o cérebro..." autocomplete="off" autocapitalize="off">
+  <button id="send" onclick="enviar()">→</button>
+</div>
+
+<script src="arch_neural_v15_final.js"></script>
+
+<script>
+'use strict';
+function toast(msg, dur) {
+  dur = dur || 2500;
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, dur);
+}
+window.toast = toast;
+
+function addMsg(quem, texto, tag) {
+  var chat = document.getElementById('chat');
+  var div = document.createElement('div');
+  div.className = 'msg msg-' + quem;
+  div.textContent = texto;
+  chat.appendChild(div);
+  if(tag) {
+    var tagDiv = document.createElement('div');
+    tagDiv.className = 'tag tag-' + tag;
+    var labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing'};
+    tagDiv.textContent = labelMap[tag] || tag;
+    chat.appendChild(tagDiv);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function enviar() {
+  var inp = document.getElementById('input');
+  var texto = inp.value.trim();
+  if(!texto) return;
+  inp.value = '';
+  addMsg('user', texto);
+  setTimeout(function() {
+    try {
+      var r = window.v112_processar(texto);
+      var resposta = (r && r.resposta) || '(sem resposta)';
+      var tag = null;
+      if(r && r._cognitivo) tag = 'cog';
+      else if(r && r._estatistico) tag = 'est';
+      else if(r && r.reflexo_social) tag = 'soc';
+      else if(r && r.resposta) tag = 'tur';
+      addMsg('brain', resposta, tag);
+      desenharCerebro();
+    } catch(e) { addMsg('brain', '⚠ erro: ' + e.message); }
+  }, 50);
+}
+
+function ex(texto) { document.getElementById('input').value = texto; enviar(); }
+function exSeq(seq) {
+  var i = 0;
+  function next() {
+    if(i >= seq.length) return;
+    document.getElementById('input').value = seq[i];
+    enviar();
+    i++;
+    setTimeout(next, 500);
+  }
+  next();
+}
+
+document.getElementById('input').addEventListener('keypress', function(e) {
+  if(e.key === 'Enter') enviar();
+});
+
+window.toggleMenu = function() {
+  document.getElementById('menu-overlay').classList.toggle('show');
+};
+
+window.setTema = function(nome) {
+  var temas = ['sci-fi', 'matrix', 'solar', 'borboleta', 'cyber'];
+  for(var i = 0; i < temas.length; i++) {
+    document.body.classList.remove('tema-' + temas[i]);
+  }
+  document.body.classList.add('tema-' + nome);
+  try { localStorage.setItem('arch_tema', nome); } catch(e) {}
+  var btns = document.querySelectorAll('.tema-btn');
+  for(var j = 0; j < btns.length; j++) {
+    btns[j].classList.toggle('active', btns[j].getAttribute('data-tema') === nome);
+  }
+  toast('Tema: ' + nome);
+  desenharCerebro();
+};
+
+var renderMode = '2d';
+window.setRender = function(modo) {
+  renderMode = modo;
+  try { localStorage.setItem('arch_render', modo); } catch(e) {}
+  document.getElementById('mode-2d').classList.toggle('active', modo === '2d');
+  document.getElementById('mode-3d').classList.toggle('active', modo === '3d');
+  var b2 = document.getElementById('vis-2d');
+  var b3 = document.getElementById('vis-3d');
+  if(b2) b2.classList.toggle('active', modo === '2d');
+  if(b3) b3.classList.toggle('active', modo === '3d');
+  if(modo === '3d') toast('⚠️ Modo 3D — pode ser pesado em dispositivos antigos');
+  else toast('Modo 2D — rápido');
+  desenharCerebro();
+};
+
+window.carregarDoGithub = function() {
+  var url = 'https://raw.githubusercontent.com/douglascorreacavasso/arch-neural-cortex-v15/main/cerebro_V15.json';
+  toast('Baixando cérebro do GitHub...');
+  fetch(url).then(function(r) {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(cerebro) {
+    if(typeof window.v112_importar === 'function') {
+      window.v112_importar(cerebro);
+      toast('✓ Cérebro do GitHub (' + (cerebro.nodes ? cerebro.nodes.length : '?') + ' nós)');
+      toggleMenu();
+      desenharCerebro();
+    } else { toast('Erro: v112_importar não disponível'); }
+  }).catch(function(e) { toast('❌ Falha: ' + e.message); });
+};
+
+window.carregarManual = function() {
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = function(e) {
+    var f = e.target.files[0];
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function() {
+      try {
+        var c = JSON.parse(r.result);
+        if(typeof window.v112_importar === 'function') {
+          window.v112_importar(c);
+          toast('✓ Importado: ' + f.name);
+          toggleMenu();
+          desenharCerebro();
+        }
+      } catch(err) { toast('❌ ' + err.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+};
+
+window.acaoResetar = function() {
+  if(!confirm('Limpar chat?')) return;
+  document.getElementById('chat').innerHTML = '';
+  toast('Chat limpo');
+};
+window.acaoSalvar = function() {
+  if(typeof window.v112_exportar !== 'function') { toast('❌ N/A'); return; }
+  try {
+    var data = window.v112_exportar();
+    var json = JSON.stringify(data);
+    var blob = new Blob([json], {type: 'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cerebro_V15_' + Date.now() + '.json';
+    a.click();
+    toast('✓ Salvo');
+  } catch(e) { toast('❌ ' + e.message); }
+};
+window.acaoImportar = function(file) {
+  if(!file) return;
+  var r = new FileReader();
+  r.onload = function() {
+    try {
+      var c = JSON.parse(r.result);
+      if(typeof window.v112_importar === 'function') {
+        window.v112_importar(c);
+        toast('✓ ' + file.name);
+        desenharCerebro();
+      }
+    } catch(err) { toast('❌ ' + err.message); }
+  };
+  r.readAsText(file);
+};
+window.acaoMeditar = function() {
+  toast('🧘 Meditando...');
+  setTimeout(function(){ toast('✓ Meditação completa'); }, 1500);
+};
+window.acaoMesclar = function() { toast('🔀 Em desenvolvimento V16'); };
+window.acaoArvore = function() { toast('🌳 Em desenvolvimento V16'); };
+var rotacaoAuto = false;
+var anguloRot = 0;
+window.acaoGirar = function() {
+  rotacaoAuto = !rotacaoAuto;
+  toast(rotacaoAuto ? '🔃 Girando' : '⏸ Parado');
+};
+
+function desenharCerebro() {
+  var canvas = document.getElementById('brain-canvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var rect = canvas.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var W = rect.width, H = rect.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if(!window.V112 || !window.V112.nodes || window.V112.nodes.length === 0) {
+    ctx.fillStyle = '#5a6a8a';
+    ctx.font = '11px monospace';
+    ctx.fillText('aguardando cérebro...', 10, 20);
+    return;
+  }
+
+  var nodes = window.V112.nodes;
+  var info = document.getElementById('canvas-info');
+  if(info) info.textContent = (renderMode === '3d' ? '3D' : '2D') + ' • ' + nodes.length + ' nós';
+
+  var cx = W / 2, cy = H / 2;
+  var scale = Math.min(W, H) * 0.0015;
+
+  var styles = getComputedStyle(document.body);
+  var a1 = styles.getPropertyValue('--accent1').trim() || '#64c8ff';
+  var a2 = styles.getPropertyValue('--accent2').trim() || '#b48fff';
+
+  function getColor(n) {
+    if(n.tipo === 'subrede') return a2;
+    if(n._categoria === 'cognitivo') return a1;
+    if(n._categoria === 'estatistico') return '#22c55e';
+    return a1;
+  }
+
+  if(window.V112.edges) {
+    ctx.lineWidth = 0.3;
+    ctx.strokeStyle = 'rgba(100,150,255,0.08)';
+    var maxEdges = Math.min(400, window.V112.edges.length);
+    for(var i = 0; i < maxEdges; i++) {
+      var e = window.V112.edges[i];
+      var n1 = nodes.find(function(n){ return n.id === e.from; });
+      var n2 = nodes.find(function(n){ return n.id === e.to; });
+      if(!n1 || !n2 || !n1.pos || !n2.pos) continue;
+      var p1 = transform(n1.pos), p2 = transform(n2.pos);
+      ctx.beginPath();
+      ctx.moveTo(cx + p1[0] * scale, cy + p1[2] * scale);
+      ctx.lineTo(cx + p2[0] * scale, cy + p2[2] * scale);
+      ctx.stroke();
+    }
+  }
+
+  if(rotacaoAuto) anguloRot += 0.005;
+
+  function transform(pos) {
+    var x = pos[0], y = pos[1], z = pos[2];
+    if(rotacaoAuto || renderMode === '3d') {
+      var cos = Math.cos(anguloRot), sin = Math.sin(anguloRot);
+      var nx = x * cos - z * sin;
+      var nz = x * sin + z * cos;
+      x = nx; z = nz;
+    }
+    if(renderMode === '3d') {
+      var depth = 1 + y * 0.003;
+      x *= depth; z *= depth;
+    }
+    return [x, y, z];
+  }
+
+  var maxNodes = Math.min(800, nodes.length);
+  for(var j = 0; j < maxNodes; j++) {
+    var n = nodes[j];
+    if(!n.pos) continue;
+    var p = transform(n.pos);
+    var x = cx + p[0] * scale, y = cy + p[2] * scale;
+    var size = n.tipo === 'subrede' ? 2.5 : 1.2;
+    ctx.fillStyle = getColor(n);
+    ctx.globalAlpha = n.tipo === 'subrede' ? 0.9 : 0.5;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function loopCanvas() {
+  if(rotacaoAuto) desenharCerebro();
+  requestAnimationFrame(loopCanvas);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    var r = arch_neural_init();
+    document.getElementById('stats').textContent = r.sub_redes + ' • ' + r.nodes;
+    document.getElementById('loading').style.display = 'none';
+    try {
+      var tema = localStorage.getItem('arch_tema') || 'sci-fi';
+      setTema(tema);
+      var rend = localStorage.getItem('arch_render') || '2d';
+      setRender(rend);
+    } catch(e) {}
+    addMsg('brain', 'Olá! Sou o ARCH-NEURAL V15.1 — ' + r.sub_redes + ' sub-redes, ' + r.nodes + ' nós, num único arquivo de 4MB.\n\nToque no ☰ pra trocar tema, carregar cérebro do GitHub ou usar outras funções.', 'soc');
+    desenharCerebro();
+    loopCanvas();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<div style="color:#ff8888;padding:20px;text-align:center">⚠ ' + e.message + '</div>';
+  }
+});
+</script>
+</body>
+</html>
