@@ -1,0 +1,1436 @@
+// Inicialização do arquivo único: importa cérebro embutido + ativa todos os módulos
+const _init_result = arch_neural_init();
+console.log('[ARCH-NEURAL] inicializado:', _init_result);
+if(typeof v112_prog_init === "function") { try { v112_prog_init(); } catch(e){ console.log("[v151] init falhou:", e.message); } }
+
+const msgs = document.getElementById('msgs');
+const input = document.getElementById('input');
+const btn = document.getElementById('btn');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statsHeader = document.getElementById('stats-header');
+const painelTurno = document.getElementById('painel-turno');
+const painelEventos = document.getElementById('painel-eventos');
+const painelPesos = document.getElementById('painel-pesos');
+const painelPalavras = document.getElementById('painel-palavras');
+const gridStats = document.getElementById('grid-stats');
+
+// VIZ
+const viz = {
+  rotX: 0, rotY: 0, zoom: 0.7, panX: 0, panY: 0,
+  dragging: false, lastX: 0, lastY: 0,
+  modo: 'lateral', ativos: new Set(), nascidos: new Set(),
+  motoresAtivos: new Set(), corticais: new Set(),
+  frame: 0,
+};
+
+function setModo(modo){
+  viz.modo = modo;
+  if(modo === 'lateral'){ viz.rotX = Math.PI/2; viz.rotY = 0; }
+  else if(modo === 'frontal'){ viz.rotX = 0; viz.rotY = 0; }
+  document.querySelectorAll('.viz-modes button').forEach(b => b.classList.remove('active'));
+  document.getElementById('vm-' + modo).classList.add('active');
+}
+setModo('lateral');
+
+function resizeCanvas(){
+  const r = canvas.getBoundingClientRect();
+  canvas.width = r.width * window.devicePixelRatio;
+  canvas.height = r.height * window.devicePixelRatio;
+  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function project(pos){
+  const [x0, y0, z0] = pos;
+  const cy = Math.cos(viz.rotY), sy = Math.sin(viz.rotY);
+  const x1 = x0*cy - z0*sy;
+  const z1 = x0*sy + z0*cy;
+  const cx = Math.cos(viz.rotX), sx = Math.sin(viz.rotX);
+  const y1 = y0*cx - z1*sx;
+  const z2 = y0*sx + z1*cx;
+  const scale = viz.zoom * 280 / (450 + z2);
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  return [w/2 + x1*scale, h/2 + y1*scale, z2, scale];
+}
+function corCamada(n){
+  if(n.camada === 'self_core') return '#fbbf24';      // dourado/ouro
+  if(n.camada === 'sensorial') return '#5eead4';      // verde-água
+  if(n.camada === 'talamo') return '#06b6d4';         // ciano (roteador)
+  if(n.camada === 'hipocampo') return '#ec4899';      // rosa
+  if(n.camada === 'cortex') return '#a78bfa';         // roxo claro
+  if(n.camada === 'amigdala') return '#ef4444';       // vermelho
+  if(n.camada === 'gaba') return '#fbbf24';           // amarelo (freio)
+  if(n.camada === 'nucleos_acao') return '#84cc16';   // verde-lima (ignição)
+  if(n.camada === 'motora') return '#fb923c';         // laranja
+  if(n.camada === 'broca') return '#f97316';          // laranja-escuro (saída)
+  // Sub-redes coloridas por região (Lab 13)
+  if(n.camada === 'subrede' || n.camada === 'subrede_sat'){
+    const txt = n.text || '';
+    // PFC — dourado
+    if(/B_planejamento|B_objetivo|B_prioridade|B_controle_exec/.test(txt) || n._subrede_pai && /^B_(planejamento|objetivo|prioridade|controle_exec)$/.test(n._subrede_pai)) return '#fcd34d';
+    // DMN — turquesa
+    if(/B_identidade|B_simulacao|B_autobiografia/.test(txt) || n._subrede_pai && /^B_(identidade|simulacao|autobiografia)$/.test(n._subrede_pai)) return '#5eead4';
+    // Atenção — branco brilhante
+    if(/B_atencao/.test(txt) || n._subrede_pai === 'B_atencao') return '#fafafa';
+    // Lógicas formais (12.6) — verde
+    if(/B_silogismo|B_quantif|B_temporal/.test(txt) || n._subrede_pai && /^B_(silogismo|quantif|temporal)$/.test(n._subrede_pai)) return '#86efac';
+    // Excecoes — laranja claro
+    if(/B_excecoes/.test(txt) || n._subrede_pai === 'B_excecoes') return '#fdba74';
+    // Paradoxo — vermelho
+    if(/B_paradoxo/.test(txt) || n._subrede_pai === 'B_paradoxo') return '#ef4444';
+    // Analogia — rosa
+    if(/B_analogia/.test(txt) || n._subrede_pai === 'B_analogia') return '#f9a8d4';
+    // Demais (B_bidir, B_logico, etc) — roxo
+    return '#c4b5fd';
+  }
+  // Hemisférios — destacados
+  if(n.camada === 'hemisferio') return n.text === '[H_LING]' ? '#60a5fa' : '#f59e0b';
+  return '#7d8b96';
+}
+function hexToRgb(h){
+  const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// VIZ ADAPTATIVA: pra muitos nós, faz subsample
+function desenharRede(){
+  viz.frame++;
+  if(viz.modo === 'rotar') viz.rotY += 0.003;
+  else if(viz.modo === 'diagonal'){ viz.rotY += 0.0028; viz.rotX += 0.0019; }
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  ctx.clearRect(0, 0, w, h);
+  // Linhas guias das camadas
+  if(viz.modo === 'lateral'){
+    ctx.strokeStyle = 'rgba(94,234,212,0.06)';
+    ctx.setLineDash([4,8]);
+    for(const z of [200, 100, 0, -200]){
+      const p1 = project([-300, 0, z]);
+      const p2 = project([300, 0, z]);
+      ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  const proj = new Map();
+  for(const n of V112.nodes) proj.set(n.id, project(n.pos));
+
+  // Arestas — só desenha as MAIS FORTES (top N por peso) pra não travar
+  const arestas_fortes = V112.edges
+    .filter(e => e.peso > 0.3 && !e._dormindo)
+    .sort((a,b) => b.peso - a.peso)
+    .slice(0, 2000);  // limite pra UI
+
+  ctx.lineWidth = 0.5;
+  for(const e of arestas_fortes){
+    const p1 = proj.get(e.from);
+    const p2 = proj.get(e.to);
+    if(!p1 || !p2) continue;
+    const opacity = Math.min(0.5, 0.05 + e.peso * 0.04);
+    const orig = v112_node_by_id(e.from);
+    let cor = orig ? corCamada(orig) : '#5eead4';
+    if(e.tipo === 'cronologica') cor = '#ec4899';
+    if(e.tipo === 'temporal_seq') cor = '#fbbf24';
+    if(e.tipo === 'mielinizada') cor = '#c4b5fd';
+    if(e.tipo === 'anatomica') cor = '#4ade80';
+    ctx.strokeStyle = `rgba(${hexToRgb(cor)},${opacity})`;
+    ctx.lineWidth = Math.min(3, 0.3 + e.peso * 0.15);
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+  }
+
+  // Nós (back-to-front)
+  const ordenado = V112.nodes.slice().sort((a,b) => proj.get(b.id)[2] - proj.get(a.id)[2]);
+  for(const n of ordenado){
+    const p = proj.get(n.id);
+    const [x, y, z, scale] = p;
+    const ativo = viz.ativos.has(n.id);
+    const nasceu = viz.nascidos.has(n.id);
+    const motor_at = viz.motoresAtivos.has(n.id);
+    const cortex_at = viz.corticais.has(n.id);
+    let cor = corCamada(n);
+    if(nasceu) cor = '#ec4899';
+    else if(ativo) cor = '#fbbf24';
+    else if(motor_at) cor = '#fb923c';
+    else if(cortex_at) cor = '#c4b5fd';
+
+    let size = 1.5 * scale;
+    if(n.camada === 'self_core') size = 12 * scale * (1 + Math.sin(viz.frame * 0.1) * 0.15);  // pulsa
+    if(n.camada === 'sensorial' && n.text) size = 3 * scale;
+    if(n.camada === 'hipocampo' && n._eh_evento) size = 4 * scale;
+    if(n.camada === 'cortex') size = 1.8 * scale;
+    if(n.camada === 'motora') size = 2.5 * scale;
+    if(n.camada === 'amigdala') size = 2.2 * scale;
+    if(n.camada === 'subrede') size = 5 * scale;
+    if(n.camada === 'hemisferio') size = 8 * scale;
+    if(n.text === '[B_atencao]') size = 7 * scale * (1 + Math.sin(viz.frame * 0.15) * 0.2);  // pulsa no topo
+    if(n.text && n.camada !== 'self_core') size *= Math.min(2.5, 0.7 + n.mass * 0.15);
+    if(nasceu) size *= 1.5 + Math.sin(viz.frame * 0.2) * 0.3;
+    if(ativo || motor_at) size *= 1.4;
+
+    ctx.fillStyle = cor;
+    ctx.globalAlpha = (nasceu || ativo || motor_at || cortex_at) ? 1 : Math.min(0.85, 0.3 + scale * 0.5);
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    if(nasceu){
+      ctx.strokeStyle = 'rgba(236,72,153,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, size + 4 + Math.sin(viz.frame * 0.2) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 0.5;
+    }
+
+    const mostraLabel = n.text && n.camada === 'sensorial' && (nasceu || ativo || n.mass > 1.5 || scale > 0.7);
+    if(mostraLabel){
+      ctx.font = `${Math.max(9, 11 * scale)}px ui-monospace`;
+      ctx.fillStyle = nasceu ? '#ec4899' : ativo ? '#fbbf24' : 'rgba(230,237,243,0.8)';
+      ctx.globalAlpha = (nasceu || ativo) ? 1 : 0.7;
+      ctx.fillText(n.text, x + size + 2, y + 3);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+function loopViz(){ desenharRede(); requestAnimationFrame(loopViz); }
+loopViz();
+
+canvas.addEventListener('mousedown', e => { viz.dragging = true; viz.lastX = e.clientX; viz.lastY = e.clientY; });
+canvas.addEventListener('mouseup', () => viz.dragging = false);
+canvas.addEventListener('mouseleave', () => viz.dragging = false);
+canvas.addEventListener('mousemove', e => {
+  if(!viz.dragging) return;
+  viz.rotY += (e.clientX - viz.lastX) * 0.01;
+  viz.rotX += (e.clientY - viz.lastY) * 0.01;
+  viz.lastX = e.clientX; viz.lastY = e.clientY;
+});
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  viz.zoom = Math.max(0.15, Math.min(4, viz.zoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+}, {passive: false});
+
+// PAN no desktop: arrasto com botão direito OU com Shift segurado
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('mousedown', e => {
+  if(e.button === 2 || e.shiftKey){ viz.panning = true; viz.dragging = false; viz.panLastX = e.clientX; viz.panLastY = e.clientY; }
+});
+canvas.addEventListener('mousemove', e => {
+  if(!viz.panning) return;
+  viz.panX += (e.clientX - viz.panLastX);
+  viz.panY += (e.clientY - viz.panLastY);
+  viz.panLastX = e.clientX; viz.panLastY = e.clientY;
+});
+canvas.addEventListener('mouseup', () => { viz.panning = false; });
+
+// TOQUE: 1 dedo gira, 2 dedos pinça (zoom) e arrastam juntos (pan)
+let _tRotX, _tRotY, _tPinch, _tZoom0, _tPanX, _tPanY, _tMidX, _tMidY;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if(e.touches.length === 1){
+    viz.dragging = true; viz.panning = false;
+    _tRotX = e.touches[0].clientX; _tRotY = e.touches[0].clientY;
+  } else if(e.touches.length === 2){
+    viz.dragging = false;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    _tPinch = Math.hypot(dx, dy); _tZoom0 = viz.zoom;
+    _tMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    _tMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    _tPanX = viz.panX; _tPanY = viz.panY;
+  }
+}, {passive: false});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if(e.touches.length === 1 && viz.dragging){
+    viz.rotY += (e.touches[0].clientX - _tRotX) * 0.01;
+    viz.rotX += (e.touches[0].clientY - _tRotY) * 0.01;
+    _tRotX = e.touches[0].clientX; _tRotY = e.touches[0].clientY;
+  } else if(e.touches.length === 2){
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    if(_tPinch) viz.zoom = Math.max(0.15, Math.min(4, _tZoom0 * (dist / _tPinch)));
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    viz.panX = _tPanX + (midX - _tMidX);
+    viz.panY = _tPanY + (midY - _tMidY);
+  }
+}, {passive: false});
+canvas.addEventListener('touchend', e => { if(e.touches.length === 0){ viz.dragging = false; viz.panning = false; } }, {passive: false});
+document.getElementById('vm-lateral').addEventListener('click', () => setModo('lateral'));
+document.getElementById('vm-frontal').addEventListener('click', () => setModo('frontal'));
+document.getElementById('vm-rotar').addEventListener('click', () => setModo('rotar'));
+document.getElementById('vm-diagonal').addEventListener('click', () => setModo('diagonal'));
+document.getElementById('vm-stop').addEventListener('click', () => setModo('stop'));
+
+function addMsg(autor, txt, classe){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (autor === 'voce' ? 'user' : 'brain') + (classe ? ' ' + classe : '');
+
+  // ── ANIMAÇÃO: frames separados por "— — —" ou "· · ·" → cicla ──
+  const ehBrain = autor !== 'voce';
+  if(ehBrain && /\n[—·\-]\s[—·\-]\s[—·\-]\n/.test(txt)){
+    const frames = txt.split(/\n[—·\-]\s[—·\-]\s[—·\-]\n/).map(f=>f.replace(/\s+$/,''));
+    if(frames.length > 1){
+      d.innerHTML = `<div class="author">${autor}</div><div class="bubble"><pre style="font-family:monospace;font-size:12px;line-height:1.15;margin:0;color:var(--accent);white-space:pre;"></pre></div>`;
+      const pre = d.querySelector('pre');
+      pre.textContent = frames[0];
+      msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+      let fi = 0;
+      const timer = setInterval(()=>{ fi=(fi+1)%frames.length; pre.textContent=frames[fi]; msgs.scrollTop=msgs.scrollHeight; }, 650);
+      setTimeout(()=>clearInterval(timer), 650*frames.length*6);
+      return;
+    }
+  }
+
+  // ── DESENHO ESTÁTICO: preserva alinhamento com <pre> ──
+  if(ehBrain && /[╱╲●█┌┐└┘│─▒▓•~]/.test(txt) && txt.includes('\n')){
+    d.innerHTML = `<div class="author">${autor}</div><div class="bubble"><pre style="font-family:monospace;font-size:12px;line-height:1.15;margin:0;color:var(--accent);white-space:pre;">${escapeHtml(txt)}</pre></div>`;
+    msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+    return;
+  }
+
+  d.innerHTML = `<div class="author">${autor}</div><div class="bubble">${escapeHtml(txt)}</div>`;
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function updateHeader(){
+  const temp = V112.edges.filter(e => e.tipo === 'temporal_seq').length;
+  const mielin = V112.edges.filter(e => e.tipo === 'mielinizada').length;
+  const anat = V112.edges.filter(e => e.tipo === 'anatomica').length;
+  statsHeader.textContent = `${V112.nodes.length} nós · ${V112.edges.length} arestas (${temp} STDP · ${mielin} mielin · ${anat} anat) · ${V112.eventos.length} eventos · T${V112.turn}`;
+}
+function renderStats(){
+  const sens_ocup = V112.sensorial.filter(s => s.ocupado).length;
+  gridStats.innerHTML = `
+    <div class="stat"><div class="num">${V112.nodes.length}</div><div class="lbl">nós</div></div>
+    <div class="stat"><div class="num">${V112.edges.length}</div><div class="lbl">arestas</div></div>
+    <div class="stat"><div class="num">${V112.turn}</div><div class="lbl">turno</div></div>
+    <div class="stat"><div class="num">${sens_ocup}/${V112.sensorial.length}</div><div class="lbl">sens</div></div>
+    <div class="stat"><div class="num">${V112.talamo.length}</div><div class="lbl">tálamo</div></div>
+    <div class="stat"><div class="num">${V112.hipocampo.length}</div><div class="lbl">hipo</div></div>
+    <div class="stat"><div class="num">${V112.gaba.length}</div><div class="lbl">GABA</div></div>
+    <div class="stat"><div class="num">${V112.cortex.length}</div><div class="lbl">córtex</div></div>
+    <div class="stat"><div class="num">${V112.amigdala.length}</div><div class="lbl">amíg</div></div>
+    <div class="stat"><div class="num">${V112.nucleos_acao.length}</div><div class="lbl">núcleos</div></div>
+    <div class="stat"><div class="num">${V112.motora.length}</div><div class="lbl">motora</div></div>
+    <div class="stat"><div class="num">${V112.broca.length}</div><div class="lbl">Broca</div></div>
+    <div class="stat"><div class="num">${V112.eventos.length}</div><div class="lbl">eventos</div></div>
+    <div class="stat"><div class="num">${V112.logs.length}</div><div class="lbl">logs</div></div>
+  `;
+}
+function renderTurno(r){
+  const tokensHtml = r.tokens.map(t => `<span class="badge sens">${escapeHtml(t)}</span>`).join('');
+  const nascHtml = r.nascidos.length > 0
+    ? '<div>🌱 ' + r.nascidos.map(id => `<span class="badge hipo">${escapeHtml(v112_node_by_id(id)?.text||'?')}</span>`).join('') + '</div>'
+    : '';
+  const cortHtml = r.cortex_ativos.length > 0
+    ? '<div style="margin-top:4px;">🧠 córtex: ' + r.cortex_ativos.slice(0,4).map(c => `<span class="badge cortex">${c.id}(${c.acum})</span>`).join('') + '</div>'
+    : '';
+  const motorHtml = r.motores_ativos.length > 0
+    ? '<div style="margin-top:4px;">⚡ motor: ' + r.motores_ativos.slice(0,4).map(m => `<span class="badge motor">${m.id}(${m.acum})</span>`).join('') + '</div>'
+    : '';
+  const evHtml = r.evento_id
+    ? `<div style="margin-top:6px; color:var(--hipocampo); font-size:10px;">💾 evento ${r.evento_id} preservou: "${escapeHtml(r.evento_texto)}"</div>`
+    : '';
+  painelTurno.innerHTML = `
+    <div class="panel">
+      <div class="titulo">turno ${V112.turn} <span class="fase-badge">${r.fase}</span></div>
+      <div>tokens: ${tokensHtml}</div>
+      ${nascHtml}
+      ${cortHtml}
+      ${motorHtml}
+      ${evHtml}
+    </div>
+  `;
+}
+function renderEventos(){
+  // Últimos 15 eventos
+  const ultimos = V112.eventos.slice(-15).reverse();
+  if(ultimos.length === 0){
+    painelEventos.innerHTML = '<div class="empty">nenhuma frase preservada ainda</div>';
+    return;
+  }
+  let html = '';
+  for(const ev of ultimos){
+    const rec = v112_reconstruir_evento(ev.id);
+    html += `<div class="evento-tab">
+      <span class="turno">T${ev.turno} · ${ev.id}</span> 
+      <span class="texto">"${escapeHtml(rec.texto_reconstruido)}"</span>
+    </div>`;
+  }
+  painelEventos.innerHTML = html;
+}
+function renderPesos(r){
+  let html = '';
+  for(const [tok, p] of Object.entries(r.pesos)){
+    const max = Math.max(p.sens, p.inter, p.motor);
+    const destino = p.sens === max ? 'SENS' : p.inter === max ? 'INTER' : 'MOTOR';
+    html += `<div class="peso-tab">
+      <strong>"${escapeHtml(tok)}"</strong> → ${destino}
+      <span style="color:var(--ink-low); font-size:9px;">
+        s=${p.sens.toFixed(2)} i=${p.inter.toFixed(2)} m=${p.motor.toFixed(2)}
+      </span>
+    </div>`;
+  }
+  painelPesos.innerHTML = html || '<div class="empty">nenhum cálculo ainda</div>';
+}
+function renderPalavras(){
+  const palavras = V112.nodes
+    .filter(n => n.text && n.camada === 'sensorial')
+    .sort((a,b) => b.mass - a.mass).slice(0, 12);
+  if(palavras.length === 0){
+    painelPalavras.innerHTML = '<div class="empty">rede vazia</div>'; return;
+  }
+  let html = '';
+  for(const n of palavras){
+    const freq = V112.freq_global[n.text] || 0;
+    const viz_count = V112.vizinhos_unicos[n.text] ? V112.vizinhos_unicos[n.text].size : 0;
+    html += `<div class="peso-tab"><strong>${escapeHtml(n.text)}</strong>
+      <span style="color:var(--ink-low); font-size:9px;">m=${n.mass.toFixed(1)} f=${freq} v=${viz_count}</span>
+    </div>`;
+  }
+  painelPalavras.innerHTML = html;
+}
+
+function enviar(){
+  const txt = input.value.trim();
+  if(!txt) return;
+  input.value = '';
+  addMsg('voce', txt);
+  const r = v112_processar(txt);
+  addMsg('brain', r.resposta);
+  const ativos = new Set();
+  for(const t of r.tokens){
+    const n = v112_node_by_text(t);
+    if(n) ativos.add(n.id);
+  }
+  viz.ativos = ativos;
+  viz.nascidos = new Set(r.nascidos);
+  viz.motoresAtivos = new Set(r.motores_ativos.map(m => m.id));
+  viz.corticais = new Set(r.cortex_ativos.map(c => c.id));
+  setTimeout(() => { viz.ativos = new Set(); viz.motoresAtivos = new Set(); viz.corticais = new Set(); }, 3500);
+  setTimeout(() => { viz.nascidos = new Set(); }, 5000);
+  renderTurno(r);
+  renderPesos(r);
+  renderPalavras();
+  renderStats();
+  renderEventos();
+  renderAmigdala(r.amigdala);
+  updateHeader();
+}
+btn.addEventListener('click', enviar);
+input.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); enviar(); }
+});
+input.addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px';
+});
+for(const b of document.querySelectorAll('.test-btn')){
+  b.addEventListener('click', () => { input.value = b.dataset.msg; enviar(); });
+}
+
+document.getElementById('btn-treinar').addEventListener('click', async () => {
+  if(V112.turn > 5){
+    if(!confirm('Já tem dados na rede. Treinar mesmo assim? (vai somar ao que existe)')) return;
+  }
+  const total = TREINAMENTO_PACOTE.curtas.length + TREINAMENTO_PACOTE.medias.length + TREINAMENTO_PACOTE.longas.length;
+  addMsg('brain', `📚 iniciando treinamento de ${total} frases (200 curtas + 20 médias + 20 longas)...`, 'sleep');
+  if(window.LOADING){ window.LOADING.show('📚 Ensinando ' + total + ' frases...', 'absorvendo conhecimento'); await new Promise(res => setTimeout(res, 40)); }
+  try {
+  
+  // Roda em chunks pra não travar UI
+  const t_inicio = Date.now();
+  
+  async function processarChunk(frases, label){
+    return new Promise(resolve => {
+      let i = 0;
+      function tick(){
+        const fim = Math.min(i + 10, frases.length);
+        for(let k = i; k < fim; k++) v112_processar(frases[k]);
+        i = fim;
+        if(i < frases.length){
+          setTimeout(tick, 0);
+        } else {
+          resolve();
+        }
+      }
+      tick();
+    });
+  }
+  
+  await processarChunk(TREINAMENTO_PACOTE.curtas, 'curtas');
+  addMsg('brain', `📚 fase 1: ${TREINAMENTO_PACOTE.curtas.length} frases curtas absorvidas.`, 'sleep');
+  
+  // Meditação intermediária
+  const m1 = v112_sleep_replay(20);
+  addMsg('brain', `💤 meditação 1: ${m1.fortalecidas} ligações fortalecidas.`, 'sleep');
+  
+  await processarChunk(TREINAMENTO_PACOTE.medias, 'medias');
+  addMsg('brain', `📚 fase 2: ${TREINAMENTO_PACOTE.medias.length} frases médias absorvidas.`, 'sleep');
+  
+  await processarChunk(TREINAMENTO_PACOTE.longas, 'longas');
+  addMsg('brain', `📚 fase 3: ${TREINAMENTO_PACOTE.longas.length} frases longas absorvidas.`, 'sleep');
+  
+  // Meditação final
+  const m2 = v112_sleep_replay(40);
+  addMsg('brain', `💤 meditação final: ${m2.fortalecidas} ligações fortalecidas, ${m2.dormindo} ruídos adormecidos.`, 'sleep');
+  
+  const t_total = ((Date.now() - t_inicio)/1000).toFixed(1);
+  addMsg('brain', `✅ pronto em ${t_total}s. ${V112.nodes.length} nós, ${V112.edges.length} arestas, ${V112.eventos.length} frases preservadas. me pergunta alguma coisa!`, 'sleep');
+  
+  renderStats(); renderPalavras(); renderEventos(); updateHeader();
+  } finally { if(window.LOADING) window.LOADING.hide(); }
+});
+
+document.getElementById('btn-sleep').addEventListener('click', async () => {
+  addMsg('brain', '💤 entrando em meditação...', 'sleep');
+  const doMed = () => v112_sleep_replay(40);
+  const log = window.LOADING ? await window.LOADING.wrap('💤 Meditando...', doMed, 'consolidando ligações') : doMed();
+  addMsg('brain', `💤 acordei. ${log.fortalecidas} ligações fortalecidas, ${log.dormindo} dormindo. NENHUMA aresta deletada.`, 'sleep');
+  renderPalavras(); renderStats(); updateHeader();
+});
+
+document.getElementById('btn-salvar').addEventListener('click', () => {
+  const estado = v112_exportar();
+  const blob = new Blob([JSON.stringify(estado, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `brain_v112_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-carregar').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = async ev => {
+    try {
+      const s = JSON.parse(ev.target.result);
+      const doImp = () => v112_importar(s);
+      const ok = window.LOADING ? await window.LOADING.wrap('📁 Carregando cérebro...', doImp, 'importando estado') : doImp();
+      if(ok){
+        renderStats(); renderPalavras(); renderEventos(); updateHeader();
+        addMsg('brain', '✅ cérebro carregado com eventos.');
+      } else addMsg('brain', '❌ arquivo inválido.');
+    } catch(err){ addMsg('brain', '❌ erro: ' + err.message); }
+  };
+  r.readAsText(f);
+});
+
+// MERGE — junta cérebro com o atual
+document.getElementById('btn-carregar-merge').addEventListener('click', () => {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = async ev => {
+      try {
+        const s = JSON.parse(ev.target.result);
+        const doMerge = () => v112_importar_merge(s);
+        const res = window.LOADING ? await window.LOADING.wrap('🔀 Juntando cérebros...', doMerge, 'mesclando nós e arestas') : doMerge();
+        if(res.ok){
+          renderStats(); renderPalavras(); renderEventos(); updateHeader();
+          if(res.modo === 'primeiro_carregamento'){
+            addMsg('brain', '✅ primeiro cérebro carregado (próximas vezes irá juntar).');
+          } else {
+            const ss = res.stats;
+            addMsg('brain', `🔀 JUNTADO: +${ss.nos_novos} nós, +${ss.arestas_novas} arestas, +${ss.eventos} eventos, +${ss.dna_novo} DNA`);
+          }
+        } else addMsg('brain', '❌ merge falhou: ' + res.motivo);
+      } catch(err){ addMsg('brain', '❌ erro: ' + err.message); }
+    };
+    r.readAsText(f);
+  });
+  inp.click();
+});
+
+// Lab 13 — botão Árvore Radial (default)
+document.getElementById('btn-arvore').addEventListener('click', () => {
+  if(typeof v112_reposicionar_em_arvore === 'function'){
+    const r = v112_reposicionar_em_arvore();
+    addMsg('brain', '🌲 árvore radial aplicada: '+r.info);
+  } else {
+    addMsg('brain', '❌ função não disponível');
+  }
+});
+
+// Lab 12.7 — botão Y reposiciona em bifurcado
+document.getElementById('btn-y').addEventListener('click', () => {
+  if(typeof v112_reposicionar_em_Y === 'function'){
+    const r = v112_reposicionar_em_Y();
+    addMsg('brain', '🌳 estrutura Y aplicada: '+r.info);
+  } else {
+    addMsg('brain', '❌ função não disponível');
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if(!confirm('Resetar tudo? (apaga eventos também)')) return;
+  v112_seed();
+  msgs.innerHTML = '';
+  painelTurno.innerHTML = '';
+  painelPesos.innerHTML = '';
+  painelEventos.innerHTML = '';
+  renderPalavras(); renderStats(); updateHeader();
+  renderAmigdala();
+  addMsg('brain', '🔄 reset. cérebro re-cabeado com 11 faixas anatômicas.');
+});
+
+// ═══ EXPORTAR LOGS ═══
+document.getElementById('btn-log-json').addEventListener('click', () => {
+  if(V112.logs.length === 0){ addMsg('brain', '⚠️ buffer de logs vazio.'); return; }
+  const blob = new Blob([v112_logs_json()], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `logs_v113_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+  a.click();
+  addMsg('brain', `📋 exportei ${V112.logs.length} turnos como JSON (cola aqui pra eu analisar)`);
+});
+document.getElementById('btn-log-txt').addEventListener('click', () => {
+  if(V112.logs.length === 0){ addMsg('brain', '⚠️ buffer de logs vazio.'); return; }
+  const blob = new Blob([v112_logs_txt()], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `logs_v113_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.txt`;
+  a.click();
+  addMsg('brain', `📄 exportei ${V112.logs.length} turnos como TXT legível`);
+});
+
+// ═══ RENDER AMÍGDALA ═══
+function renderAmigdala(amig){
+  const painel = document.getElementById('painel-amigdala');
+  if(!painel) return;
+  const t = amig ? amig.depois.tensao : (V112.amigdala_tensao || 0);
+  const estado = amig ? amig.depois.estado : V112.amigdala_estado;
+  const icone = estado === 'calma' ? '😌' : estado === 'tensao' ? '😰' : '🚨';
+  const cor = estado === 'calma' ? '#4ade80' : estado === 'tensao' ? '#fbbf24' : '#ef4444';
+  const motivo = amig && amig.motivo && amig.motivo !== 'nenhuma anomalia' 
+    ? `<div style="font-size:10px;color:var(--ink-low);margin-top:4px;">${escapeHtml(amig.motivo)}</div>` : '';
+  const gabaTxt = V112.gaba_ativo ? '<span style="background:#ef4444;color:white;padding:2px 6px;border-radius:3px;font-size:10px;">GABA ATIVO</span>' : '';
+  painel.innerHTML = `
+    <div style="padding:8px;background:var(--bg-card);border:1px solid ${cor};border-radius:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:${cor};">
+        <span>${icone} ${estado.toUpperCase()} · tensão ${t.toFixed(1)}/100</span>
+        ${gabaTxt}
+      </div>
+      <div style="height:8px;background:var(--bg-soft);border-radius:4px;overflow:hidden;margin-top:6px;">
+        <div style="height:100%;width:${t}%;background:linear-gradient(90deg,#4ade80,#fbbf24,#ef4444);transition:width 0.6s;"></div>
+      </div>
+      ${motivo}
+    </div>`;
+}
+
+// ═══ RENDER SELF-CORE ═══
+function renderSelfCore(r){
+  const painel = document.getElementById('painel-selfcore');
+  if(!painel) return;
+  const sc = V112.self_core;
+  if(!sc){ painel.innerHTML = '<div class="empty">sem self-core</div>'; return; }
+  const ativo = r?.log?.self_core?.ativo;
+  const motivo = r?.log?.self_core?.motivo || '-';
+  const cor_borda = ativo ? '#fbbf24' : 'var(--border)';
+  const bg = ativo ? 'rgba(251,191,36,0.06)' : 'transparent';
+  function lista(arr){ return arr && arr.length > 0 ? arr.map(x => `<code style="color:#fbbf24;">${escapeHtml(x)}</code>`).join(', ') : '<span style="color:var(--ink-low);">—</span>'; }
+  painel.innerHTML = `
+    <div style="padding:8px;border:1px solid ${cor_borda};background:${bg};border-radius:4px;">
+      <div style="font-weight:600;color:#fbbf24;margin-bottom:4px;">
+        ${ativo ? '⚡ ATIVO' : '○ repouso'} ${ativo ? `<span style="font-size:10px;color:var(--ink-low);">(${escapeHtml(motivo)})</span>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:80px 1fr;gap:2px;font-size:11px;">
+        <div style="color:var(--ink-low);">sistema:</div><div><code>${escapeHtml(sc.sistema_nome)}</code></div>
+        <div style="color:var(--ink-low);">sou:</div><div>${lista(sc.sou)}</div>
+        <div style="color:var(--ink-low);">nome (IA):</div><div>${lista(sc.nome)}</div>
+        <div style="color:var(--ink-low);">gênero:</div><div>${lista(sc.genero)}</div>
+        <div style="color:var(--ink-low);">criador:</div><div>${lista(sc.criador)}</div>
+        <div style="color:var(--ink-low);">user:</div><div>${lista(sc.user)}</div>
+        <div style="color:var(--ink-low);">orbitantes:</div><div><code>${Object.keys(sc.orbitantes||{}).length} palavras</code></div>
+        <div style="color:var(--ink-low);">modo:</div><div><code>${sc.modo_ativacao}</code> / <code>${sc.modo_gravidade}</code></div>
+      </div>
+    </div>`;
+}
+
+// ═══ RENDER 3 CANDIDATOS DE EMISSÃO ═══
+function renderCandidatos(r){
+  const painel = document.getElementById('painel-candidatos');
+  if(!painel) return;
+  if(!r || !r.log || !r.log.candidatos){
+    painel.innerHTML = '<div class="empty">aguardando primeira mensagem</div>';
+    return;
+  }
+  const c = r.log.candidatos;
+  const ativo = c.criterio_usado;
+  function lbl(nome, cand){
+    const isActive = nome === ativo;
+    const cor = isActive ? '#4ade80' : 'var(--ink-low)';
+    const bg = isActive ? 'rgba(74,222,128,0.08)' : 'transparent';
+    const emite = cand.emite.length > 0 ? `<strong style="color:var(--ink);">${escapeHtml(cand.emite.join(', '))}</strong>` : '<span style="color:var(--ink-low);">— (silêncio)</span>';
+    return `
+      <div style="padding:6px 8px;border-left:3px solid ${cor};background:${bg};margin:3px 0;font-size:11px;">
+        <div><strong>${nome}</strong>${isActive?' ← usado':''}</div>
+        <div style="margin-top:2px;">${emite}</div>
+        <div style="font-size:9px;color:var(--ink-low);margin-top:2px;">${escapeHtml(cand.razao)}</div>
+      </div>`;
+  }
+  painel.innerHTML = lbl('ratio', c.ratio) + lbl('media', c.media) + lbl('absoluto', c.absoluto);
+}
+
+// ═══ CONFIG SLIDERS ═══
+function setupSliders(){
+  V112.config = V112.config || {criterio_emissao: 'ratio', k_ratio: 1.8, k_media: 3.0, k_absoluto: 200};
+  
+  const sel = document.getElementById('sel-criterio');
+  sel.value = V112.config.criterio_emissao;
+  sel.addEventListener('change', () => {
+    V112.config.criterio_emissao = sel.value;
+  });
+  
+  function bind(sliderId, valId, configKey){
+    const sl = document.getElementById(sliderId);
+    const vl = document.getElementById(valId);
+    sl.value = V112.config[configKey];
+    vl.textContent = parseFloat(V112.config[configKey]).toFixed(configKey === 'k_absoluto' ? 0 : 1);
+    sl.addEventListener('input', () => {
+      const v = parseFloat(sl.value);
+      V112.config[configKey] = v;
+      vl.textContent = configKey === 'k_absoluto' ? v.toFixed(0) : v.toFixed(1);
+    });
+  }
+  bind('sl-ratio', 'v-ratio', 'k_ratio');
+  bind('sl-media', 'v-media', 'k_media');
+  bind('sl-absoluto', 'v-absoluto', 'k_absoluto');
+}
+setupSliders();
+
+// ═══ LOOP BACKGROUND (C) ═══
+// 10 iterações por hora = 1 a cada 6 minutos (360000ms)
+// Cérebro fica "pensando" sozinho — propaga energia em palavras com massa alta
+// Botão pausa/retoma
+let _bg_loop_ativo = false;
+let _bg_loop_interval = null;
+
+function bg_tick(){
+  if(!_bg_loop_ativo) return;
+  if(V112.turn === 0) return;  // ainda não tem rede
+  if(V112._sleep_active) return;
+  
+  // Pega top 3 palavras mais "carregadas" (massa alta) e propaga
+  const tops = V112.nodes
+    .filter(n => n.text && n.camada === 'sensorial' && n.mass > 3)
+    .sort((a,b) => b.mass - a.mass)
+    .slice(0, 3);
+  if(tops.length === 0) return;
+  
+  for(const n of tops){
+    v112_propagar(n.id, 15, 3);
+  }
+  // Decay leve depois
+  for(const n of V112.nodes) n.acumulador *= 0.5;
+  
+  console.log('[bg loop] tick — propagou', tops.map(n => n.text).join(', '));
+}
+
+document.getElementById('btn-loop').addEventListener('click', () => {
+  _bg_loop_ativo = !_bg_loop_ativo;
+  const btn = document.getElementById('btn-loop');
+  if(_bg_loop_ativo){
+    btn.textContent = '▶ rodando';
+    btn.style.background = '#4ade80';
+    _bg_loop_interval = setInterval(bg_tick, 6 * 60 * 1000);  // 6min
+    addMsg('brain', '🧠 loop background ativo (1 tick a cada 6 min)', 'sleep');
+  } else {
+    btn.textContent = '⏸ pausado';
+    btn.style.background = '';
+    if(_bg_loop_interval){ clearInterval(_bg_loop_interval); _bg_loop_interval = null; }
+    addMsg('brain', '⏸ loop background pausado', 'sleep');
+  }
+});
+
+// Render candidatos no enviar
+const _orig_renderTurno = renderTurno;
+renderTurno = function(r){
+  _orig_renderTurno(r);
+  renderCandidatos(r);
+  renderSelfCore(r);
+};
+
+// Sleep automático
+setInterval(() => {
+  const ocioso = Date.now() - V112._last_activity;
+  if(ocioso > 3 * 60 * 1000 && V112.turn > 5){
+    V112._last_activity = Date.now();
+    addMsg('brain', '💤 ficou quieto... vou meditar.', 'sleep');
+    setTimeout(() => {
+      const log = v112_sleep_replay(30);
+      addMsg('brain', `💤 acordei. ${log.fortalecidas} fortalecidas, ${log.dormindo} dormindo.`, 'sleep');
+      renderPalavras(); renderStats(); updateHeader();
+    }, 200);
+  }
+}, 30000);
+
+renderStats(); updateHeader();
+renderAmigdala();
+addMsg('brain', 'oi. v11.3 — 11 faixas anatômicas (sensorial, tálamo, hipocampo, GABA, córtex, amígdala, núcleos ação, motora, Broca). Amígdala viva, fix do gradiente "oi", logs detalhados. Botões 📋 log JSON e 📄 log TXT exportam o caminho lógico de cada turno.');
+
+// ═══ FUNÇÕES DA BARRA EXTRA — paletas + carga GitHub/Manual (V15.1 FINAL) ═══
+function toastExtra(msg, dur){
+  dur = dur || 2500;
+  var t = document.getElementById('toast-extra');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, dur);
+}
+
+window.setTemaExtra = function(nome){
+  var temas = ['sci-fi','matrix','solar','borboleta','cyber','dracula','oceano','sakura','lava','gelo'];
+  for(var i=0; i<temas.length; i++) document.body.classList.remove('tema-'+temas[i]);
+  if(nome !== 'sci-fi') document.body.classList.add('tema-'+nome);
+  try { localStorage.setItem('arch_tema', nome); } catch(e){}
+  var btns = document.querySelectorAll('.pal-btn');
+  for(var j=0; j<btns.length; j++)
+    btns[j].classList.toggle('active', btns[j].getAttribute('data-tema') === nome);
+  toastExtra('🎨 Tema: ' + nome);
+};
+
+window.carregarDoGithubExtra = function(){
+  // Carrega o cerebro_V15.json local (mesma pasta do HTML)
+  var url = 'cerebro_V15.json';
+  toastExtra('⏳ Baixando cérebro...');
+  fetch(url).then(function(r){
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(async function(c){
+    if(typeof window.v112_importar === 'function'){
+      const doImp = () => window.v112_importar(c);
+      if(window.LOADING) await window.LOADING.wrap('🌐 Carregando cérebro...', doImp, 'importando do GitHub'); else doImp();
+      toastExtra('✓ Cérebro do GitHub carregado (' + (c.nodes ? c.nodes.length : '?') + ' nós)');
+      if(typeof renderStats === 'function') renderStats();
+      if(typeof updateHeader === 'function') updateHeader();
+    } else {
+      toastExtra('❌ v112_importar não disponível');
+    }
+  }).catch(function(e){
+    toastExtra('❌ Falha: ' + e.message);
+  });
+};
+
+window.carregarManualExtra = function(){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = function(e){
+    var f = e.target.files[0];
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = async function(){
+      try {
+        var c = JSON.parse(r.result);
+        const doImp = () => window.v112_importar(c);
+        if(window.LOADING) await window.LOADING.wrap('📂 Importando cérebro...', doImp, f.name); else doImp();
+        toastExtra('✓ Importado: ' + f.name);
+        if(typeof renderStats === 'function') renderStats();
+        if(typeof updateHeader === 'function') updateHeader();
+      } catch(err){ toastExtra('❌ ' + err.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+};
+
+// Restaurar tema salvo
+try {
+  var _tema_salvo = localStorage.getItem('arch_tema');
+  if(_tema_salvo && _tema_salvo !== 'sci-fi') setTemaExtra(_tema_salvo);
+} catch(e){}
+
+// ═══════════════════════════════════════════════════════════════
+//  ▼▼▼ INTEGRAÇÃO LEVA 3 — desktop
+// ═══════════════════════════════════════════════════════════════
+
+// ─── ENSINAR FUNCIONAL no desktop (igual ao mobile) ────────────
+// O desktop tinha TREINAMENTO_PACOTE hardcoded. Substituímos pelo TREINO progressivo.
+(function(){
+  const btn = document.getElementById('btn-treinar');
+  if(!btn) return;
+  // Remove TODOS os listeners antigos clonando o nó
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+
+  newBtn.addEventListener('click', async function(){
+    if(!window.TREINO){ alert('Módulo TREINO não carregado'); return; }
+    if(window.TREINO.acabou()){
+      addMsg && addMsg('brain', '🎓 Treinamento completo. Não há mais pacotes pra ensinar.', 'sleep');
+      newBtn.disabled = true;
+      newBtn.innerHTML = '🎓 acabou';
+      newBtn.style.background = 'rgba(251,191,36,0.15)';
+      return;
+    }
+    const r = await window.TREINO.ensinarProximo();
+    if(r.ok){
+      addMsg && addMsg('brain', window.TREINO.mensagemDeConclusao(r), 'sleep');
+      // Atualiza label do botão
+      if(window.TREINO.acabou()){
+        newBtn.innerHTML = '🎓 acabou';
+        newBtn.style.background = 'rgba(251,191,36,0.15)';
+        newBtn.disabled = true;
+      } else {
+        newBtn.innerHTML = '📚 ' + window.TREINO.labelProximo();
+      }
+      // Refresh
+      if(typeof renderStats === 'function') renderStats();
+      if(typeof renderPalavras === 'function') renderPalavras();
+      if(typeof renderEventos === 'function') renderEventos();
+      if(typeof updateHeader === 'function') updateHeader();
+    } else {
+      addMsg && addMsg('brain', '❌ Erro: ' + (r.erro || 'desconhecido'), 'sleep');
+    }
+  });
+
+  // Inicializa label
+  setTimeout(function(){
+    if(window.TREINO && !window.TREINO.acabou()){
+      newBtn.innerHTML = '📚 ' + window.TREINO.labelProximo();
+    }
+  }, 500);
+})();
+
+// ─── MEDITAR (btn-sleep) com overlay ───────────────────────────
+(function(){
+  const btn = document.getElementById('btn-sleep');
+  if(!btn) return;
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('click', async function(){
+    if(!window.LOADING){ if(typeof v112_sleep_replay==='function') v112_sleep_replay(40); return; }
+    await window.LOADING.run('💤 Meditando...', async function(setProgress, setLabel){
+      const ciclos = 40;
+      for(let i = 0; i < ciclos; i++){
+        try { if(typeof v112_sleep_replay==='function') v112_sleep_replay(1); } catch(e){}
+        setProgress(i+1, ciclos);
+        setLabel('💤 Meditando...', (i+1) + ' de ' + ciclos + ' ciclos');
+        await new Promise(r => setTimeout(r, 25));
+      }
+      if(typeof renderStats === 'function') renderStats();
+      if(typeof updateHeader === 'function') updateHeader();
+    });
+  });
+})();
+
+// ─── SALVAR com overlay ────────────────────────────────────────
+(function(){
+  const btn = document.getElementById('btn-salvar');
+  if(!btn) return;
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('click', async function(){
+    if(!window.LOADING || typeof v112_exportar !== 'function') return;
+    await window.LOADING.run('💾 Salvando cérebro...', async function(){
+      await new Promise(r => setTimeout(r, 30));
+      const estado = v112_exportar();
+      const blob = new Blob([JSON.stringify(estado)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'brain_v112_' + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  });
+})();
+
+// ─── CARREGAR com overlay (já tinha; envolvemos) ───────────────
+const _carregarGithubExtraOrig = window.carregarDoGithubExtra;
+window.carregarDoGithubExtra = async function(){
+  if(!window.LOADING){ if(_carregarGithubExtraOrig) _carregarGithubExtraOrig(); return; }
+  await window.LOADING.run('🧠 Carregando cérebro...', async function(setProgress, setLabel){
+    try {
+      const arquivo = window.escolherCerebro ? window.escolherCerebro() : 'cerebro_V15.json';
+      setLabel('🧠 Carregando cérebro...', 'fetching ' + arquivo + '...');
+      let r = await fetch(arquivo);
+      // Fallback: leve não existe → usa pesado
+      if(!r.ok && arquivo === 'cerebro_V15.1.json'){
+        setLabel('🧠 Carregando cérebro...', 'leve não achado, usando completo...');
+        r = await fetch('cerebro_V15.json');
+      }
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      setLabel('🧠 Carregando cérebro...', 'parseando...');
+      const c = await r.json();
+      setLabel('🧠 Carregando cérebro...', 'importando...');
+      if(typeof v112_importar === 'function') v112_importar(c);
+      if(window.TREINO) window.TREINO.reset();
+      if(typeof renderStats === 'function') renderStats();
+      if(typeof updateHeader === 'function') updateHeader();
+      if(typeof addMsg === 'function') addMsg('brain', '✓ Cérebro carregado: ' + (c.nodes?c.nodes.length:0) + ' nós', 'sleep');
+    } catch(e){
+      if(typeof addMsg === 'function') addMsg('brain', '❌ ' + e.message);
+    }
+  });
+};
+
+const _carregarManualExtraOrig = window.carregarManualExtra;
+window.carregarManualExtra = function(){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = async function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    await window.LOADING.run('📂 Importando JSON...', async function(setProgress, setLabel){
+      setLabel('📂 Importando JSON...', 'lendo arquivo...');
+      const txt = await f.text();
+      const c = JSON.parse(txt);
+      setLabel('📂 Importando JSON...', 'importando...');
+      if(typeof v112_importar === 'function') v112_importar(c);
+      if(window.TREINO) window.TREINO.reset();
+      if(typeof renderStats === 'function') renderStats();
+      if(typeof updateHeader === 'function') updateHeader();
+      if(typeof addMsg === 'function') addMsg('brain', '✓ Cérebro importado: ' + (c.nodes ? c.nodes.length : '?') + ' nós', 'sleep');
+    });
+  };
+  inp.click();
+};
+
+// ─── CHAT com PENSANDO se >2s ──────────────────────────────────
+(function(){
+  const sendBtn = document.querySelector('.input-row button') || document.getElementById('btn-send');
+  const inputEl = document.getElementById('input');
+  const msgsEl = document.getElementById('msgs');
+  if(!inputEl || !msgsEl) return;
+
+  function envioComPensando(){
+    const txt = inputEl.value.trim();
+    if(!txt) return;
+    if(typeof addMsg === 'function') addMsg('user', txt);
+    inputEl.value = '';
+
+    const pensando = window.PENSANDO ? window.PENSANDO.start(msgsEl) : null;
+    setTimeout(function(){
+      try {
+        const r = (typeof v112_processar === 'function') ? v112_processar(txt) : null;
+        if(pensando) pensando.stop();
+        const resp = (r && r.resposta) || '(sem resposta)';
+        let tag = 'tur';
+        if(r && r._cognitivo) tag = 'cog';
+        else if(r && r._estatistico) tag = 'est';
+        else if(r && r.reflexo_social) tag = 'soc';
+        if(typeof addMsg === 'function') addMsg('brain', resp, tag);
+        if(typeof renderStats === 'function') renderStats();
+        if(typeof renderEventos === 'function') renderEventos();
+        if(typeof updateHeader === 'function') updateHeader();
+      } catch(e){
+        if(pensando) pensando.stop();
+        if(typeof addMsg === 'function') addMsg('brain', '⚠ ' + e.message);
+      }
+    }, 20);
+  }
+
+  // Substitui handler do botão e Enter
+  if(sendBtn){
+    sendBtn.replaceWith(sendBtn.cloneNode(true));
+    const newSend = document.querySelector('.input-row button') || document.getElementById('btn-send');
+    if(newSend) newSend.addEventListener('click', envioComPensando);
+  }
+  const newInput = inputEl.cloneNode(true);
+  inputEl.parentNode.replaceChild(newInput, inputEl);
+  newInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); envioComPensando(); }
+  });
+  newInput.addEventListener('input', function(e){
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px';
+  });
+})();
+
+// ─── MENUS ⚛ FORMATO e ⛓ CONEXÃO no desktop ────────────────────
+let _vizEstiloDesk = 0;
+let _vizConexaoDesk = null;
+
+function ensureDeskMenuStyles(){
+  if(document.getElementById('deskmenu-style')) return;
+  const s = document.createElement('style');
+  s.id = 'deskmenu-style';
+  s.textContent = `
+    .deskmenu {
+      position: fixed; background: rgba(13,20,36,0.97);
+      border: 1px solid rgba(94,234,212,0.35); border-radius: 10px;
+      padding: 8px; min-width: 220px; max-width: 280px; max-height: 70vh;
+      overflow-y: auto; z-index: 10000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .deskmenu.show { display: block; }
+    .deskmenu h6 {
+      color: #5eead4; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1px; padding: 4px 6px 6px; margin: 0 0 4px 0;
+      border-bottom: 1px solid rgba(94,234,212,0.18);
+    }
+    .deskmenu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 8px; cursor: pointer; border-radius: 5px;
+      transition: background 0.1s;
+    }
+    .deskmenu-item:hover { background: rgba(94,234,212,0.10); }
+    .deskmenu-item.active { background: rgba(94,234,212,0.18); }
+    .deskmenu-item canvas {
+      width: 30px; height: 30px; border-radius: 5px; flex-shrink: 0;
+      background: #06080f;
+    }
+    .deskmenu-item .nome { font-size: 12px; color: #d1dbf0; font-weight: 600; }
+    .deskmenu-item .desc { font-size: 10px; color: #5a6a8a; }
+  `;
+  document.head.appendChild(s);
+}
+
+function getOrCreateDeskMenu(id){
+  let m = document.getElementById(id);
+  if(!m){
+    m = document.createElement('div');
+    m.id = id;
+    m.className = 'deskmenu';
+    document.body.appendChild(m);
+  }
+  return m;
+}
+
+window.toggleMenuFormatoDesk = function(ev){
+  ev.stopPropagation();
+  ensureDeskMenuStyles();
+  fecharDeskMenus();
+  const m = getOrCreateDeskMenu('deskmenu-formato');
+  if(!window.VIZ){ m.innerHTML = '<div style="padding:10px;color:#5a6a8a">VIZ não carregado</div>'; }
+  else {
+    let h = '<h6>⚛ FORMATO</h6>';
+    window.VIZ.ESTILOS.forEach(function(e, i){
+      h += '<div class="deskmenu-item' + (i === _vizEstiloDesk ? ' active' : '') +
+           '" data-i="' + i + '"><canvas></canvas><div><div class="nome">' + e.nome +
+           '</div><div class="desc">' + e.desc + '</div></div></div>';
+    });
+    m.innerHTML = h;
+    m.querySelectorAll('.deskmenu-item').forEach(function(it){
+      const i = parseInt(it.dataset.i);
+      window.VIZ.renderSwatch(it.querySelector('canvas'), window.VIZ.ESTILOS[i]);
+      it.onclick = function(){
+        _vizEstiloDesk = i;
+        m.classList.remove('show');
+        if(typeof addMsg === 'function') addMsg('brain', '🎨 Estilo: ' + window.VIZ.ESTILOS[i].nome, 'sleep');
+      };
+    });
+  }
+  const rect = ev.target.getBoundingClientRect();
+  m.style.top = (rect.bottom + 6) + 'px';
+  m.style.left = rect.left + 'px';
+  m.classList.add('show');
+};
+
+window.toggleMenuConexaoDesk = function(ev){
+  ev.stopPropagation();
+  ensureDeskMenuStyles();
+  fecharDeskMenus();
+  const m = getOrCreateDeskMenu('deskmenu-conexao');
+  if(!window.VIZ){ m.innerHTML = '<div style="padding:10px;color:#5a6a8a">VIZ não carregado</div>'; }
+  else {
+    let h = '<h6>⛓ CONEXÃO</h6>';
+    h += '<div class="deskmenu-item' + (!_vizConexaoDesk ? ' active' : '') + '" data-t="__default__"><canvas></canvas><div><div class="nome">↻ Padrão do estilo</div><div class="desc">usa o configurado</div></div></div>';
+    window.VIZ.TIPOS_EDGE.forEach(function(tipo){
+      h += '<div class="deskmenu-item' + (_vizConexaoDesk === tipo ? ' active' : '') +
+           '" data-t="' + tipo + '"><canvas></canvas><div><div class="nome">' + tipo + '</div></div></div>';
+    });
+    m.innerHTML = h;
+    m.querySelectorAll('.deskmenu-item').forEach(function(it){
+      const t = it.dataset.t;
+      const cv = it.querySelector('canvas');
+      const ctx = cv.getContext('2d');
+      cv.width = 30; cv.height = 30;
+      ctx.fillStyle = '#06080f'; ctx.fillRect(0,0,30,30);
+      ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(4, 24); ctx.lineTo(26, 6); ctx.stroke();
+      it.onclick = function(){
+        _vizConexaoDesk = (t === '__default__') ? null : t;
+        m.classList.remove('show');
+        if(typeof addMsg === 'function') addMsg('brain', '⛓ Conexão: ' + (t === '__default__' ? 'padrão' : t), 'sleep');
+      };
+    });
+  }
+  const rect = ev.target.getBoundingClientRect();
+  m.style.top = (rect.bottom + 6) + 'px';
+  m.style.left = rect.left + 'px';
+  m.classList.add('show');
+};
+
+function fecharDeskMenus(){
+  ['deskmenu-formato','deskmenu-conexao'].forEach(function(id){
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('show');
+  });
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.deskmenu') && !e.target.closest('#btn-formato') && !e.target.closest('#btn-conexao')){
+    fecharDeskMenus();
+  }
+});
+
+// ─── PALETA CÉREBRO DESKTOP (8 paletas em cima dos clusters) ─────
+let _vizPaletaCerebroDesk = 'padrao';
+window.setPaletaCerebroDesk = function(nome){
+  _vizPaletaCerebroDesk = nome;
+  // Marca ativo na UI
+  document.querySelectorAll('.pal-btn-cere').forEach(function(b){
+    b.classList.toggle('active', b.dataset.pal === nome);
+  });
+  // Força redraw imediato — o desenharRede patched detecta paleta ≠ padrão e usa VIZ.desenhar
+  if(typeof window.desenharRede === 'function') window.desenharRede();
+  // Feedback visual
+  if(typeof toastExtra === 'function') toastExtra('🧠 Paleta cérebro: ' + nome);
+};
+
+// ─── PATCH desenharRede pra usar VIZ.desenhar quando estilo ≠ Padrão ─────
+// (Patcheamos desenharRede em vez de loopViz porque loopViz já tá rodando
+//  com referência local — substituir window.loopViz não tem efeito)
+let _vizFrameDesk = 0;
+let _vizParticlesDesk = [];
+const _desenharRedeOriginal = window.desenharRede || desenharRede;
+
+window.desenharRede = function(){
+  try {
+    // PADRÃO (estilo 0) = renderizador LEGACY PORTADO DO MOBILE — pra ficar IDÊNTICO ao celular.
+    if(_vizEstiloDesk === 0 && typeof desenharCerebro_legacy_desk === 'function'){
+      if(viz && viz.modo === 'rotar') viz.rotY += 0.003;
+      else if(viz && viz.modo === 'diagonal'){ viz.rotY += 0.0028; viz.rotX += 0.0019; }
+      desenharCerebro_legacy_desk();
+      return;
+    }
+    // Estilos 1+ usam o VIZ.desenhar
+    if(!window.VIZ){
+      _desenharRedeOriginal();
+      return;
+    }
+    _vizFrameDesk++;
+    if(viz && viz.modo === 'rotar') viz.rotY += 0.003;
+    else if(viz && viz.modo === 'diagonal'){ viz.rotY += 0.0028; viz.rotX += 0.0019; }
+
+    // Monta cfg
+    const cfg = window.VIZ.clonarEstilo(_vizEstiloDesk);
+    if(_vizConexaoDesk) cfg.edge = _vizConexaoDesk;
+    // Paleta cérebro (exceto estilo Original que usa cores reais por camada)
+    if(_vizEstiloDesk !== 1 && _vizPaletaCerebroDesk !== 'padrao'){
+      window.VIZ.aplicarPaletaCerebro(cfg, _vizPaletaCerebroDesk);
+    }
+
+    window.VIZ.desenhar({
+      canvas: canvas,
+      cerebro: { nodes: V112.nodes, edges: V112.edges },
+      cfg: cfg,
+      frame: _vizFrameDesk,
+      anguloY: viz.rotY || 0,
+      anguloX: viz.rotX || 0,
+      panX: 0,
+      panY: 0,
+      particles: _vizParticlesDesk,
+      zoomMult: (viz.zoom || 0.7) / 0.7,  // viz.zoom = 0.7 é o default; usuário pode aumentar ou diminuir
+      modoOriginal: (_vizEstiloDesk === 1)
+    });
+  } catch(e){
+    console.error('[desenharRede patched] erro:', e);
+    try { _desenharRedeOriginal(); } catch(_){}
+  }
+};
+
+// ─── RENDERIZADOR LEGACY PORTADO DO MOBILE ───────────────────────────────
+// Pro Padrão (estilo 0) do desktop ficar IDÊNTICO ao Padrão do mobile.
+// Mesma matemática do desenharCerebro_legacy do celular, usando os globais do desktop
+// (viz.zoom/panX/panY/rotX/rotY/modo).
+function desenharCerebro_legacy_desk() {
+  const cv = document.getElementById('canvas');
+  if(!cv) return;
+  if(!window.V112 || !window.V112.nodes) return;
+  const nodes = window.V112.nodes;
+  const nN = nodes.length, nE = (window.V112.edges || []).length;
+
+  // GUARD anti-freeze: no cérebro grande, redesenhar TODO frame trava a thread (nem digitar dá).
+  // Então desenha UMA vez (com aviso) e congela. O cérebro continua respondendo por baixo.
+  const pesado = nN > 6000 || nE > 60000;
+  const sig = nN + 'x' + nE;
+  if(window._legDeskSig !== sig){ window._legDeskFrozen = false; window._legDeskSig = sig; } // cérebro mudou -> reavalia
+  if(pesado && window._legDeskFrozen) return;   // já congelou este cérebro: não redesenha (libera a thread p/ digitar)
+
+  const ctx2 = cv.getContext('2d');
+  const rect = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = rect.width * dpr;
+  cv.height = rect.height * dpr;
+  ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  ctx2.clearRect(0, 0, W, H);
+
+  if(nN === 0){
+    ctx2.fillStyle = '#5a6a8a'; ctx2.font = '11px monospace';
+    ctx2.fillText('aguardando cérebro...', 10, 30); return;
+  }
+  // índice id->nó montado 1x por frame — evita nodes.find() por aresta (era O(arestas×nós), travava no mega)
+  const byId = {};
+  for(let i = 0; i < nodes.length; i++){ if(nodes[i] && nodes[i].id) byId[nodes[i].id] = nodes[i]; }
+  const _zoom = (viz.zoom || 0.7) / 0.7;
+  const _pX = viz.panX || 0, _pY = viz.panY || 0;
+  const _aY = viz.rotY || 0, _aX = viz.rotX || 0;
+  const _vista = (viz.modo === 'lateral') ? 'lateral' : 'normal';
+  const cx = W / 2 + _pX, cy = H / 2 + _pY;
+  const baseScale = Math.min(W, H) * 0.0024 * _zoom;
+
+  const styles = getComputedStyle(document.body);
+  const a1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
+  const n1 = styles.getPropertyValue('--neuron1').trim() || '#5eead4';
+  const n2 = styles.getPropertyValue('--neuron2').trim() || '#a78bfa';
+  const n3 = styles.getPropertyValue('--neuron3').trim() || '#fbbf24';
+  const n4 = styles.getPropertyValue('--neuron4').trim() || '#ef4444';
+
+  function corNo(n){
+    if(n.tipo === 'subrede') return n2;
+    if(n._categoria === 'cognitivo') return n2;
+    if(n._categoria === 'estatistico') return n3;
+    if(n.tipo === 'sensorial') return n1;
+    if(n.tipo === 'motor') return n4;
+    return a1;
+  }
+  function transform(pos){
+    let x = pos[0], y = pos[1], z = pos[2];
+    if(_aY !== 0){ const c=Math.cos(_aY), s=Math.sin(_aY); const nx=x*c - z*s; const nz=x*s + z*c; x=nx; z=nz; }
+    if(_aX !== 0){ const c=Math.cos(_aX), s=Math.sin(_aX); const ny=y*c - z*s; const nz=y*s + z*c; y=ny; z=nz; }
+    return [x, y, z];
+  }
+  const sxv = _vista === 'lateral' ? 0.5 : 1;
+
+  const grad = ctx2.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.4);
+  grad.addColorStop(0, a1 + '20'); grad.addColorStop(1, 'transparent');
+  ctx2.fillStyle = grad; ctx2.fillRect(0, 0, W, H);
+
+  if(window.V112.edges){
+    ctx2.lineWidth = 0.3; ctx2.strokeStyle = a1 + '15';
+    const maxEdges = Math.min(300, window.V112.edges.length);
+    const stepE = Math.ceil(window.V112.edges.length / maxEdges);
+    for(let i = 0; i < window.V112.edges.length; i += stepE){
+      const e = window.V112.edges[i];
+      const nA = byId[e.from];
+      const nB = byId[e.to];
+      if(!nA || !nB || !nA.pos || !nB.pos) continue;
+      const pA = transform(nA.pos), pB = transform(nB.pos);
+      ctx2.beginPath();
+      ctx2.moveTo(cx + pA[0]*baseScale*sxv, cy + pA[2]*baseScale);
+      ctx2.lineTo(cx + pB[0]*baseScale*sxv, cy + pB[2]*baseScale);
+      ctx2.stroke();
+    }
+  }
+  const maxNodes = Math.min(900, nodes.length);
+  const stepN = Math.ceil(nodes.length / maxNodes);
+  for(let i = 0; i < nodes.length; i += stepN){
+    const n = nodes[i];
+    if(!n.pos) continue;
+    const p = transform(n.pos);
+    const x = cx + p[0]*baseScale*sxv, y = cy + p[2]*baseScale;
+    const size = n.tipo === 'subrede' ? 2.8 : 1.1;
+    ctx2.fillStyle = corNo(n);
+    ctx2.globalAlpha = n.tipo === 'subrede' ? 0.95 : 0.55;
+    ctx2.beginPath(); ctx2.arc(x, y, size, 0, Math.PI*2); ctx2.fill();
+  }
+  ctx2.globalAlpha = 1;
+
+  // Cérebro grande: desenha o aviso e CONGELA (não redesenha nos próximos frames -> libera a thread)
+  if(pesado){
+    ctx2.fillStyle = 'rgba(8,10,18,0.82)';
+    ctx2.fillRect(0, H - 46, W, 46);
+    ctx2.fillStyle = '#fbbf24'; ctx2.font = '12px monospace';
+    ctx2.fillText('⚠ Cérebro grande (' + Math.round(nN/1000) + 'k nós) — imagem congelada pra não travar.', 14, H - 26);
+    ctx2.fillStyle = '#8aa3bf'; ctx2.font = '11px monospace';
+    ctx2.fillText('Ele continua respondendo por baixo. Só a animação parou.', 14, H - 10);
+    window._legDeskFrozen = true;
+  }
+}
+
+// ─── ENSINAR DESKTOP: robustecido com try/catch + logs ─────
+// O handler já foi instalado no botão clonado. Vou re-instalar mais robusto.
+(function reEnsinar(){
+  const btn = document.getElementById('btn-treinar');
+  if(!btn) return;
+  const novo = btn.cloneNode(true);
+  btn.parentNode.replaceChild(novo, btn);
+
+  novo.addEventListener('click', async function(){
+    try {
+      if(!window.TREINO){ alert('Módulo TREINO não carregado'); console.error('[ensinar desktop] TREINO ausente'); return; }
+      if(!window.LOADING){ alert('Módulo LOADING não carregado'); console.error('[ensinar desktop] LOADING ausente'); return; }
+      if(typeof v112_processar !== 'function'){ alert('Cérebro não inicializado'); console.error('[ensinar desktop] v112_processar ausente'); return; }
+
+      if(window.TREINO.acabou()){
+        addMsg('brain', '🎓 Treinamento completo. Não há mais pacotes pra ensinar.', 'sleep');
+        novo.innerHTML = '🎓 acabou';
+        novo.disabled = true;
+        return;
+      }
+
+      const r = await window.TREINO.ensinarProximo();
+
+      if(r && r.ok){
+        addMsg('brain', window.TREINO.mensagemDeConclusao(r), 'sleep');
+        if(window.TREINO.acabou()){
+          novo.innerHTML = '🎓 acabou';
+          novo.disabled = true;
+        } else {
+          novo.innerHTML = '📚 ' + window.TREINO.labelProximo();
+        }
+        if(typeof renderStats === 'function') renderStats();
+        if(typeof renderPalavras === 'function') renderPalavras();
+        if(typeof renderEventos === 'function') renderEventos();
+        if(typeof updateHeader === 'function') updateHeader();
+      } else {
+        const erro = (r && r.erro) || 'erro desconhecido';
+        console.error('[ensinar desktop] falhou:', r);
+        addMsg('brain', '❌ Erro ao ensinar: ' + erro);
+      }
+    } catch(err){
+      console.error('[ensinar desktop] exceção:', err);
+      addMsg('brain', '❌ Exceção: ' + (err.message || err));
+    }
+  });
+
+  // Inicializa label
+  setTimeout(function(){
+    if(window.TREINO && !window.TREINO.acabou()){
+      novo.innerHTML = '📚 ' + window.TREINO.labelProximo();
+    }
+  }, 800);
+})();
+
+console.log('[Leva 3 desktop] integração aplicada — VIZ:', !!window.VIZ, '| TREINO:', !!window.TREINO, '| LOADING:', !!window.LOADING, '| TUTORIAL:', !!window.TUTORIAL);
+
+/* ════ VITRINE: abre/fecha pop-ups da faixa ════ */
+window.toggleMenu = function(btn){
+  var menu = btn.closest('[data-menu]');
+  var aberto = menu.classList.contains('aberto');
+  document.querySelectorAll('[data-menu]').forEach(function(m){ m.classList.remove('aberto'); });
+  if(!aberto) menu.classList.add('aberto');
+  if(window.event) window.event.stopPropagation();
+};
+document.addEventListener('click', function(){
+  document.querySelectorAll('[data-menu]').forEach(function(m){ m.classList.remove('aberto'); });
+});
+
+/* ════ VITRINE: botão único de câmera que cicla (estilo mobile) ════ */
+window._camIdx = 0;
+window.cicloCamera = function(){
+  var btns = document.querySelectorAll('.viz-modes button');
+  if(!btns.length) return;
+  window._camIdx = (window._camIdx + 1) % btns.length;
+  try { btns[window._camIdx].click(); } catch(e){}
+  var lbl = document.getElementById('cam-mini-lbl');
+  if(lbl) lbl.textContent = (btns[window._camIdx].textContent || '').replace(/^[A-D]:\s*/,'').trim() || 'câmera';
+};
