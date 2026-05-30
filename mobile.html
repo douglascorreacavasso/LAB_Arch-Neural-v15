@@ -673,7 +673,7 @@
       <div style="color:var(--accent1);font-size:13px;font-weight:bold;">⚡ AÇÕES</div>
       <button class="ph-drawer-close" onclick="fecharDrawer()">×</button>
     </div>
-    <div class="ph-drawer-item" onclick="acao_ensinar240()">📌 ensinar 240 frases</div>
+    <div class="ph-drawer-item" id="ph-ensinar" onclick="acao_ensinar240()">📌 ensinar 240 frases</div>
     <div class="ph-drawer-item" onclick="acao_meditar()">🧘 meditar</div>
     <div class="ph-drawer-item" onclick="acao_salvar()">💾 salvar cérebro</div>
     <div class="ph-drawer-item" onclick="acao_carregar_github()">📂 carregar do GitHub</div>
@@ -1428,6 +1428,17 @@ function desenharCerebro() {
 function desenharCerebro_legacy() {
   const canvas = document.getElementById('brain-canvas');
   if(!canvas) return;
+  if(!window.V112 || !window.V112.nodes) return;
+  const nodes = window.V112.nodes;
+  const nN = nodes.length, nE = (window.V112.edges || []).length;
+
+  // GUARD anti-freeze: no cérebro grande, redesenhar todo frame trava a thread.
+  // Desenha UMA vez (com aviso) e congela. O cérebro continua respondendo por baixo.
+  const pesado = nN > 6000 || nE > 60000;
+  const sig = nN + 'x' + nE;
+  if(window._legMobSig !== sig){ window._legMobFrozen = false; window._legMobSig = sig; }
+  if(pesado && window._legMobFrozen) return;
+
   const ctx = canvas.getContext('2d');
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -1437,16 +1448,18 @@ function desenharCerebro_legacy() {
   const W = rect.width, H = rect.height;
   ctx.clearRect(0, 0, W, H);
 
-  if(!window.V112 || !window.V112.nodes || window.V112.nodes.length === 0) {
+  if(nN === 0) {
     ctx.fillStyle = '#5a6a8a';
     ctx.font = '11px monospace';
     ctx.fillText('aguardando cérebro...', 10, 30);
     return;
   }
 
-  const nodes = window.V112.nodes;
   const cx = W / 2 + panX, cy = H / 2 + panY;
   const baseScale = Math.min(W, H) * 0.0024 * zoom;
+  // índice id->nó (1x por frame) — evita nodes.find por aresta (O(arestas×nós), travava no mega)
+  const byId = {};
+  for(let i = 0; i < nodes.length; i++){ if(nodes[i] && nodes[i].id) byId[nodes[i].id] = nodes[i]; }
 
   const styles = getComputedStyle(document.body);
   const a1 = styles.getPropertyValue('--accent1').trim() || '#5eead4';
@@ -1503,8 +1516,8 @@ function desenharCerebro_legacy() {
     const step = Math.ceil(window.V112.edges.length / maxEdges);
     for(let i = 0; i < window.V112.edges.length; i += step) {
       const e = window.V112.edges[i];
-      const nA = nodes.find(function(n){ return n.id === e.from; });
-      const nB = nodes.find(function(n){ return n.id === e.to; });
+      const nA = byId[e.from];
+      const nB = byId[e.to];
       if(!nA || !nB || !nA.pos || !nB.pos) continue;
       const pA = transform(nA.pos);
       const pB = transform(nB.pos);
@@ -1533,6 +1546,17 @@ function desenharCerebro_legacy() {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+
+  // Cérebro grande: desenha aviso e CONGELA (não redesenha nos próximos frames -> libera a thread)
+  if(pesado){
+    ctx.fillStyle = 'rgba(8,10,18,0.82)';
+    ctx.fillRect(0, H - 42, W, 42);
+    ctx.fillStyle = '#fbbf24'; ctx.font = '11px monospace';
+    ctx.fillText('⚠ Cérebro grande (' + Math.round(nN/1000) + 'k) — imagem congelada pra não travar.', 12, H - 24);
+    ctx.fillStyle = '#8aa3bf'; ctx.font = '10px monospace';
+    ctx.fillText('Ele continua respondendo. Só a animação parou.', 12, H - 10);
+    window._legMobFrozen = true;
+  }
 }
 
 // ═══ PAINÉIS ═══
@@ -2219,21 +2243,25 @@ window.acao_ensinar240 = async function(){
 // Override do label do botão ensinar
 window.atualizarLabelBotaoEnsinar = function(){
   if(!window.TREINO) return;
-  const itens = document.querySelectorAll('.ph-drawer-item');
-  itens.forEach(function(item){
-    if(item.textContent.includes('ensinar') || item.textContent.includes('Acabou')){
-      if(window.TREINO.acabou()){
-        item.innerHTML = '🎓 Acabou';
-        item.style.color = '#fbbf24';
-        item.style.fontWeight = 'bold';
-        // SEM "clica pra ver"
-      } else {
-        item.innerHTML = '📌 ' + window.TREINO.labelProximo();
-        item.style.color = '';
-        item.style.fontWeight = '';
-      }
-    }
-  });
+  // Mira pelo id estável (antes mirava por textContent.includes('ensinar'), que parava de
+  // casar assim que o label virava "Ensinar" com E maiúsculo — por isso o número travava).
+  var item = document.getElementById('ph-ensinar');
+  if(!item){
+    // fallback robusto e case-insensitive
+    document.querySelectorAll('.ph-drawer-item').forEach(function(el){
+      if(/ensinar|acabou|📌/i.test(el.textContent)) item = item || el;
+    });
+  }
+  if(!item) return;
+  if(window.TREINO.acabou()){
+    item.innerHTML = '🎓 Acabou';
+    item.style.color = '#fbbf24';
+    item.style.fontWeight = 'bold';
+  } else {
+    item.innerHTML = '📌 ' + window.TREINO.labelProximo();
+    item.style.color = '';
+    item.style.fontWeight = '';
+  }
 };
 
 // Inicializa label
