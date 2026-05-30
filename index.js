@@ -1523,35 +1523,52 @@ window._updCerebroInd = function(){
 setInterval(window._updCerebroInd, 2500);
 setTimeout(window._updCerebroInd, 1500);
 
-/* ════ VITRINE: INFO → "Sobre o LAB" (abre o doc do projeto) ════ */
+/* ════ VITRINE: INFO → "Sobre o LAB" (texto EMBUTIDO — abre sempre, mesmo em file://) ════ */
+window._SOBRE_LAB_HTML =
+  '<p style="margin:0 0 14px;font-size:14px;color:#bcd;">Bem-vindo! Você está olhando para um <b style="color:#5eead4">cérebro artificial</b> sendo construído do zero — e o mais legal: dá pra <b>ver ele pensando</b>, ao vivo, naquela nuvem de pontos girando no fundo.</p>'
+  + '<h4 style="color:#a78bfa;letter-spacing:1px;margin:18px 0 6px;">A IDEIA EM UMA FRASE</h4>'
+  + '<p style="margin:0 0 14px;border-left:2px solid #5eead4;padding-left:12px;color:#cfe;">Em vez de programar um robô que decora respostas prontas, aqui a gente <b>cria um cérebro que aprende conversando</b> — igual uma criança aprende o mundo conversando com as pessoas.</p>'
+  + '<h4 style="color:#a78bfa;letter-spacing:1px;margin:18px 0 6px;">COMO ELE FUNCIONA (FÁCIL)</h4>'
+  + '<p style="margin:0 0 8px;">Imagine uma <b>teia gigante de palavras e ideias</b>, ligadas por fios:</p>'
+  + '<ul style="margin:0 0 14px;padding-left:18px;line-height:1.7;">'
+  + '<li>🟢 Cada <b>pontinho</b> é uma ideia que ele conhece (uma palavra, um nome, um conceito).</li>'
+  + '<li>🔗 Cada <b>fio</b> é uma ligação entre duas ideias — tipo "fogo" ligado a "quente".</li>'
+  + '<li>⚡ Quando você fala, uma <b>faísca de energia</b> corre pelos fios. As ideias que mais acendem viram a resposta.</li>'
+  + '</ul>'
+  + '<p style="margin:0 0 14px;">Quanto mais você conversa, <b>mais fios ele cria e mais grossos eles ficam</b>. É assim que ele aprende — sem ninguém escrever a resposta na mão.</p>'
+  + '<h4 style="color:#a78bfa;letter-spacing:1px;margin:18px 0 6px;">COISAS QUE ELE FAZ SOZINHO</h4>'
+  + '<ul style="margin:0 0 14px;padding-left:18px;line-height:1.7;">'
+  + '<li>🌱 <b>Cresce</b> — começa pequeno e ganha ideias a cada conversa.</li>'
+  + '<li>😴 <b>Dorme e sonha</b> — de vez em quando "medita": revive o que aprendeu, reforça o importante e deixa o resto descansar, igual nosso cérebro dormindo.</li>'
+  + '<li>🧒 <b>Aprende seu nome (e o dele)</b> — não nasce sabendo quem é você nem o nome dele. Você ensina: "meu nome é fulano", "seu nome é beltrano".</li>'
+  + '<li>🔍 <b>É 100% transparente</b> — diferente das IAs comuns (caixa-preta), aqui dá pra ver cada ligação e cada decisão.</li>'
+  + '</ul>'
+  + '<h4 style="color:#a78bfa;letter-spacing:1px;margin:18px 0 6px;">COMO BRINCAR</h4>'
+  + '<ol style="margin:0 0 14px;padding-left:18px;line-height:1.7;">'
+  + '<li><b>Converse</b> no chat, como falaria com um amigo.</li>'
+  + '<li>Aperte <b>ENSINAR</b> pra dar um pacote de frases de uma vez.</li>'
+  + '<li>Aperte <b>MEDITAR</b> depois de ensinar bastante — é ele organizando a memória.</li>'
+  + '<li>Gire o cérebro 3D, mude as cores, e clique nos painéis dos lados pra abrir os <b>detalhes</b>.</li>'
+  + '</ol>'
+  + '<h4 style="color:#a78bfa;letter-spacing:1px;margin:18px 0 6px;">POR QUE ISSO IMPORTA</h4>'
+  + '<p style="margin:0 0 14px;">Este LAB é um <b>avião de papel</b> — não o foguete final. É a prova de que dá pra construir inteligência a partir de <b>regras simples, visíveis e honestas</b>, e não só de números gigantes que ninguém entende.</p>'
+  + '<p style="margin:14px 0 0;opacity:.65;font-style:italic;">Feito com paciência, café e muita curiosidade. Aproveite — e ensina bastante pra ele. 🚀</p>';
+
 window.abrirSobreLab = function(){
-  // fecha menus abertos
   document.querySelectorAll('.menu.aberto').forEach(function(m){ m.classList.remove('aberto'); });
   var ov = document.getElementById('sobre-lab-ov');
-  if(!ov){
-    ov = document.createElement('div');
-    ov.id = 'sobre-lab-ov';
-    ov.style.cssText = 'position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:rgba(2,4,8,.62); backdrop-filter:blur(6px);';
-    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
-    document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ var o=document.getElementById('sobre-lab-ov'); if(o) o.remove(); } });
-    document.body.appendChild(ov);
-  } else { ov.innerHTML = ''; }
+  if(ov) ov.remove();
+  ov = document.createElement('div');
+  ov.id = 'sobre-lab-ov';
+  ov.style.cssText = 'position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:rgba(2,4,8,.66); backdrop-filter:blur(6px);';
+  ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ var o=document.getElementById('sobre-lab-ov'); if(o) o.remove(); } });
   var box = document.createElement('div');
-  box.style.cssText = 'width:min(680px,92vw); max-height:80vh; overflow:auto; background:rgba(9,12,20,.97); border:1px solid rgba(94,234,212,.22); border-radius:18px; padding:22px 26px; box-shadow:0 24px 70px rgba(0,0,0,.7); color:#dce6f2; font-family:var(--sans,Sora),sans-serif; line-height:1.55;';
-  box.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">'
-    + '<div style="font-family:var(--disp,\'Chakra Petch\'); letter-spacing:1px; color:#5eead4; font-size:15px;">📖 SOBRE O LAB</div>'
-    + '<button onclick="document.getElementById(\'sobre-lab-ov\').remove()" style="background:transparent; border:1px solid rgba(255,255,255,.15); color:#9fb2c9; border-radius:8px; padding:3px 10px; cursor:pointer;">fechar ✕</button></div>'
-    + '<div id="sobre-lab-corpo" style="font-size:13px; white-space:pre-wrap;">carregando o documento do projeto…</div>';
+  box.style.cssText = 'width:min(640px,92vw); max-height:82vh; overflow:auto; background:rgba(10,14,24,.97); border:1px solid rgba(94,234,212,.25); border-radius:18px; padding:24px 28px; box-shadow:0 24px 70px rgba(0,0,0,.7); color:#dce6f2; line-height:1.55;';
+  box.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">'
+    + '<div style="font-weight:700; letter-spacing:1px; color:#5eead4; font-size:17px;">🧠 O QUE É ESTE LAB?</div>'
+    + '<button onclick="document.getElementById(\'sobre-lab-ov\').remove()" style="background:transparent; border:1px solid rgba(255,255,255,.15); color:#9fb2c9; border-radius:8px; padding:4px 12px; cursor:pointer;">fechar ✕</button></div>'
+    + window._SOBRE_LAB_HTML;
   ov.appendChild(box);
-  // lê o doc do projeto (mesma pasta do app)
-  fetch('SOBRE_O_LAB.md').then(function(r){ return r.ok ? r.text() : Promise.reject(); })
-    .then(function(txt){
-      var corpo = document.getElementById('sobre-lab-corpo');
-      if(corpo) corpo.textContent = txt;
-    })
-    .catch(function(){
-      var corpo = document.getElementById('sobre-lab-corpo');
-      if(corpo) corpo.textContent = 'O documento do projeto fica em SOBRE_O_LAB.md (na pasta do app). '
-        + 'Não consegui ler agora — confira se o arquivo está na pasta e se você abriu via servidor local (não file://).';
-    });
+  document.body.appendChild(ov);
 };

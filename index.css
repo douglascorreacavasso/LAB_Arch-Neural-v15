@@ -280,17 +280,17 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 .swatches{display:flex; flex-wrap:wrap; gap:7px; padding:6px 10px;}
 
 /* PLACA neon */
-.placa{position:fixed; top:0; left:50%; z-index:36; padding:16px 70px 24px; text-align:center; min-width:480px;
+.placa{position:fixed; top:0; left:50%; z-index:36; padding:9px 42px 13px; text-align:center; min-width:330px;
   background:linear-gradient(180deg,rgba(var(--tintv),.16),rgba(11,16,26,.7)); border:2px solid rgba(var(--tintv),.6); border-top:none;
   clip-path:polygon(22px 0,calc(100% - 22px) 0,100% 100%,0 100%); backdrop-filter:blur(14px);
   box-shadow:0 0 20px rgba(var(--tintv),.5),0 0 48px rgba(var(--tintv),.22),inset 0 0 26px rgba(var(--tintv),.1);
   transform:translateX(-50%); animation:placaIn .7s .15s both;}
 @keyframes placaIn{from{opacity:0;transform:translate(-50%,-14px);}to{opacity:1;transform:translate(-50%,0);}}
-.placa .nome{font-family:var(--disp); font-weight:700; letter-spacing:7px; font-size:28px; color:#eafffb; line-height:1;
+.placa .nome{font-family:var(--disp); font-weight:700; letter-spacing:4px; font-size:22px; color:#eafffb; line-height:1;
   text-shadow:0 0 10px #fff,0 0 22px var(--teal),0 0 40px rgba(var(--tintv),.6); animation:ledv 3.4s infinite ease-in-out;}
 .placa .nome b{color:var(--roxo); text-shadow:0 0 10px var(--roxo);}
-.placa .sub{font-family:var(--monov); font-size:11px; letter-spacing:5px; color:#9fb3cc; text-transform:uppercase; margin-top:11px;}
-.placa::after{content:''; position:absolute; left:30px; right:30px; bottom:9px; height:2px; border-radius:2px; background:#fff;
+.placa .sub{font-family:var(--monov); font-size:10px; letter-spacing:3px; color:#9fb3cc; text-transform:uppercase; margin-top:4px;}
+.placa::after{content:''; position:absolute; left:24px; right:24px; bottom:6px; height:2px; border-radius:2px; background:#fff;
   box-shadow:0 0 7px #fff,0 0 16px var(--teal),0 0 30px rgba(var(--tintv),.8); animation:neonLine 2.2s infinite ease-in-out;}
 @keyframes ledv{0%,100%{opacity:1;filter:brightness(1);}50%{filter:brightness(1.2);}52%{opacity:.88;}}
 @keyframes neonLine{0%,100%{opacity:1;filter:brightness(1.25);}50%{opacity:.5;filter:brightness(.75);}}
@@ -299,7 +299,7 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 .v-col{position:fixed; top:62px; bottom:14px; width:var(--colw); z-index:15; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-bottom:12px;}
 .v-col::-webkit-scrollbar{width:0;}
 .v-col.esq{left:16px;} .v-col.dir{right:16px;}
-.card{background:rgba(11,16,26,.26); backdrop-filter:blur(16px); border:1px solid var(--glassbv); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.4);}
+.card{background:rgba(11,16,26,.14); backdrop-filter:blur(19px) saturate(1.15); border:1px solid var(--glassbv); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.4);}
 .card h3{font-family:var(--disp); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin:0 0 12px;}
 
 /* amígdala compacta na faixa */
@@ -345,11 +345,18 @@ body.tema-gelo{ --bg:#0a1018; --bg-soft:#121b26; --bg-card:#1a2633; --ink:#eef6f
 /* ════ VITRINE: painéis da direita trocam minimalista<->detalhe ao clicar no título ════ */
 .card-toggle > h3{ cursor:pointer; user-select:none; }
 .card-toggle > h3::after{ content:'▾'; float:right; opacity:.55; transition:transform .25s; font-size:.8em; }
-.card-toggle > :not(h3){ max-height:1400px; opacity:1; overflow:hidden; transition:max-height .4s ease, opacity .25s; -webkit-mask-image:none; mask-image:none; }
-/* versao SIMPLES (padrao): previa com fade; clicar abre a versao DETALHADA */
-.card-toggle.compacto > :not(h3){ max-height:62px; opacity:1; overflow:hidden;
-  -webkit-mask-image:linear-gradient(180deg,#000 45%,transparent 100%);
-  mask-image:linear-gradient(180deg,#000 45%,transparent 100%); }
+.card-toggle > :not(h3){ opacity:1; }
+/* versao SIMPLES (padrao): mostra so os 3 primeiros itens INTEIROS; clicar mostra TODOS */
+.card-toggle.compacto > :not(h3) > *:nth-child(n+4){ display:none; }
+/* versao SIMPLES mais limpa: esconde numeros tecnicos (so aparecem no detalhe) */
+.card-toggle.compacto .peso-tab span,
+.card-toggle.compacto .evento-tab .turno{ display:none; }
+.card-toggle.compacto .peso-tab strong{ font-size:13px; }
+.card-toggle.compacto .peso-tab,
+.card-toggle.compacto .evento-tab{ padding:5px 0; }
+.card-toggle.compacto > :not(h3)::after{ content:'⋯ clique p/ ver tudo'; display:block;
+  font-family:var(--monov); font-size:9px; color:var(--teal); opacity:.5; text-align:right;
+  padding-top:7px; letter-spacing:.5px; }
 .card-toggle.compacto > h3{ opacity:.95; }
 .card-toggle.compacto > h3::after{ content:'▸'; }
 .card-toggle:not(.compacto) > h3::after{ content:'▾'; }
