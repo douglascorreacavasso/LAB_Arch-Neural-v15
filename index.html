@@ -32,7 +32,9 @@
 <!-- cérebro 3D como FUNDO (a wrap inteira vira tela cheia via CSS) -->
 <div class="viz-wrap">
   <canvas id="canvas"></canvas>
-  <div class="viz-legend">
+  <div class="viz-legend" id="viz-legend">
+    <div class="vl-head" onclick="toggleLegenda()">🧠 cérebro 3D · 11 faixas <span class="vl-seta">▾</span></div>
+    <div class="vl-body">
     <div style="font-weight:600;"><span class="dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></span> SELF-CORE (0,0,0) — EU</div>
     <div><span class="dot" style="background:#5eead4"></span> sensorial (+200) — 500</div>
     <div><span class="dot" style="background:#06b6d4"></span> tálamo (+150) — 20 roteador</div>
@@ -47,6 +49,7 @@
       <span style="color:#ec4899;">━</span> cronológica · <span style="color:#fbbf24;">━</span> temporal · <span style="color:#c4b5fd;">━</span> mielinizada · <span style="color:#4ade80;">━</span> anatômica
     </div>
     <div><span class="dot" style="background:var(--warn)"></span> ativos · <span class="dot" style="background:var(--pink)"></span> nascidos</div>
+    </div>
   </div>
   <div class="viz-modes">
     <button id="vm-lateral" class="active">A: lateral</button>
@@ -58,7 +61,11 @@
 </div>
 <div class="grain"></div>
 <div class="vinheta"></div>
-<button class="cam-mini" onclick="cicloCamera()"><span class="ic">↻</span> <span id="cam-mini-lbl">lateral</span></button>
+<div class="cam-ctrl">
+  <button class="cam-b" onclick="camFrontal()">frontal</button>
+  <button class="cam-b" onclick="camLateral()">de lado</button>
+  <button class="cam-b" id="cam-girar" onclick="camGirar()">↻ girar</button>
+</div>
 <div id="toast-extra"></div>
 <span id="stats-header" style="display:none"></span>
 
@@ -187,13 +194,14 @@
     <div class="pop dir">
       <button class="pop-item-btn" onclick="window.TUTORIAL && window.TUTORIAL.abrir('ensinar','desktop')">❓ como ensinar</button>
       <button class="pop-item-btn" onclick="window.TUTORIAL && window.TUTORIAL.abrir('usar','desktop')">❗ como usar</button>
+      <button class="pop-item-btn" onclick="abrirSobreLab()">📖 sobre o LAB</button>
     </div>
   </div>
 </div>
 
 <!-- PLACA LAB neon -->
 <div class="placa">
-  <div class="nome"><b>LAB</b> · ARCH·NEURAL</div>
+  <div class="nome"><b>LAB</b> · ARCH·NEURAL V15.1</div>
   <div class="sub">cérebro simbólico emergente</div>
 </div>
 
@@ -206,10 +214,10 @@
 
 <!-- DIREITA: pesos / palavras / candidatos / eventos -->
 <div class="v-col dir">
-  <div class="card"><h3>◈ Pesos semânticos</h3><div id="painel-pesos"></div></div>
-  <div class="card"><h3>◈ Palavras na rede (top 12)</h3><div id="painel-palavras"></div></div>
-  <div class="card"><h3>🎯 Candidatos de resposta</h3><div id="painel-candidatos"></div></div>
-  <div class="card"><h3>◈ Eventos no hipocampo</h3><div id="painel-eventos"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Pesos semânticos</h3><div id="painel-pesos"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Palavras na rede (top 12)</h3><div id="painel-palavras"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>🎯 Candidatos de resposta</h3><div id="painel-candidatos"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Eventos no hipocampo</h3><div id="painel-eventos"></div></div>
 </div>
 
 <!-- CHAT central de vidro -->

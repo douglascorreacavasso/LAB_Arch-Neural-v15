@@ -217,6 +217,7 @@
 :root{
   --teal:#5eead4; --roxo:#a78bfa; --tintv:94,234,212;
   --glassv:rgba(11,16,26,.5); --glassbv:rgba(94,234,212,.16);
+  --colw: clamp(206px, 18.5vw, 290px);
   --disp:'Chakra Petch',sans-serif; --corpo:'Sora',sans-serif; --monov:'Space Mono',monospace;
 }
 body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1322 0%,#05070d 72%) !important; overflow:hidden;}
@@ -226,27 +227,35 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 /* cérebro como FUNDO */
 .viz-wrap{position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important; z-index:0 !important; margin:0 !important; border:none !important; border-radius:0 !important; background:transparent !important;}
 #canvas{width:100% !important; height:100% !important; display:block;}
-.viz-legend{position:fixed !important; left:16px !important; bottom:14px !important; top:auto !important; right:auto !important; z-index:16; max-width:250px;
-  background:var(--glassv); backdrop-filter:blur(14px); border:1px solid var(--glassbv); border-radius:13px;
-  padding:11px 13px; font-family:var(--monov); font-size:10.5px; line-height:1.55;}
+.viz-legend{position:fixed !important; left:calc(var(--colw) + 34px) !important; top:60px !important; bottom:auto !important; right:auto !important; z-index:16; max-width:266px;
+  background:transparent !important; backdrop-filter:none !important; border:none !important; border-radius:0 !important;
+  padding:0 !important; font-family:var(--monov); font-size:10.5px; line-height:1.6; color:#9fb4cf;
+  text-shadow:0 1px 4px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,.7);}
+.viz-legend .vl-head{font-family:var(--disp); font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--teal);
+  cursor:pointer; margin-bottom:8px; display:flex; align-items:center; gap:6px; user-select:none;
+  text-shadow:0 0 9px rgba(var(--tintv),.5), 0 1px 3px #000;}
+.viz-legend .vl-seta{transition:transform .2s;}
+.viz-legend.recolhido .vl-body{display:none;}
+.viz-legend.recolhido .vl-seta{transform:rotate(-90deg);}
+.viz-legend .vl-body > div{margin:2px 0;}
+.viz-legend .vl-body > div[style*="border-top"]{border-top-color:rgba(255,255,255,.2) !important;}
+@media(max-width:980px){ .viz-legend{left:16px !important;} }
 /* fileira original escondida (os botões continuam ligados e são clicados via JS) */
 .viz-modes{display:none !important;}
 .viz-controls{display:none !important;}
 /* botão compacto de câmera (cicla, estilo mobile) */
-.cam-mini{position:fixed; right:16px; top:64px; z-index:31; display:flex; align-items:center; gap:7px;
-  font-family:var(--disp); font-size:12px; letter-spacing:.5px; color:var(--teal);
+.cam-ctrl{position:fixed; top:60px; right:calc(var(--colw) + 34px); z-index:31; display:flex; gap:6px;}
+.cam-b{font-family:var(--disp); font-size:11px; letter-spacing:.4px; color:var(--teal);
   background:var(--glassv); backdrop-filter:blur(12px); border:1px solid var(--glassbv);
-  border-radius:11px; padding:8px 13px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.4);}
-.cam-mini:hover{border-color:rgba(var(--tintv),.4); box-shadow:0 0 16px rgba(var(--tintv),.2);}
-.cam-mini .ic{font-size:15px; transition:transform .3s;}
-.cam-mini:active .ic{transform:rotate(180deg);}
+  border-radius:10px; padding:7px 12px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.4); white-space:nowrap;}
+.cam-b:hover{border-color:rgba(var(--tintv),.4); box-shadow:0 0 14px rgba(var(--tintv),.2);}
 .grain{position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.04;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
 .vinheta{position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(circle at 50% 45%,transparent 55%,rgba(2,4,8,.65) 100%);}
 
 /* FAIXA */
 .faixa{position:fixed; top:0; left:0; right:0; z-index:30; height:54px; display:flex; align-items:center; gap:9px; padding:0 16px;
-  background:linear-gradient(180deg,rgba(8,11,20,.82),rgba(8,11,20,.32)); backdrop-filter:blur(14px); border-bottom:1px solid var(--glassbv);}
+  background:linear-gradient(180deg,rgba(7,10,18,.97),rgba(7,10,18,.88)); backdrop-filter:blur(16px); border-bottom:1px solid var(--glassbv);}
 .espaco{flex:1;}
 .hud-btn{font-family:var(--disp); font-weight:500; font-size:12px; letter-spacing:.6px; color:var(--texto-fraco,#8aa0bd);
   background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); padding:8px 13px; border-radius:10px; cursor:pointer;
@@ -256,7 +265,7 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 .hud-btn.sec{color:var(--teal); border-color:var(--glassbv); background:rgba(var(--tintv),.06);}
 
 .menu{position:relative;}
-.pop{position:absolute; top:44px; left:0; min-width:210px; z-index:40; background:var(--glassv); backdrop-filter:blur(18px);
+.pop{position:absolute; top:44px; left:0; min-width:210px; z-index:40; background:rgba(9,12,20,.96); backdrop-filter:blur(18px);
   border:1px solid var(--glassbv); border-radius:13px; padding:8px; box-shadow:0 18px 50px rgba(0,0,0,.6);
   opacity:0; transform:translateY(-8px) scale(.98); pointer-events:none; transition:.16s; max-height:74vh; overflow:auto;}
 .menu.aberto > .pop{opacity:1; transform:none; pointer-events:auto;}
@@ -287,21 +296,21 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 @keyframes neonLine{0%,100%{opacity:1;filter:brightness(1.25);}50%{opacity:.5;filter:brightness(.75);}}
 
 /* COLUNAS de vidro */
-.v-col{position:fixed; top:62px; bottom:14px; width:280px; z-index:15; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-bottom:12px;}
+.v-col{position:fixed; top:62px; bottom:14px; width:var(--colw); z-index:15; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-bottom:12px;}
 .v-col::-webkit-scrollbar{width:0;}
 .v-col.esq{left:16px;} .v-col.dir{right:16px;}
-.card{background:var(--glassv); backdrop-filter:blur(16px); border:1px solid var(--glassbv); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.4);}
+.card{background:rgba(11,16,26,.26); backdrop-filter:blur(16px); border:1px solid var(--glassbv); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.4);}
 .card h3{font-family:var(--disp); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin:0 0 12px;}
 
 /* amígdala compacta na faixa */
 .amig-faixa{font-family:var(--monov); font-size:11px; color:var(--texto-fraco,#8aa0bd); max-width:230px; max-height:40px; overflow:hidden; padding:0 6px;}
 
 /* CHAT de vidro */
-.chat{position:fixed; left:50%; bottom:16px; z-index:18; width:min(600px,calc(100% - 620px)); display:flex; flex-direction:column;
-  background:rgba(10,14,22,.42); backdrop-filter:blur(22px); border:1px solid var(--glassbv); border-radius:20px; overflow:hidden;
+.chat{position:fixed; left:50%; bottom:16px; z-index:18; width:clamp(320px,44vw,640px); display:flex; flex-direction:column;
+  background:rgba(10,14,22,.30); backdrop-filter:blur(24px); border:1px solid var(--glassbv); border-radius:20px; overflow:hidden;
   box-shadow:0 24px 70px rgba(0,0,0,.55); transform:translateX(-50%); animation:chatIn .7s .35s both;}
 @keyframes chatIn{from{opacity:0;transform:translate(-50%,16px);}to{opacity:1;transform:translate(-50%,0);}}
-.chat .msgs{padding:24px 18px 12px; height:150px; min-height:90px; max-height:58vh; resize:vertical; overflow-y:auto; background:transparent !important; border:none !important;
+.chat .msgs{padding:24px 18px 12px; height:150px; min-height:90px; max-height:70vh; overflow-y:auto; background:transparent !important; border:none !important;
   -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 16%,#000 100%); mask-image:linear-gradient(to bottom,transparent 0%,#000 16%,#000 100%);}
 .chat .input-row{display:flex; gap:10px; padding:11px; border-top:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03);}
 .chat .input-row textarea{flex:1; background:rgba(0,0,0,.32); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:11px 15px; color:#e7eef7; font-family:var(--corpo); font-size:14px; outline:none; resize:none;}
@@ -322,3 +331,27 @@ body.tema-oceano{ --bg:#04141f; --bg-soft:#072433; --bg-card:#0a3247; --ink:#e0f
 body.tema-sakura{ --bg:#1f0d14; --bg-soft:#33141f; --bg-card:#471a2b; --ink:#ffe6ef; --ink-mid:#f3a8c4; --ink-low:#c47d97; --accent:#fb7185; --accent2:#f9a8d4; --border:#5c2438; }
 body.tema-lava{ --bg:#1a0a04; --bg-soft:#2b1107; --bg-card:#3d180a; --ink:#fff0e0; --ink-mid:#f3b88c; --ink-low:#c4855a; --accent:#fb923c; --accent2:#ef4444; --border:#5c2e18; }
 body.tema-gelo{ --bg:#0a1018; --bg-soft:#121b26; --bg-card:#1a2633; --ink:#eef6ff; --ink-mid:#b8cee0; --ink-low:#7d97b0; --accent:#7dd3fc; --accent2:#c4b5fd; --border:#2b3a4d; }
+
+/* ════ VITRINE: alça de redimensionar o chat (topo-centro) ════ */
+.chat{ position:fixed; } /* (já é fixed; contexto pra alça absoluta) */
+.chat-grip{ position:absolute; top:5px; left:50%; transform:translateX(-50%); width:46px; height:5px;
+  border-radius:3px; background:rgba(var(--tintv),.4); cursor:ns-resize; z-index:6; transition:background .15s; }
+.chat-grip:hover{ background:rgba(var(--tintv),.75); }
+/* responsividade extra: faixa não estoura em telas menores */
+@media(max-width:1200px){ .faixa{gap:6px; padding:0 10px;} .hud-btn{padding:7px 9px; font-size:11px;} }
+@media(max-width:980px){ .v-col.dir{display:none;} .cam-ctrl{right:16px;} .chat{width:clamp(300px,70vw,640px);} }
+
+
+/* ════ VITRINE: painéis da direita trocam minimalista<->detalhe ao clicar no título ════ */
+.card-toggle > h3{ cursor:pointer; user-select:none; }
+.card-toggle > h3::after{ content:'▾'; float:right; opacity:.55; transition:transform .25s; font-size:.8em; }
+.card-toggle > :not(h3){ max-height:1400px; opacity:1; overflow:hidden; transition:max-height .4s ease, opacity .25s; -webkit-mask-image:none; mask-image:none; }
+/* versao SIMPLES (padrao): previa com fade; clicar abre a versao DETALHADA */
+.card-toggle.compacto > :not(h3){ max-height:62px; opacity:1; overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,#000 45%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 45%,transparent 100%); }
+.card-toggle.compacto > h3{ opacity:.95; }
+.card-toggle.compacto > h3::after{ content:'▸'; }
+.card-toggle:not(.compacto) > h3::after{ content:'▾'; }
+.card-toggle.piscou{ animation:cardPisca .4s ease; }
+@keyframes cardPisca{ 0%{box-shadow:0 0 0 rgba(94,234,212,0)} 45%{box-shadow:0 0 20px rgba(94,234,212,.5)} 100%{box-shadow:0 0 0 rgba(94,234,212,0)} }
