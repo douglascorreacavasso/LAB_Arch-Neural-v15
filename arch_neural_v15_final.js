@@ -8464,7 +8464,10 @@ function v112_comando_tentar_executar(input){
     let padrao;
     try { padrao = new RegExp(cmd._padrao_str, cmd._padrao_flags || 'i'); }
     catch(e){ continue; }
-    
+    // LAB: padrão vazio ou catch-all (ex: '' ou '.*') casa QUALQUER input em JS —
+    // num cérebro importado isso fazia o handler (ex: identidade) responder a tudo. Ignora.
+    if(!cmd._padrao_str || padrao.test('')) continue;
+
     const match = input.match(padrao);
     if(!match) continue;
     

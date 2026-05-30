@@ -251,7 +251,7 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 .cam-b:hover{border-color:rgba(var(--tintv),.4); box-shadow:0 0 14px rgba(var(--tintv),.2);}
 .grain{position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.04;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-.vinheta{position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(circle at 50% 45%,transparent 55%,rgba(2,4,8,.65) 100%);}
+.vinheta{position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(circle at 50% 45%,transparent 62%,rgba(2,4,8,.18) 100%);}
 
 /* FAIXA */
 .faixa{position:fixed; top:0; left:0; right:0; z-index:30; height:54px; display:flex; align-items:center; gap:9px; padding:0 16px;
@@ -299,7 +299,7 @@ body{font-family:var(--corpo); background:radial-gradient(circle at 50% 40%,#0c1
 .v-col{position:fixed; top:62px; bottom:14px; width:var(--colw); z-index:15; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-bottom:12px;}
 .v-col::-webkit-scrollbar{width:0;}
 .v-col.esq{left:16px;} .v-col.dir{right:16px;}
-.card{background:rgba(11,16,26,.14); backdrop-filter:blur(19px) saturate(1.15); border:1px solid var(--glassbv); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.4);}
+.card{background:rgba(11,16,26,.06); backdrop-filter:blur(19px) saturate(1.15); -webkit-backdrop-filter:blur(19px) saturate(1.15); border:1px solid rgba(94,234,212,.43); border-radius:15px; padding:15px; box-shadow:0 10px 34px rgba(0,0,0,.44);}
 .card h3{font-family:var(--disp); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin:0 0 12px;}
 
 /* amígdala compacta na faixa */
@@ -347,13 +347,12 @@ body.tema-gelo{ --bg:#0a1018; --bg-soft:#121b26; --bg-card:#1a2633; --ink:#eef6f
 .card-toggle > h3::after{ content:'▾'; float:right; opacity:.55; transition:transform .25s; font-size:.8em; }
 .card-toggle > :not(h3){ opacity:1; }
 /* versao SIMPLES (padrao): mostra so os 3 primeiros itens INTEIROS; clicar mostra TODOS */
-.card-toggle.compacto > :not(h3) > *:nth-child(n+4){ display:none; }
-/* versao SIMPLES mais limpa: esconde numeros tecnicos (so aparecem no detalhe) */
-.card-toggle.compacto .peso-tab span,
-.card-toggle.compacto .evento-tab .turno{ display:none; }
-.card-toggle.compacto .peso-tab strong{ font-size:13px; }
-.card-toggle.compacto .peso-tab,
-.card-toggle.compacto .evento-tab{ padding:5px 0; }
+/* SIMPLES (resumo) por padrao; DETALHE tecnico ao clicar — dois conteudos distintos */
+.card-toggle:not(.compacto) .resumo-c{ display:none; }
+.card-toggle.compacto .detalhe-c{ display:none; }
+.resumo-c .peso-tab{ font-size:14px; }
+.resumo-c .cnt{ color:var(--teal); font-weight:600; font-family:var(--monov); font-size:13px; }
+.detalhe-c .cnt{ color:#cfe; }
 .card-toggle.compacto > :not(h3)::after{ content:'⋯ clique p/ ver tudo'; display:block;
   font-family:var(--monov); font-size:9px; color:var(--teal); opacity:.5; text-align:right;
   padding-top:7px; letter-spacing:.5px; }

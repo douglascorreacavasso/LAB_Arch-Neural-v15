@@ -115,8 +115,22 @@ function desenharRede(){
     }
     ctx.setLineDash([]);
   }
+  // LAB: TETO DE RENDER — com cérebro pesado, projetar/ordenar TODOS os nós trava a UI.
+  // Desenha só os N nós mais "fortes" (por massa). Os demais continuam nos dados (por baixo),
+  // só não são desenhados — assim dá pra girar/zoom sem travar e o cérebro não cresce visualmente além do teto.
+  var VIZ_MAX = (window.VIZ_MAX_NODES || 1800);
+  var nodesRender = V112.nodes;
+  if(V112.nodes.length > VIZ_MAX){
+    if(!viz._renderCache || viz._renderCacheN !== V112.nodes.length){
+      viz._renderCache = V112.nodes.slice()
+        .sort((a,b) => (b.mass||0) - (a.mass||0))
+        .slice(0, VIZ_MAX);
+      viz._renderCacheN = V112.nodes.length;
+    }
+    nodesRender = viz._renderCache;
+  }
   const proj = new Map();
-  for(const n of V112.nodes) proj.set(n.id, project(n.pos));
+  for(const n of nodesRender) proj.set(n.id, project(n.pos));
 
   // Arestas — só desenha as MAIS FORTES (top N por peso) pra não travar
   const arestas_fortes = V112.edges
@@ -142,7 +156,7 @@ function desenharRede(){
   }
 
   // Nós (back-to-front)
-  const ordenado = V112.nodes.slice().sort((a,b) => proj.get(b.id)[2] - proj.get(a.id)[2]);
+  const ordenado = nodesRender.slice().sort((a,b) => proj.get(b.id)[2] - proj.get(a.id)[2]);
   for(const n of ordenado){
     const p = proj.get(n.id);
     const [x, y, z, scale] = p;
@@ -356,29 +370,28 @@ function renderEventos(){
     painelEventos.innerHTML = '<div class="empty">nenhuma frase preservada ainda</div>';
     return;
   }
-  let html = '';
+  let simples = '', detalhe = '';
   for(const ev of ultimos){
     const rec = v112_reconstruir_evento(ev.id);
-    html += `<div class="evento-tab">
+    simples += `<div class="evento-tab"><span class="texto">"${escapeHtml(rec.texto_reconstruido)}"</span></div>`;
+    detalhe += `<div class="evento-tab">
       <span class="turno">T${ev.turno} · ${ev.id}</span> 
-      <span class="texto">"${escapeHtml(rec.texto_reconstruido)}"</span>
-    </div>`;
+      <span class="texto">"${escapeHtml(rec.texto_reconstruido)}"</span></div>`;
   }
-  painelEventos.innerHTML = html;
+  painelEventos.innerHTML = '<div class="resumo-c">'+simples+'</div><div class="detalhe-c">'+detalhe+'</div>';
 }
 function renderPesos(r){
-  let html = '';
+  let simples = '', detalhe = '';
   for(const [tok, p] of Object.entries(r.pesos)){
     const max = Math.max(p.sens, p.inter, p.motor);
     const destino = p.sens === max ? 'SENS' : p.inter === max ? 'INTER' : 'MOTOR';
-    html += `<div class="peso-tab">
-      <strong>"${escapeHtml(tok)}"</strong> → ${destino}
-      <span style="color:var(--ink-low); font-size:9px;">
-        s=${p.sens.toFixed(2)} i=${p.inter.toFixed(2)} m=${p.motor.toFixed(2)}
-      </span>
-    </div>`;
+    const freq = (V112.freq_global && V112.freq_global[tok]) || 0;
+    simples += `<div class="peso-tab"><strong>"${escapeHtml(tok)}"</strong><span class="cnt">×${freq}</span></div>`;
+    detalhe += `<div class="peso-tab"><strong>"${escapeHtml(tok)}"</strong> → ${destino}
+      <span style="color:var(--ink-low); font-size:9px;">s=${p.sens.toFixed(2)} i=${p.inter.toFixed(2)} m=${p.motor.toFixed(2)}</span></div>`;
   }
-  painelPesos.innerHTML = html || '<div class="empty">nenhum cálculo ainda</div>';
+  if(!simples){ painelPesos.innerHTML = '<div class="empty">nenhum cálculo ainda</div>'; return; }
+  painelPesos.innerHTML = '<div class="resumo-c">'+simples+'</div><div class="detalhe-c">'+detalhe+'</div>';
 }
 function renderPalavras(){
   const palavras = V112.nodes
@@ -387,15 +400,15 @@ function renderPalavras(){
   if(palavras.length === 0){
     painelPalavras.innerHTML = '<div class="empty">rede vazia</div>'; return;
   }
-  let html = '';
+  let simples = '', detalhe = '';
   for(const n of palavras){
     const freq = V112.freq_global[n.text] || 0;
     const viz_count = V112.vizinhos_unicos[n.text] ? V112.vizinhos_unicos[n.text].size : 0;
-    html += `<div class="peso-tab"><strong>${escapeHtml(n.text)}</strong>
-      <span style="color:var(--ink-low); font-size:9px;">m=${n.mass.toFixed(1)} f=${freq} v=${viz_count}</span>
-    </div>`;
+    simples += `<div class="peso-tab"><strong>${escapeHtml(n.text)}</strong><span class="cnt">×${freq}</span></div>`;
+    detalhe += `<div class="peso-tab"><strong>${escapeHtml(n.text)}</strong>
+      <span style="color:var(--ink-low); font-size:9px;">m=${n.mass.toFixed(1)} f=${freq} v=${viz_count}</span></div>`;
   }
-  painelPalavras.innerHTML = html;
+  painelPalavras.innerHTML = '<div class="resumo-c">'+simples+'</div><div class="detalhe-c">'+detalhe+'</div>';
 }
 
 function enviar(){
@@ -686,7 +699,15 @@ function renderCandidatos(r){
         <div style="font-size:9px;color:var(--ink-low);margin-top:2px;">${escapeHtml(cand.razao)}</div>
       </div>`;
   }
-  painel.innerHTML = lbl('ratio', c.ratio) + lbl('media', c.media) + lbl('absoluto', c.absoluto);
+  const usado = c[ativo];
+  let simples = '';
+  if(usado){
+    const emite = usado.emite.length > 0 ? escapeHtml(usado.emite.join(', ')) : '— (silêncio)';
+    simples = `<div class="peso-tab"><strong>resposta</strong><span class="cnt">${emite}</span></div>`
+            + `<div class="peso-tab"><strong>critério</strong><span class="cnt">${escapeHtml(ativo)}</span></div>`;
+  }
+  const detalhe = lbl('ratio', c.ratio) + lbl('media', c.media) + lbl('absoluto', c.absoluto);
+  painel.innerHTML = '<div class="resumo-c">'+simples+'</div><div class="detalhe-c">'+detalhe+'</div>';
 }
 
 // ═══ CONFIG SLIDERS ═══
