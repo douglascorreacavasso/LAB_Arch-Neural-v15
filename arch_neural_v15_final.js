@@ -2223,7 +2223,7 @@ function v112_processar(input){
       const valor = _proximo_conteudo(m[2]);
       if(valor){
         if(negado) _remove_se(sc.user, valor);
-        else _add_se_novo(sc.user, valor);
+        else sc.user = [valor];  /* PATCH-NOME-ATUAL: nome do user novo SUBSTITUI (ultimo vence) */
       }
     }
     
@@ -2234,7 +2234,7 @@ function v112_processar(input){
       const valor = _proximo_conteudo(m[2]);
       if(valor){
         if(negado) _remove_se(sc.nome, valor);
-        else _add_se_novo(sc.nome, valor);
+        else sc.nome = [valor];  /* PATCH-NOME-ATUAL: nome novo SUBSTITUI (1 nome atual, ultimo vence) */
       }
     }
     
