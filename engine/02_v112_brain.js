@@ -1549,7 +1549,7 @@ function v112_processar(input){
     const tem_negacao = analise.intent_nega;
     
     // "meu nome é X" / "meu nome não é X"
-    let m = input_lower_raw.match(/meu\s+nome\s+(não\s+)?(?:é|=|eh)\s+(.+)/);
+    let m = input_lower_raw.match(/meu\s+nome\s+(n[ãa]o\s+)?(?:é|=|eh|e)\s+(.+)/);
     if(m){
       const negado = !!m[1] || tem_negacao;
       const valor = _proximo_conteudo(m[2]);
@@ -1560,7 +1560,7 @@ function v112_processar(input){
     }
     
     // "seu nome é X" / "seu nome não é X"
-    m = input_lower_raw.match(/seu\s+nome\s+(não\s+)?(?:é|=|eh)\s+(.+)/);
+    m = input_lower_raw.match(/(?:seu|teu)\s+nome\s+(n[ãa]o\s+)?(?:é|=|eh|e)\s+(.+)/);
     if(m){
       const negado = !!m[1];
       const valor = _proximo_conteudo(m[2]);
@@ -1570,6 +1570,17 @@ function v112_processar(input){
       }
     }
     
+    // [NEREAL_FIX_SELFCORE_GENERO_V1] "seu genero é X" / "teu sexo é X" -> sc.genero
+    m = input_lower_raw.match(/(?:seu|teu)\s+(?:g[eê]nero|sexo)\s+(não\s+|nao\s+)?(?:é|=|eh|e)\s+(.+)/);
+    if(m){
+      const negado = !!m[1];
+      const valor = _proximo_conteudo(m[2]);
+      if(valor){
+        if(negado) _remove_se(sc.genero, valor);
+        else _add_se_novo(sc.genero, valor);
+      }
+    }
+
     // "eu sou X" / "eu não sou X"  — diferencia nome/atributo/gênero
     m = input_lower_raw.match(/eu\s+(não\s+)?sou\s+(.+)/);
     if(m){
@@ -1586,7 +1597,7 @@ function v112_processar(input){
     }
     
     // "você é X" / "você não é X" — atributo da IA
-    m = input_lower_raw.match(/(?:você|vc|tu)\s+(não\s+)?(?:é|eh|és)\s+(.+)/);
+    m = input_lower_raw.match(/(?:voc[eê]|vc|tu)\s+(n[ãa]o\s+)?(?:é|eh|és|e)\s+(.+)/);
     if(m){
       const negado = !!m[1];
       const valor = _proximo_conteudo(m[2]);
@@ -1946,14 +1957,37 @@ function v112_processar(input){
   // Em vez de buscar nos últimos 50 eventos toda vez, mantém cache 
   // permanente em V112.subredes.B_bidir._cache_instancias[categoria] = Set
   let bidir_resultado = null;
-  
+
+  // [NEREAL_SELFCORE_GATE_PRIORITARIO_V1] Self-Core DOMINA pergunta de identidade.
+  // Causa-raiz do bug do dump de genero: a fase de comando-no (logo abaixo) roda ANTES
+  // dos handlers dedicados de genero/nome (2418+). Um comando-no aprendido/persistido
+  // (vindo de sessao antiga / cerebro restaurado) podia casar "qual e o seu genero ?"
+  // e despejar a identidade. Aqui marcamos perguntas de campo de identidade
+  // (genero/sexo/nome/criador) para que NENHUM comando-no as intercepte — elas caem
+  // direto nos handlers de Self-Core. Nao afeta frases de SET (escrita do valor).
+  let _eh_pergunta_id_field = false;
+  if(typeof input === 'string'){
+    const _il = input.toLowerCase();
+    const _tem_valor_gen = /\b(masculino|feminino|homem|mulher|menino|menina|n[ãa]o[\- ]bin[áa]rio|homossexual|heterossexual|bissexual|gay|l[ée]sbica|trans)\b/.test(_il);
+    const _eh_set_id = /(seu|teu|meu|minha|sua|tua)\s+(nome|g[eê]nero|sexo|criador)\s+(n[ãa]o\s+)?(é|=|eh|e)\s+\S/.test(_il)
+                    || /\bme\s+chamo\b/.test(_il)
+                    || /\b(te\s+chamo|se\s+chama)\s+\S/.test(_il)
+                    || (/\b(g[eê]nero|sexo)\b/.test(_il) && _tem_valor_gen);
+    _eh_pergunta_id_field = !_eh_set_id && (
+          /\b(g[eê]nero|sexo)\b/.test(_il)
+       || (/\bnome\b/.test(_il) && /\b(qual|quem|como|sabe|seu|teu|meu|sua|tua|diz|me\s+diz)\b/.test(_il))
+       || /\b(seu|teu)\s+criador\b/.test(_il)
+       || /\bquem\s+(te\s+criou|criou\s+(você|voce|vc|tu))\b/.test(_il)
+    );
+  }
+
   // LAB 13.15 — Tenta comandos-NÓS (lógica nos núcleos)
   // ANTES dos hooks JS hardcoded — usa lowercase pra consistência
-  if(typeof input === 'string' && V112.subredes && V112.subredes.B_comandos_nucleos){
+  if(typeof input === 'string' && V112.subredes && V112.subredes.B_comandos_nucleos && !_eh_pergunta_id_field){
     try {
       const input_lower = input.toLowerCase();
       const cmd_r = v112_comando_tentar_executar(input_lower);
-      if(cmd_r && cmd_r.tratou && cmd_r.resultado){
+      if(cmd_r && cmd_r.tratou && cmd_r.resultado && !bidir_resultado){
         bidir_resultado = {tratou: true, conhecia: true, dados: cmd_r.resultado, via_comando_no: cmd_r.comando};
         LOG.subredes = LOG.subredes || {}; LOG.subredes.B_comandos_nucleos = {handler: cmd_r.handler, comando: cmd_r.comando};
       }
@@ -2402,8 +2436,53 @@ function v112_processar(input){
         }
       }
       
+      // [NEREAL_FIX_SELFCORE_GENERO_V1] pergunta de GENERO da IA responde o campo genero,
+      // NAO o dump de identidade. Tem que vir ANTES do B_identidade.
+      if(!bidir_resultado){
+        var _txt_g = txt_orig;
+        var _tem_valor_genero = /\b(masculino|feminino|homem|mulher|menino|menina|n[ãa]o[\- ]bin[áa]rio|homossexual|heterossexual|bissexual|gay|l[ée]sbica|trans)\b/.test(_txt_g);
+        var _eh_pergunta_genero = /\b(g[eê]nero|sexo)\b/.test(_txt_g)
+              && !/\bmeu\b/.test(_txt_g)
+              && !_tem_valor_genero
+              && (/\bqual\b/.test(_txt_g) || /\?/.test(_txt_g) || /^\s*g[eê]nero\s*$/.test(_txt_g) || /\b(seu|teu)\b/.test(_txt_g));
+        if(_eh_pergunta_genero){
+          var _scg = V112.self_core;
+          var _g = (_scg.genero && _scg.genero.length > 0) ? _scg.genero.join(', ') : null;
+          var _resp_g = _g ? ('meu genero e ' + _g) : 'ainda nao sei meu genero — me diz qual e?';
+          bidir_resultado = {tratou: true, conhecia: !!_g, dados: {resposta_direta: _resp_g, genero_resp: true}};
+          LOG.subredes = LOG.subredes || {}; LOG.subredes.B_identidade = {genero_resp: _g};
+        }
+      }
+
+      // [NEREAL_FIX_SELFCORE_NOME_V1] pergunta de NOME (IA ou user) de varias formas -> responde o campo certo.
+      if(!bidir_resultado){
+        var _txn = txt_orig;
+        var _interrog = /\bqual\b|\?|\bcomo\b|\bsabe\b|\bme\s+diz\b|\bdiz\b/.test(_txn);
+        var _ehSetNome = /(seu|teu|meu|minha|sua)\s+nome\s+(n[ãa]o\s+)?(é|=|eh|e)\s+\S/.test(_txn) || /\bme\s+chamo\b/.test(_txn) || /\b(te\s+chamo|se\s+chama)\s+\S/.test(_txn);
+        var _scn = V112.self_core;
+        // nome do USER: "qual é o meu nome", "como eu me chamo", "sabe meu nome"
+        var _pede_nome_user = !_ehSetNome && _interrog && ((/\bnome\b/.test(_txn) && /\bmeu\b/.test(_txn)) || /\bcomo\s+eu\s+me\s+chamo\b/.test(_txn));
+        // nome da IA: "qual é o seu/teu nome", "como você se chama", "como te chamo"
+        var _pede_nome_ia = !_ehSetNome && _interrog && ((/\bnome\b/.test(_txn) && /\b(seu|teu|sua|tua)\b/.test(_txn) && !/\bmeu\b/.test(_txn)) || /\bcomo\b.{0,15}\bcham[ao]/.test(_txn) || /\bcomo\s+te\s+chamo\b/.test(_txn));
+        if(_pede_nome_user){
+          var _u = (_scn.user && _scn.user.length>0) ? _scn.user[0] : null;
+          bidir_resultado = {tratou:true, conhecia:!!_u, dados:{resposta_direta: _u?('teu nome é '+_u):'ainda não sei teu nome — me diz?', nome_user_resp:true}};
+          LOG.subredes = LOG.subredes || {}; LOG.subredes.B_identidade = {nome_user_resp:_u};
+        } else if(_pede_nome_ia){
+          var _n = (_scn.nome && _scn.nome.length>0) ? _scn.nome[0] : null;
+          bidir_resultado = {tratou:true, conhecia:!!_n, dados:{resposta_direta: _n?('meu nome é '+_n):'ainda não tenho nome — como quer me chamar?', nome_ia_resp:true}};
+          LOG.subredes = LOG.subredes || {}; LOG.subredes.B_identidade = {nome_ia_resp:_n};
+        }
+      }
+
       // B_identidade: "quem sou eu / quem é você / quem é nerael"
-      const eh_pergunta_id = /(quem|qual).{0,8}(sou|é|eh).{0,8}(eu|você|voce|nerael|nereal)/.test(txt_orig) || /(você|voce|eu)\s+(é|eh|sou)\s+(o\s+que|que\s+coisa|que)/.test(txt_orig);
+      // [NEREAL_FIX_SELFCORE_GENERO_V3] paridade com o montador 2 (4306): NAO dumpa
+      // identidade quando a pergunta e de campo (genero/sexo/nome) — esse dump so
+      // responde "quem e voce/nerael", nunca "qual e o seu genero".
+      const _eh_q_genero_nome_m1 = /\b(g[eê]nero|sexo|nome)\b/.test(txt_orig);
+      const eh_pergunta_id = !_eh_q_genero_nome_m1 && (
+            /(quem|qual).{0,8}(sou|é|eh).{0,8}\b(eu|você|voce|nerael|nereal)\b/.test(txt_orig)
+         || /(você|voce|eu)\s+(é|eh|sou)\s+(o\s+que|que\s+coisa|que)/.test(txt_orig));
       if(eh_pergunta_id && !bidir_resultado){
         const sr = V112.subredes.B_identidade;
         if(sr){
@@ -4238,8 +4317,12 @@ function v112_processar(input){
         // ─── B_identidade (DMN): "quem sou eu / quem é nerael" → combina DNA ───
         if(!bidir_resultado){
           const txt_orig = String(input || '').toLowerCase();
-          const eh_pergunta_id = /(quem|qual).*(sou|é).*(eu|você|nerael|nereal)/.test(txt_orig) || 
-                                  /quem.*(sou|é) (eu|você)/.test(txt_orig);
+          // [NEREAL_FIX_SELFCORE_GENERO_V2] \b evita casar "eu" dentro de seu/teu/meu;
+          // e NAO dumpa identidade quando a pergunta e sobre genero/sexo/nome.
+          const _eh_q_genero_nome = /\b(g[eê]nero|sexo|nome)\b/.test(txt_orig);
+          const eh_pergunta_id = !_eh_q_genero_nome && (
+                /(quem|qual).{0,8}(sou|é|eh).{0,8}\b(eu|você|voce|nerael|nereal)\b/.test(txt_orig) ||
+                /\b(você|voce|eu)\s+(é|eh|sou)\s+(o\s+que|que\s+coisa|que)\b/.test(txt_orig));
           if(eh_pergunta_id){
             const sr = V112.subredes.B_identidade;
             if(sr){

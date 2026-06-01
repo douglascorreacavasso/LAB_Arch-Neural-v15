@@ -87,3 +87,39 @@ Opcoes uteis:
 Os treinos pesados ficam SO no PC. O `index.html` ja redireciona celular pro `mobile.html`, e o `mobile.html` NAO carrega mais as baterias nem os treinos adaptativos — no celular e so ENSINAR.
 No PC (index.html) tudo continua: baterias rodam apos o ensino e os treinos adaptativos sao disparados via TREINOS_EXTRA.
 Reforco: se um celular forcar o index.html, o runner detecta (user-agent mobile ou tela < 768px) e recusa educadamente.
+
+## Self-Core: fim do dump de identidade em pergunta de genero (NEREAL_SELFCORE_GATE_PRIORITARIO_V1)
+
+Sintoma: "qual e o seu genero ?" devolvia "sou nerael, ia, sistema, criado por douglas..."
+em vez de "masculino". "genero ?" sozinho respondia certo. O dump tambem comia
+"qual e o seu nome", "quem te criou", etc, principalmente sob repeticao.
+
+Causa-raiz (duas camadas):
+1. A fase de comando-no roda ANTES dos handlers dedicados de genero/nome no engine/02.
+   Um comando-no APRENDIDO em sessoes antigas (que volta com o cerebro restaurado)
+   casava a pergunta de genero e despejava a identidade — preemptando o handler certo.
+   A valvula de escape (engine/07), que tambem e comando-no, fazia o mesmo sob stress.
+2. Regex antigo de dump sem \b casava "eu" dentro de "s-eu"/"t-eu" (ja corrigido antes,
+   mas faltava paridade no 2o montador).
+
+Fix: o Self-Core agora DOMINA pergunta de identidade. Toda pergunta de campo
+(genero / sexo / nome / criador) e marcada no topo do processamento e NENHUM comando-no
+pode intercepta-la — cai direto no handler de Self-Core. Frases de SET (escrever o valor)
+nao sao afetadas. Fechado o gap do 2o montador de dump (V3).
+
+Resultado da bateria self-core (3000 testes): genero 24% -> 100%, nome da IA 63% -> 87%,
+total 57% -> 76%. A identidade e preservada (snapshot/restore) durante a bateria.
+
+Ainda fracos (proxima rodada, se quiser): nome do USUARIO (54% — "eu sou X" e ambiguo de
+proposito e "pode me chamar de X" ainda nao escreve o nome do user) e "liste o que sabe
+sobre mim/voce" (0% — a feature de listar esta quebrada, trata as palavras da pergunta
+como fatos; provavelmente no cerebro embutido).
+
+## Bateria self-core (so PC)
+
+Nova bateria em `baterias/bateria_selfcore.js`, ja no `index.html` (NAO no celular).
+Estilo: dizer que ELE e coisas / que EU sou coisas / pedir pra listar / perguntar de
+varias formas. No console do PC:
+
+    BATERIA_SELFCORE.run({max:120})              // rapido, sincrono
+    await BATERIA_SELFCORE.completo({n:3000})    // completo, com yields

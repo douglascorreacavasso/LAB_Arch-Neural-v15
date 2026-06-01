@@ -488,6 +488,15 @@ function _criar_valvula(stress_origem){
   const handler_nome = 'h_valvula_' + numero;
   window.V112_HANDLERS = window.V112_HANDLERS || {};
   window.V112_HANDLERS[handler_nome] = function(m, ctx){
+    // [NEREAL_VALVULA_NAO_ENGOLE_IDENTIDADE_V1] a valvula de escape NUNCA intercepta
+    // pergunta de identidade/self-core (nome/genero/sexo/criador/quem-e-voce) — mesmo
+    // sob repeticao/stress, a identidade tem que responder de verdade. Self-Core domina.
+    var _txt = String(ctx || '').toLowerCase();
+    if(/\b(g[eê]nero|sexo|nome|criador)\b/.test(_txt)
+       || /\bquem\s+(é|eh|sou)\b/.test(_txt)
+       || /\bo\s+que\s+(você|voce|eu|tu)\s+(é|eh|sou)\b/.test(_txt)){
+      return null;
+    }
     const no_v = v112_node_by_id(id);
     if(no_v){
       no_v._ativacoes = (no_v._ativacoes||0) + 1;
