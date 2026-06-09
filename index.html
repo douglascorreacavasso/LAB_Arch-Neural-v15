@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<!-- NEREAL_FIX_CACHE_LIMPO_V1 -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+// NEREAL_FIX_CACHE_LIMPO_V1 — ao abrir: tem dados? apaga tudo e recarrega limpo (trava anti-loop em sessionStorage)
+(function(){
+  try{
+    if(sessionStorage.getItem('arch_cache_limpo') === '1') return;
+    var temDados = false; try { temDados = (localStorage.length > 0); } catch(e){}
+    sessionStorage.setItem('arch_cache_limpo','1');
+    if(temDados){
+      try { localStorage.clear(); } catch(e){}
+      try { if(window.caches && caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){try{caches.delete(k);}catch(e){}});}); } catch(e){}
+      try { if(window.indexedDB && indexedDB.databases) indexedDB.databases().then(function(dbs){(dbs||[]).forEach(function(d){try{indexedDB.deleteDatabase(d.name);}catch(e){}});}); } catch(e){}
+      // SEM location.reload(): roda no <head> antes do engine/boot lerem dados -> boot ja sai limpo.
+    }
+  }catch(e){}
+})();
+// cache-bust dos cerebros .json
+(function(){
+  try{
+    if(window.__fetchBust || typeof window.fetch !== 'function') return;
+    var _f = window.fetch;
+    window.fetch = function(u, o){
+      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=154'; }catch(e){}
+      return _f.call(this, u, o);
+    };
+    window.__fetchBust = true;
+  }catch(e){}
+})();
+</script>
+<title>LAB_ARCH-NEURAL V15.1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Sora:wght@300;400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- redireciona pra mobile.html se for celular -->
+<script>
+(function(){
+  // Permite forçar desktop adicionando ?desktop=1 na URL
+  var forceDesktop = location.search.indexOf('desktop=1') !== -1;
+  if(forceDesktop) return;
+
+  // Detecta mobile por user-agent + tela pequena
+  var ua = navigator.userAgent || '';
+  var mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
+  var smallScreen = window.innerWidth < 768;
+  // NEREAL_FIX_PC_NAO_VAI_MOBILE_V1: PC com MOUSE (sem toque) nunca vai pro mobile so por janela
+  // estreita — antes uma janela < 768px no PC jogava pro mobile.html e parecia "sem css".
+  var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  if(mobileUA || (smallScreen && isTouch)) {
+    // Redireciona pro mobile.html preservando hash
+    location.replace('mobile.html' + location.search + location.hash);
+  }
+})();
+</script>
+<link rel="stylesheet" href="index.css?v=154">
+</head>
+<body>
+
+<!-- NEREAL_FIX_BOASVINDAS_V1 -->
+<div id="welcome-overlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(6,8,14,0.9); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:24px; font-family:'Sora',system-ui,sans-serif;">
+  <div style="max-width:460px; width:100%; background:linear-gradient(160deg,#0d1322,#141b2e); border:1px solid #2a3550; border-radius:18px; padding:28px 26px 20px; box-shadow:0 18px 60px rgba(0,0,0,0.6); color:#e6edf3;">
+    <div style="font-size:24px; font-weight:700; color:#5eead4; margin-bottom:4px;">Bem-vindo 👋</div>
+    <div style="font-size:12px; color:#7d8b96; margin-bottom:18px; letter-spacing:.5px;">LAB · ARCH-NEURAL — cérebro simbólico</div>
+
+    <div style="display:flex; gap:11px; margin-bottom:12px;">
+      <div style="font-size:19px;">🧠</div>
+      <div style="font-size:14px; line-height:1.45;">Ao abrir, o cérebro começa <b style="color:#5eead4;">leve</b>.</div>
+    </div>
+    <div style="display:flex; gap:11px; margin-bottom:12px;">
+      <div style="font-size:19px;">💾</div>
+      <div style="font-size:14px; line-height:1.45;"><b style="color:#fbbf24;">Salve sempre</b> antes de fechar o cérebro — senão você perde o progresso.</div>
+    </div>
+    <div style="display:flex; gap:11px; margin-bottom:12px;">
+      <div style="font-size:19px;">📥</div>
+      <div style="font-size:14px; line-height:1.45;">Já falou com ele antes? <b style="color:#a78bfa;">Importe</b> seu cérebro salvo pra continuar de onde parou.</div>
+    </div>
+    <div style="display:flex; gap:11px; margin-bottom:20px;">
+      <div style="font-size:19px;">🌀</div>
+      <div style="font-size:14px; line-height:1.45;">A imagem fica girando <b>devagar e fixa em órbita</b>, pra você ver o cérebro crescendo.</div>
+    </div>
+
+    <button onclick="window.fecharBoasVindas && window.fecharBoasVindas()" style="width:100%; background:linear-gradient(135deg,#5eead4,#22d3ee); color:#06231f; border:none; padding:13px; border-radius:11px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:9px;">🚀 Começar</button>
+    <button onclick="window.importarBoasVindas && window.importarBoasVindas()" style="width:100%; background:rgba(167,139,250,0.14); color:#c4b5fd; border:1px solid #6d5bb0; padding:12px; border-radius:11px; font-size:14px; font-weight:600; cursor:pointer;">📥 Importar cérebro salvo</button>
+
+    <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:12px; color:#7d8b96; cursor:pointer;">
+      <input type="checkbox" id="welcome-skip" style="width:15px; height:15px; accent-color:#5eead4;"> não mostrar isso toda vez
+    </label>
+  </div>
+</div>
+<!-- FIM NEREAL_FIX_BOASVINDAS_V1 -->
+
+<!-- cérebro 3D como FUNDO (a wrap inteira vira tela cheia via CSS) -->
+<div class="viz-wrap">
+  <canvas id="canvas"></canvas>
+  <div class="viz-legend" id="viz-legend">
+    <div class="vl-head" onclick="toggleLegenda()">🧠 cérebro 3D · 11 faixas <span class="vl-seta">▾</span></div>
+    <div class="vl-body">
+    <div style="font-weight:600;"><span class="dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></span> SELF-CORE (0,0,0) — EU</div>
+    <div><span class="dot" style="background:#5eead4"></span> sensorial (+200) — 500</div>
+    <div><span class="dot" style="background:#06b6d4"></span> tálamo (+150) — 20 roteador</div>
+    <div><span class="dot" style="background:#ec4899"></span> hipocampo (+100) — 400 + eventos</div>
+    <div><span class="dot" style="background:#fbbf24"></span> GABA (+50) — 10 inibidor</div>
+    <div><span class="dot" style="background:#a78bfa"></span> córtex (0) — 400</div>
+    <div><span class="dot" style="background:#ef4444"></span> amígdala (0 off) — 50 emocional</div>
+    <div><span class="dot" style="background:#84cc16"></span> núcleos ação (-50) — 30 ignição</div>
+    <div><span class="dot" style="background:#fb923c"></span> motora (-150) — 200</div>
+    <div><span class="dot" style="background:#f97316"></span> Broca (-200) — 100 saída</div>
+    <div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border);">
+      <span style="color:#ec4899;">━</span> cronológica · <span style="color:#fbbf24;">━</span> temporal · <span style="color:#c4b5fd;">━</span> mielinizada · <span style="color:#4ade80;">━</span> anatômica
+    </div>
+    <div><span class="dot" style="background:var(--warn)"></span> ativos · <span class="dot" style="background:var(--pink)"></span> nascidos</div>
+    </div>
+  </div>
+  <div class="viz-modes">
+    <button id="vm-lateral" class="active">A: lateral</button>
+    <button id="vm-frontal">B: frontal</button>
+    <button id="vm-rotar">C: girar H</button>
+    <button id="vm-diagonal">D: diagonal</button>
+    <button id="vm-stop">⏸</button>
+  </div>
+</div>
+<div class="grain"></div>
+<div class="vinheta"></div>
+<div class="cam-ctrl">
+  <button class="cam-b" onclick="camFrontal()">frontal</button>
+  <button class="cam-b" onclick="camLateral()">de lado</button>
+  <button class="cam-b" id="cam-girar" onclick="camGirar()">↻ girar</button>
+</div>
+<div id="toast-extra"></div>
+<span id="stats-header" style="display:none"></span>
+
+<!-- ═══ FAIXA HUD ═══ -->
+<div class="faixa">
+  <button id="btn-treinar" class="hud-btn primaria">📚 ensinar 240</button>
+  <button id="btn-sleep" class="hud-btn sec">💤 meditar</button>
+
+  <!-- CORES -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">🎨 Cores ▾</button>
+    <div class="pop">
+      <div class="pop-titulo">🎨 sistema</div>
+      <div class="swatches">
+        <button class="pal-btn active" data-tema="sci-fi" onclick="setTemaExtra('sci-fi')" title="Sci-Fi" style="background:linear-gradient(135deg,#5eead4,#a78bfa)"></button>
+        <button class="pal-btn" data-tema="matrix" onclick="setTemaExtra('matrix')" title="Matrix" style="background:linear-gradient(135deg,#00ff66,#00cc44)"></button>
+        <button class="pal-btn" data-tema="solar" onclick="setTemaExtra('solar')" title="Solar" style="background:linear-gradient(135deg,#ff8c00,#ffb84d)"></button>
+        <button class="pal-btn" data-tema="borboleta" onclick="setTemaExtra('borboleta')" title="Borboleta" style="background:linear-gradient(135deg,#4488ff,#8866ff)"></button>
+        <button class="pal-btn" data-tema="cyber" onclick="setTemaExtra('cyber')" title="Cyber" style="background:linear-gradient(135deg,#00ffff,#ff00ff)"></button>
+        <button class="pal-btn" data-tema="dracula" onclick="setTemaExtra('dracula')" title="Drácula" style="background:linear-gradient(135deg,#bd93f9,#ff79c6)"></button>
+        <button class="pal-btn" data-tema="oceano" onclick="setTemaExtra('oceano')" title="Oceano" style="background:linear-gradient(135deg,#22d3ee,#3b82f6)"></button>
+        <button class="pal-btn" data-tema="sakura" onclick="setTemaExtra('sakura')" title="Sakura" style="background:linear-gradient(135deg,#fb7185,#f9a8d4)"></button>
+        <button class="pal-btn" data-tema="lava" onclick="setTemaExtra('lava')" title="Lava" style="background:linear-gradient(135deg,#fb923c,#ef4444)"></button>
+        <button class="pal-btn" data-tema="gelo" onclick="setTemaExtra('gelo')" title="Gelo" style="background:linear-gradient(135deg,#7dd3fc,#c4b5fd)"></button>
+      </div>
+      <div class="pop-titulo">🧠 cérebro</div>
+      <div class="swatches">
+        <button class="pal-btn-cere active" data-pal="padrao" onclick="setPaletaCerebroDesk('padrao')" title="Padrão" style="background:conic-gradient(#5eead4,#a78bfa,#fbbf24,#ef4444)"></button>
+        <button class="pal-btn-cere" data-pal="arcoiris" onclick="setPaletaCerebroDesk('arcoiris')" title="Arco-íris" style="background:conic-gradient(red,orange,yellow,green,blue,purple)"></button>
+        <button class="pal-btn-cere" data-pal="frio" onclick="setPaletaCerebroDesk('frio')" title="Frio" style="background:conic-gradient(#00ffff,#0077be,#4488ff,#8866ff)"></button>
+        <button class="pal-btn-cere" data-pal="quente" onclick="setPaletaCerebroDesk('quente')" title="Quente" style="background:conic-gradient(#ff4444,#ffaa00,#ffd700,#ff1493)"></button>
+        <button class="pal-btn-cere" data-pal="neon" onclick="setPaletaCerebroDesk('neon')" title="Neon" style="background:conic-gradient(#00ff66,#ff00ff,#00ffff,#ffff00)"></button>
+        <button class="pal-btn-cere" data-pal="mono_azul" onclick="setPaletaCerebroDesk('mono_azul')" title="Mono Azul" style="background:linear-gradient(135deg,#88ddff,#0077be,#003366)"></button>
+        <button class="pal-btn-cere" data-pal="mono_verde" onclick="setPaletaCerebroDesk('mono_verde')" title="Mono Verde" style="background:linear-gradient(135deg,#88ff99,#22c55e,#15803d)"></button>
+        <button class="pal-btn-cere" data-pal="mono_roxo" onclick="setPaletaCerebroDesk('mono_roxo')" title="Mono Roxo" style="background:linear-gradient(135deg,#e9d5ff,#a78bfa,#6d28d9)"></button>
+        <button class="pal-btn-cere" data-pal="terra" onclick="setPaletaCerebroDesk('terra')" title="Terra" style="background:conic-gradient(#a3e635,#84cc16,#ca8a04)"></button>
+        <button class="pal-btn-cere" data-pal="pastel" onclick="setPaletaCerebroDesk('pastel')" title="Pastel" style="background:conic-gradient(#c4b5fd,#67e8f9,#fcd34d)"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODELO: Árvore/Y no topo + Formato/Conexão (menus originais que flutuam) -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">◇ Modelo ▾</button>
+    <div class="pop">
+      <div class="pop-titulo">Modelo do nó</div>
+      <button id="btn-arvore" class="pop-item-btn" title="Árvore radial (8 braços)">🌲 árvore</button>
+      <button id="btn-y" class="pop-item-btn" title="Y bifurcado (clássico)">🌳 Y</button>
+      <div class="pop-sep"></div>
+      <button id="btn-formato" class="pop-item-btn" onclick="toggleMenuFormatoDesk(event)">⚛ Formato ▸</button>
+      <button id="btn-conexao" class="pop-item-btn" onclick="toggleMenuConexaoDesk(event)">⛓ Conexão ▸</button>
+    </div>
+  </div>
+
+  <!-- EXPERIMENTOS -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">🧪 Experimentos ▾</button>
+    <div class="pop">
+      <button class="test-btn" data-msg="a é letra">a é letra</button>
+      <button class="test-btn" data-msg="a é vogal">a é vogal ← acumula</button>
+      <button class="test-btn" data-msg="a">a ← evoca letra+vogal</button>
+      <button class="test-btn" data-msg="Zandalar é uma cidade">Zandalar é uma cidade</button>
+      <button class="test-btn" data-msg="Stormwind é uma cidade">Stormwind é uma cidade</button>
+      <button class="test-btn" data-msg="cidade ?">cidade ?</button>
+      <button class="test-btn" data-msg="meu nome é joão">meu nome é joão</button>
+      <button class="test-btn" data-msg="qual meu nome ?">qual meu nome ?</button>
+      <button class="test-btn" data-msg="eu gosto de chuva forte">eu gosto de chuva forte</button>
+      <button class="test-btn" data-msg="2 + 2 = 4">2 + 2 = 4</button>
+      <button class="test-btn" data-msg="quanto é 5 + 5">quanto é 5 + 5</button>
+      <button class="test-btn" data-msg="b é letra">b é letra</button>
+      <button class="test-btn" data-msg="b é consoante">b é consoante</button>
+      <button class="test-btn" data-msg="cachorro é um animal">cachorro é um animal</button>
+      <button class="test-btn" data-msg="gato é um animal">gato é um animal</button>
+      <button class="test-btn" data-msg="o que é um animal ?">o que é um animal ?</button>
+      <button class="test-btn" data-msg="banana é uma fruta">banana é uma fruta</button>
+      <button class="test-btn" data-msg="maçã é uma fruta">maçã é uma fruta</button>
+      <button class="test-btn" data-msg="fogo causa fumaça">fogo causa fumaça</button>
+      <button class="test-btn" data-msg="chuva causa molhado">chuva causa molhado</button>
+    </div>
+  </div>
+
+  <div class="espaco"></div>
+
+  <!-- AMÍGDALA (direita, na faixa) -->
+  <div id="painel-amigdala" class="amig-faixa"></div>
+
+  <!-- AJUSTES (direita) -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">⚙ Ajustes ▾</button>
+    <div class="pop ajustes dir" id="painel-config">
+      <div class="pop-titulo">Ajustes de emissão</div>
+      <div style="margin:6px 0;">critério ativo:
+        <select id="sel-criterio" style="background:var(--bg-card);color:var(--ink);border:1px solid var(--border);padding:3px;border-radius:6px;">
+          <option value="ratio">ratio (top1 &gt; top2 × k)</option>
+          <option value="media">média (top1 &gt; média × k)</option>
+          <option value="absoluto">absoluto (top1 &gt; k)</option>
+        </select>
+      </div>
+      <div style="margin:8px 0;">k_ratio: <input type="range" id="sl-ratio" min="1.2" max="4" step="0.1" value="1.8" style="width:130px;"> <span id="v-ratio">1.8</span></div>
+      <div style="margin:8px 0;">k_media: <input type="range" id="sl-media" min="1.5" max="6" step="0.1" value="3" style="width:130px;"> <span id="v-media">3.0</span></div>
+      <div style="margin:8px 0;">k_absoluto: <input type="range" id="sl-absoluto" min="50" max="500" step="10" value="200" style="width:130px;"> <span id="v-absoluto">200</span></div>
+      <div style="margin:8px 0;">loop background: <button id="btn-loop" style="font-size:10px;padding:2px 8px;">⏸ pausado</button></div>
+    </div>
+  </div>
+
+  <!-- AÇÕES (direita) -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">⋯ Ações ▾</button>
+    <div class="pop dir">
+      <button id="btn-salvar" class="pop-item-btn">💾 SALVAR CEREBRO</button>
+      <button id="btn-carregar" class="pop-item-btn">📁 carregar</button>
+      <button id="btn-carregar-merge" class="pop-item-btn" title="JUNTA com o atual (NÃO substitui)">🔀 juntar</button>
+      <button class="pop-item-btn" onclick="carregarDoGithubExtra()" title="Carrega cerebro_V15.json local">🌐 carregar local</button>
+      <button class="pop-item-btn" onclick="carregarManualExtra()" title="Carrega .json do PC">📂 manual</button>
+      <div class="pop-sep"></div>
+      <button id="btn-log-json" class="pop-item-btn">📋 log JSON</button>
+      <button id="btn-log-txt" class="pop-item-btn">📄 log TXT</button>
+      <div class="pop-sep"></div>
+      <button id="btn-reset" class="pop-item-btn perigo">🔄 reset</button>
+    </div>
+  </div>
+
+  <!-- INFO (direita) -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" onclick="toggleMenu(this)">ⓘ Info ▾</button>
+    <div class="pop dir">
+      <button class="pop-item-btn" onclick="window.TUTORIAL && window.TUTORIAL.abrir('ensinar','desktop')">❓ como ensinar</button>
+      <button class="pop-item-btn" onclick="window.TUTORIAL && window.TUTORIAL.abrir('usar','desktop')">❗ como usar</button>
+      <button class="pop-item-btn" onclick="abrirSobreLab()">📖 sobre o LAB</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLACA LAB neon -->
+<div class="placa">
+  <div class="nome"><b>LAB</b> · ARCH·NEURAL V15.1</div>
+  <div class="sub">cérebro simbólico emergente</div>
+</div>
+
+<!-- ESQUERDA: estado / turno / self-core -->
+<div class="v-col esq">
+  <div class="card"><h3>◈ Estado da rede</h3><div class="stats" id="grid-stats"></div></div>
+  <div class="card"><h3>◈ Último turno</h3><div id="painel-turno"></div></div>
+  <div class="card"><h3>🌟 Self-Core</h3><div id="painel-selfcore" style="font-size:11px;"></div></div>
+</div>
+
+<!-- DIREITA: pesos / palavras / candidatos / eventos -->
+<div class="v-col dir">
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Pesos semânticos</h3><div id="painel-pesos"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Palavras na rede (top 12)</h3><div id="painel-palavras"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>🎯 Candidatos de resposta</h3><div id="painel-candidatos"></div></div>
+  <div class="card card-toggle compacto" onclick="toggleCard(this)"><h3>◈ Eventos no hipocampo</h3><div id="painel-eventos"></div></div>
+</div>
+
+<!-- CHAT central de vidro -->
+<div class="chat">
+  <div class="chat-msgs msgs" id="msgs"></div>
+  <div class="chat-entrada input-row">
+    <textarea id="input" placeholder="conversa comigo... (Shift+Enter = linha nova)" rows="1"></textarea>
+    <button id="btn" class="enviar">ENVIAR</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" style="display:none" accept=".json">
+
+<!-- engine modularizado (14 partes — ORDEM OBRIGATORIA) -->
+<script src="engine/01_v112_core.js?v=154"></script>
+<script src="engine/02_v112_brain.js?v=154"></script>
+<script src="engine/03_v151_logica_prog.js?v=154"></script>
+<script src="engine/04_v152_afastamentos.js?v=154"></script>
+<script src="engine/05_v153_auto_mod.js?v=154"></script>
+<script src="engine/06_v154_aprendiz_meta.js?v=154"></script>
+<script src="engine/07_v155_valvula_escape.js?v=154"></script>
+<script src="engine/08_v156_evolucao.js?v=154"></script>
+<script src="engine/09_v158_reflexos_sociais.js?v=154"></script>
+<script src="engine/10_v15_cortex_logico.js?v=154"></script>
+<script src="engine/11_v159_cortex_cognitivo.js?v=154"></script>
+<script src="engine/12_v159b_motores_cognitivos.js?v=154"></script>
+<script src="engine/13_v160_estatistico.js?v=154"></script>
+<script src="engine/14_cerebro_embutido.js?v=154"></script>
+<script src="shared/device_check.js?v=154"></script>
+<script src="shared/identidade_persist.js?v=154"></script>
+<script src="shared/desenho_simbolos.js?v=154"></script>
+<script src="shared/motor_receitas.js?v=154"></script>
+<script src="shared/auto_receita.js?v=154"></script>
+<script src="shared/desenho_alfabeto.js?v=154"></script>
+
+<!-- SHARED modules (Leva 1+2+3) -->
+<script src="shared/overlay_loading.js?v=154"></script>
+<script src="shared/chat_pensando.js?v=154"></script>
+<script src="shared/audit_filter.js?v=154"></script>
+<script src="shared/viz_renderer.js?v=154"></script>
+  <!-- NEREAL_PATCH_RENDER_GUARD_V1 -- DESLIGADO em NEREAL_FIX_RENDER_ORBITA_V1: trava de congelar trocada por giro + FPS proporcional. Religar se precisar. -->
+  <!-- <script src="shared/render_guard.js?v=154"></script> -->
+<script src="shared/treino_loader.js?v=154"></script>
+<!-- baterias: testes que tambem treinam a rede (rodam apos o ensino) -->
+<script src="baterias/bateria_integracao.js"></script>
+<script src="baterias/bateria_estatistica.js"></script>
+<script src="baterias/bateria_nivel_deus.js"></script>
+<script src="baterias/bateria_selfcore.js"></script>
+<script src="shared/baterias_runner.js?v=154"></script>
+<!-- treinos adaptativos (dinamicos): xadrez, labirinto 10 niveis, benchmark -->
+<script src="treinos/treino_benchmark.js"></script>
+<script src="treinos/treino_labirinto.js"></script>
+<script src="treinos/treino_xadrez.js"></script>
+<script src="shared/treinos_adapt_runner.js?v=154"></script>
+<script src="shared/tutorials.js?v=154"></script>
+<script src="index.js"></script>
+</body>
+</html>
