@@ -133,13 +133,35 @@
   // Stack pra chamadas aninhadas
   const stack = [];
 
+  // NEREAL_FIX_PCT_TODAS_V1: barra de % SEMPRE visivel (com creep) em qualquer LOADING.run/wrap.
+  // Se o trabalho chamar setProgress, o % real assume; senao, a barra sobe sozinha ate 90% e
+  // finaliza em 100%. Resolve "mesclar/importar/baterias sem porcentagem".
+  let _creepIv = null, _creepPct = 0, _realUsed = false;
+  function _setBar(pct){
+    pct = Math.max(0, Math.min(100, pct));
+    const w = document.getElementById('anv-loading-bar-wrap');
+    const p = document.getElementById('anv-loading-pct');
+    const b = document.getElementById('anv-loading-bar');
+    if(w) w.classList.add('show');
+    if(p){ p.classList.add('show'); p.textContent = Math.round(pct) + '%'; }
+    if(b) b.style.width = pct + '%';
+  }
+  function _startCreep(){
+    _stopCreep(); _creepPct = 8; _realUsed = false; _setBar(_creepPct);
+    _creepIv = setInterval(function(){
+      if(_realUsed) return;
+      if(_creepPct < 90){ _creepPct += (_creepPct < 35 ? 6 : (_creepPct < 70 ? 2 : 1)); _setBar(_creepPct); }
+    }, 110);
+  }
+  function _stopCreep(){ if(_creepIv){ clearInterval(_creepIv); _creepIv = null; } }
+
   function show(label, sub) {
     ov.classList.add('show');
     document.getElementById('anv-loading-label').textContent = label || 'Carregando...';
     document.getElementById('anv-loading-sub').textContent = sub || 'aguarde um instante';
     document.getElementById('anv-loading-bar').style.width = '0%';
-    document.getElementById('anv-loading-bar-wrap').classList.remove('show');
-    document.getElementById('anv-loading-pct').classList.remove('show');
+    document.getElementById('anv-loading-bar-wrap').classList.add('show');
+    document.getElementById('anv-loading-pct').classList.add('show');
     document.getElementById('anv-loading-pct').textContent = '0%';
     lockScroll();
   }
@@ -150,6 +172,7 @@
   }
 
   function setProgress(cur, tot) {
+    _realUsed = true; _stopCreep();   // progresso real assume; para o creep
     const pct = Math.min(100, Math.floor((cur / tot) * 100));
     document.getElementById('anv-loading-bar-wrap').classList.add('show');
     document.getElementById('anv-loading-pct').classList.add('show');
@@ -174,16 +197,20 @@
   async function run(label, fn, sub) {
     stack.push({ label, sub });
     show(label, sub);
+    _startCreep();
     try {
       const result = await fn(setProgress, setLabel);
       return result;
     } finally {
+      _stopCreep();
+      _setBar(100);            // sempre termina em 100%
       stack.pop();
       if(stack.length > 0) {
         const top = stack[stack.length - 1];
         show(top.label, top.sub);
+        _startCreep();
       } else {
-        hide();
+        setTimeout(hide, 180); // deixa o 100% aparecer um instante antes de sumir
       }
     }
   }

@@ -19,7 +19,8 @@
       try { localStorage.clear(); } catch(e){}
       try { if(window.caches && caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){try{caches.delete(k);}catch(e){}});}); } catch(e){}
       try { if(window.indexedDB && indexedDB.databases) indexedDB.databases().then(function(dbs){(dbs||[]).forEach(function(d){try{indexedDB.deleteDatabase(d.name);}catch(e){}});}); } catch(e){}
-      location.reload();   // recarrega limpo (na volta a trava ja esta setada -> nao limpa de novo)
+      // SEM location.reload(): este script roda no <head>, ANTES do engine/boot lerem qualquer dado,
+      // entao limpar aqui ja garante boot limpo. O reload era redundante e dava flash/estado ruim no PC.
     }
   }catch(e){}
 })();
