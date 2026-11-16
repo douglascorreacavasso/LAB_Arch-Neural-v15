@@ -63,6 +63,20 @@
 
   // Processa N frases em batches assíncronos
   async function processarFrases(frases, setProgress, setLabel, labelBase) {
+    // [FIX_ENSINO_FATIAS_V1] antes: lotes fixos de 30 frases. No cerebro completo cada
+    // frase leva ~0,5 s -> 15 s de tela congelada por lote. Agora fatias de TEMPO
+    // (8/14/24 ms conforme o aparelho) cedendo a tela entre elas.
+    if(window.PERFIL && window.PERFIL.emFatias){
+      let ok = 0;
+      await window.PERFIL.emFatias(frases, function(frase){
+        if(typeof window.v112_processar === 'function') window.v112_processar(frase);
+        ok++;
+      }, function(feitas, total){
+        setProgress(feitas, total);
+        if(labelBase) setLabel(labelBase, feitas + ' de ' + total + ' frases');
+      });
+      return ok;
+    }
     const batchSize = 30;
     let processadas = 0;
     const total = frases.length;

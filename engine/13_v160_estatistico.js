@@ -22,8 +22,8 @@ window._ARCH_MODULOS.push({nome:"v160_estatistico.js", src: `
 
 (function(){
 'use strict';
-if(!global.V112 && !window.V112) return;
-const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : global.V112;
+if(!globalThis.V112) return; // [FIX_GLOBAL_NAVEGADOR_V1] 'global' nao existe no navegador
+const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : globalThis.V112;
 
 // ────────────────────────────────────────────────────────────────
 // Helpers de criação de nós (igual padrão v159)

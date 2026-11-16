@@ -25,9 +25,9 @@ window._ARCH_MODULOS.push({nome:"v159_cortex_cognitivo.js", src: `
 
 (function(){
 'use strict';
-if(!global.V112 && !window.V112) return;
+if(!globalThis.V112) return; // [FIX_GLOBAL_NAVEGADOR_V1] 'global' nao existe no navegador
 
-const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : global.V112;
+const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : globalThis.V112;
 
 // ────────────────────────────────────────────────────────────────
 // 0) Geração de ID sincronizada (lição do v15 — não colidir com brain)

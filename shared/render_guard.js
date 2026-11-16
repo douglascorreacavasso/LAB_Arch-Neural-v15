@@ -4,7 +4,7 @@
      <script src="shared/viz_renderer.js"></script>
      <script src="shared/render_guard.js"></script>
 
-   Regra (do Douglas): ao passar de X nós/arestas, o 3D para de atualizar
+   Regra (do autor): ao passar de X nós/arestas, o 3D para de atualizar
    (congela o último frame) e mostra um aviso. O cérebro NÃO encolhe e
    continua crescendo/respondendo por baixo — só a renderização pausa.
 

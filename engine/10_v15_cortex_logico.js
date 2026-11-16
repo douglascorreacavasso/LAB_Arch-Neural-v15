@@ -14,7 +14,7 @@ window._ARCH_MODULOS.push({nome:"v15_cortex_logico.js", src: `
 //   - Lógica de programação é UMA coisa só (não 3 ilhas)
 //   - Anatomia dentro do cérebro (nós/sub-redes), comportamento no JS
 //   - Inibição lateral: quando córtex acorda, silencia o resto via GABA
-//   - SEM teto de loops (decisão Douglas: energia gira até cond liberar)
+//   - SEM teto de loops (decisão do autor: energia gira até cond liberar)
 //   - Estrutura base FIXA (auto-mods criam novo, não modificam base)
 //   - Auto-mods interagem 100%
 //   - v151 e v152 continuam carregados; córtex orquestra via consulta interna

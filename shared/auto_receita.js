@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    auto_receita.js — A PONTE com os auto-mods.
 
-   Fecha o ciclo que o Douglas quer:
+   Fecha o ciclo que o autor quer:
      necessidade detectada → cérebro MONTA receita das letras →
      registra como comando-nó novo → necessidade atendida.
 

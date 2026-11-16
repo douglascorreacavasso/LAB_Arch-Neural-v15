@@ -9,13 +9,13 @@ window._ARCH_MODULOS.push({nome:"v159b_motores_cognitivos.js", src: `
 
 (function(){
 'use strict';
-if(!global.V112 && !window.V112) return;
+if(!globalThis.V112) return; // [FIX_GLOBAL_NAVEGADOR_V1] 'global' nao existe no navegador
 if(!window.v159_cortex_cognitivo_base_pronto){
   console.warn('[v159b] v159 base NÃO está pronto. Pulei.');
   return;
 }
 
-const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : global.V112;
+const V = (typeof window !== 'undefined' && window.V112) ? window.V112 : globalThis.V112;
 
 // Helpers locais (precisamos rebuildar — já que outro IIFE)
 function _no_central_cog(){
@@ -762,7 +762,7 @@ function arbitrar(input){
   }
   
   // 3) Detecta pares input→output → engenharia reversa
-  if(/\\b(?:entrada|input)\\s+(\\S+)\\s*→\\s*(?:saida|output)\\s+(\\S+)\\b/i.test(input)){
+  if(/\\b(?:entrada|input)\\s+(\\S+)\\s*(?:→|->|=>)\\s*(?:sa[ií]da|output)\\s+(\\S+)\\b/i.test(input)){
     motores_acionar.push('engenharia_reversa');
   }
   
@@ -828,7 +828,7 @@ function processar_cognitivo(input){
       }
     } else if(m === 'engenharia_reversa'){
       // Extrai par (input, output) da query
-      const m_par = input.match(/\\b(?:entrada|input)\\s+(\\S+)\\s*→\\s*(?:saida|output)\\s+(\\S+)/i);
+      const m_par = input.match(/\\b(?:entrada|input)\\s+(\\S+)\\s*(?:→|->|=>)\\s*(?:sa[ií]da|output)\\s+(\\S+)/i);
       if(m_par){
         const inp = isNaN(parseFloat(m_par[1])) ? m_par[1] : parseFloat(m_par[1]);
         const outp = isNaN(parseFloat(m_par[2])) ? m_par[2] : parseFloat(m_par[2]);
@@ -910,7 +910,7 @@ if(!window._v159_hooked){
     );
     
     const tem_padrao_forte = !eh_turing_claro && (
-      /\\b(?:entrada|input)\\s+\\S+\\s*→\\s*(?:saida|output)\\s+\\S+/i.test(input) ||
+      /\\b(?:entrada|input)\\s+\\S+\\s*(?:→|->|=>)\\s*(?:sa[ií]da|output)\\s+\\S+/i.test(input) ||
       /\\b\\d+(?:[\\.,]\\d+)?\\s*(?:com\\s+)?(?:taxa\\s+)?\\d+(?:[\\.,]\\d+)?\\s*%\\s*por\\s*\\d+\\s*anos?/i.test(input) ||
       /\\b(an[áa]lise|status|relat[óo]rio)\\s+(metacogn|cognitiv)/i.test(input) ||
       // Padrões estruturais fortes que devem virar analogia

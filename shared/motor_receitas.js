@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    motor_receitas.js — O ALFABETO + INTERPRETADOR.
 
-   A ideia (do Douglas):
+   A ideia (do autor):
    - Mantém os 142 handlers fixos (não mexe neles).
    - ADICIONA um alfabeto de ~20 primitivas atômicas (as "letras").
    - ADICIONA 5 letras ESPECIAIS (meta-operações poderosas).

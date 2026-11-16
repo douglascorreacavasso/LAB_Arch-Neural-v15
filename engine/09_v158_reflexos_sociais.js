@@ -6,7 +6,7 @@ window._ARCH_MODULOS.push({nome:"v158_reflexos_sociais.js", src: `
 // Sub-rede de REFLEXOS sociais. Pré-cabeada (não-aprendida), de alta
 // prioridade, interceptando saudações/conversa antes do fluxo cognitivo.
 //
-// PRINCÍPIOS (vide pedido do Douglas):
+// PRINCÍPIOS (vide pedido do autor):
 //  - Reflexo social é coisa do tronco/sistema límbico, não do córtex.
 //    Não passa por raciocínio, propagação, álgebra etc.
 //  - VARIAÇÃO EXPLORATÓRIA: o cérebro tenta variantes diferentes da

@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════
    baterias/bateria_selfcore.js — STRESS do SELF-CORE (browser)
-   Estilo pedido pelo Douglas:
+   Estilo pedido pelo autor do projeto:
      - dizer que ELE (a IA) é coisas:  "seu nome é X", "voce é Y", "seu genero é Z"
      - dizer que EU (user) sou coisas: "meu nome é X", "me chamo Y", "eu sou Z"
      - pedir pra LISTAR:               "liste o que sabe sobre voce/mim"
@@ -33,7 +33,7 @@
 
   // ── pools de valores e frases ──
   var NOME_IA   = ['nerael','aurora','kai','vega','nova','iris','eco','lumen','sora','aria'];
-  var NOME_USER = ['douglas','ana','bruno','carla','diego','elis','fabio','gabi','helena','igor'];
+  var NOME_USER = ['otavio','ana','bruno','carla','diego','elis','fabio','gabi','helena','igor'];
   var GENERO    = ['masculino','feminino'];
   var SOU       = ['ia','sistema','assistente','robo','programa'];
 

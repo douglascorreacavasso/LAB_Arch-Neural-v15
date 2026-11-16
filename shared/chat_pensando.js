@@ -34,6 +34,7 @@
     border-radius: 50%;
     background: #5eead4;
     animation: anv-pensando-pulse 1.2s infinite ease-in-out;
+    will-change: transform, opacity;
   }
   .anv-pensando-dot:nth-child(2) { animation-delay: 0.18s; background: #a78bfa; }
   .anv-pensando-dot:nth-child(3) { animation-delay: 0.36s; background: #fbbf24; }
@@ -60,14 +61,18 @@
    * @param {HTMLElement} chatContent - container de mensagens
    * @returns {{stop: function}}
    */
-  function start(chatContent) {
+  // [FIX_PENSANDO_IMEDIATO_V1] start(chat, {imediato:true}) mostra a bolha NA HORA.
+  // O turno do cerebro e sincrono: o timer de 2 s nunca disparava durante ele, entao a
+  // bolha nunca aparecia. Agora quem chama decide (PERFIL.turnoLento()) e espera
+  // PERFIL.pintar() antes de processar, pra bolha ja estar na tela.
+  function start(chatContent, opcoes) {
     let bolhaEl = null;
-    let timerId = setTimeout(() => {
+    function mostrar(){
       timerId = null;
       bolhaEl = document.createElement('div');
       bolhaEl.className = 'anv-pensando-wrap';
       bolhaEl.innerHTML = `
-        <div class="anv-pensando-bolha">
+        <div class="anv-pensando-bolha" role="status" aria-label="pensando">
           <div class="anv-pensando-dot"></div>
           <div class="anv-pensando-dot"></div>
           <div class="anv-pensando-dot"></div>
@@ -77,9 +82,13 @@
         chatContent.appendChild(bolhaEl);
         chatContent.scrollTop = chatContent.scrollHeight;
       }
-    }, DELAY);
+    }
+    let timerId = null;
+    if(opcoes && opcoes.imediato) mostrar();
+    else timerId = setTimeout(mostrar, DELAY);
 
     return {
+      visivel: function(){ return !!bolhaEl; },
       stop: function() {
         if(timerId !== null) {
           clearTimeout(timerId);

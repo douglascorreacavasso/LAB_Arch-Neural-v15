@@ -8,7 +8,7 @@ window._ARCH_MODULOS.push({nome:"v153_auto_mod_necessidade.js", src: `
 // pra cobrir o gap. Sem ensino manual via NL.
 //
 // Diferença do TIPO 1 (B_gerador_comandos):
-//   TIPO 1: Douglas fala "ensina: X -> Y" → cria comando
+//   TIPO 1: o usuário fala "ensina: X -> Y" → cria comando
 //   TIPO 2: cérebro vê 3+ falhas similares → cria sub-rede sozinho
 //
 // Mecânica:

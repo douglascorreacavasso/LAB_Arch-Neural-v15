@@ -90,7 +90,7 @@ Reforco: se um celular forcar o index.html, o runner detecta (user-agent mobile 
 
 ## Self-Core: fim do dump de identidade em pergunta de genero (NEREAL_SELFCORE_GATE_PRIORITARIO_V1)
 
-Sintoma: "qual e o seu genero ?" devolvia "sou nerael, ia, sistema, criado por douglas..."
+Sintoma: "qual e o seu genero ?" devolvia "sou nerael, ia, sistema, criado por (autor)"..."
 em vez de "masculino". "genero ?" sozinho respondia certo. O dump tambem comia
 "qual e o seu nome", "quem te criou", etc, principalmente sob repeticao.
 

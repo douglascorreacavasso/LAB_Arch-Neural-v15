@@ -55,6 +55,7 @@
     border-top-color: #5eead4;
     border-right-color: #a78bfa;
     animation: anv-spin 0.9s linear infinite;
+    will-change: transform;   /* gira na GPU: continua girando mesmo com a CPU ocupada */
   }
   .anv-loading-label {
     color: #d1dbf0;
@@ -198,10 +199,17 @@
     stack.push({ label, sub });
     show(label, sub);
     _startCreep();
+    // [FIX_SPINNER_PINTA_V1] marca o app como ocupado (o 3D desacelera e cede CPU) e
+    // garante que o spinner foi DESENHADO antes do trabalho comecar — sem isso, trabalho
+    // sincrono logo em seguida congelava a tela antes do overlay aparecer.
+    if(window.PERFIL) window.PERFIL.ocupado++;
     try {
+      if(window.PERFIL) await window.PERFIL.pintar();
+      else await new Promise(r => setTimeout(r, 30));
       const result = await fn(setProgress, setLabel);
       return result;
     } finally {
+      if(window.PERFIL) window.PERFIL.ocupado = Math.max(0, window.PERFIL.ocupado - 1);
       _stopCreep();
       _setBar(100);            // sempre termina em 100%
       stack.pop();
@@ -217,12 +225,8 @@
 
   // Wrapper síncrono: pra envolver coisas que não retornam promise (ex: salvar)
   function wrap(label, fn, sub) {
-    return run(label, async () => {
-      // Dá 1 tick pro browser renderizar o overlay ANTES da operação síncrona pesada
-      await new Promise(r => setTimeout(r, 30));
-      return fn();
-    }, sub);
+    return run(label, async () => fn(), sub);   // run() ja garante o spinner pintado antes
   }
 
-  window.LOADING = { run, wrap, show, hide, setProgress, setLabel };
+  window.LOADING = { run, wrap, show, hide, setProgress, setLabel, ativo: function(){ return stack.length > 0; } };
 })();

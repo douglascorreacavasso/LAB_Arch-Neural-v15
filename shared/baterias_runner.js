@@ -43,9 +43,28 @@
   window.BATERIAS = { rodar: rodar, registro: window.BATERIAS_REGISTRO };
 
   // ── HOOK: depois que o ENSINO termina, roda as baterias (treina + valida) ──
+  // [FIX_BATERIAS_FATIAS_V1] antes: as 4 baterias rodavam num bloco so (3 a 15 s de tela
+  // congelada). Agora uma bateria por vez, cedendo a tela e mostrando o % entre elas.
+  async function rodarEmFatias(setProgress, setLabel){
+    var regs = window.BATERIAS_REGISTRO || [];
+    var resumo = [], totOk = 0, tot = 0;
+    for(var i = 0; i < regs.length; i++){
+      if(setLabel) setLabel('🧪 Rodando baterias (treino extra)...', 'bateria ' + (i+1) + ' de ' + regs.length + ': ' + (regs[i].nome || ''));
+      if(window.PERFIL) await window.PERFIL.pintar(); else await new Promise(function(s){ setTimeout(s, 30); });
+      try {
+        var rr = regs[i].run();
+        if(rr){ resumo.push(rr); totOk += (rr.ok || 0); tot += (rr.total || 0); }
+      } catch(e){
+        try { console.warn('[baterias] erro em ' + (regs[i] && regs[i].nome) + ': ' + e.message); } catch(_){}
+      }
+      if(setProgress) setProgress(i+1, regs.length);
+    }
+    return { ok: totOk, total: tot, baterias: resumo };
+  }
+
   function rodarComOverlay(){
-    function exec(){
-      var res = rodar();
+    function exec(resPronto){
+      var res = resPronto || rodar();
       var msg = '🧪 baterias (treino extra): ' + res.ok + '/' + res.total + ' ok';
       try { if(typeof window.addMsg === 'function') window.addMsg('brain', msg, 'sleep'); } catch(e){}
       try { if(typeof window.toastExtra === 'function') window.toastExtra(msg, 3500); } catch(e){}
@@ -57,8 +76,8 @@
       return res;
     }
     if(window.LOADING && typeof window.LOADING.run === 'function'){
-      return window.LOADING.run('🧪 Rodando baterias (treino extra)...', function(){
-        return new Promise(function(s){ setTimeout(function(){ s(exec()); }, 30); });
+      return window.LOADING.run('🧪 Rodando baterias (treino extra)...', function(setProgress, setLabel){
+        return rodarEmFatias(setProgress, setLabel).then(exec);
       });
     }
     return Promise.resolve(exec());
@@ -70,7 +89,8 @@
     window.TREINO.ensinarProximo = function(){
       var p = _orig.apply(this, arguments);
       return Promise.resolve(p).then(function(r){
-        if(r && r.ok && !ehCelular()){ return rodarComOverlay().then(function(){ return r; }); }
+        // aparelho fraco (PERFIL) pula o treino extra, como ja acontecia no celular
+        if(r && r.ok && !ehCelular() && !(window.PERFIL && window.PERFIL.nivel === 'fraco')){ return rodarComOverlay().then(function(){ return r; }); }
         return r;
       });
     };

@@ -222,10 +222,16 @@ function _vizBudgetMs(){
 function loopViz(ts){
   requestAnimationFrame(loopViz);
   if(!ts) ts = (window.performance && performance.now) ? performance.now() : Date.now();
-  var budget = _vizBudgetMs();
+  // [FIX_RENDER_ADAPTATIVO_V1] intervalo = maior entre (tamanho do cerebro, teto de qps do
+  // aparelho, custo MEDIDO do desenho x fator). Aparelho fraco desenha menos vezes; durante
+  // operacao pesada (overlay aberto) cai pra ~4 qps e a CPU vai pro trabalho.
+  var nN = (window.V112 && V112.nodes) ? V112.nodes.length : 0;
+  var budget = window.PERFIL ? window.PERFIL.intervaloRender(nN) : _vizBudgetMs();
   if(budget && (ts - _vizUltimo) < budget) return;  // pula frame, libera a thread
   _vizUltimo = ts;
+  var _t0 = performance.now();
   desenharRede();
+  if(window.PERFIL) window.PERFIL.medirRender(performance.now() - _t0);
 }
 loopViz();
 
@@ -433,8 +439,33 @@ function enviar(){
   if(!txt) return;
   input.value = '';
   addMsg('voce', txt);
-  const r = v112_processar(txt);
-  addMsg('brain', r.resposta);
+  // [FIX_PENSANDO_IMEDIATO_V1] este e o envio que o botao/Enter usam de verdade (via
+  // corrigeEnvio). O turno e sincrono: se as respostas andam lentas (cerebro grande ou
+  // aparelho fraco), os 3 pontinhos entram NA HORA e a tela e pintada antes de processar.
+  const lento = window.PERFIL ? window.PERFIL.turnoLento() : false;
+  const pensando = (lento && window.PENSANDO) ? window.PENSANDO.start(msgs, { imediato: true }) : null;
+  const rodar = function(){
+    let r;
+    try {
+      const _t0 = performance.now();
+      r = v112_processar(txt);
+      if(window.PERFIL) window.PERFIL.medirTurno(performance.now() - _t0);
+    } catch(e){
+      if(pensando) pensando.stop();
+      addMsg('brain', '⚠ ' + e.message);
+      return;
+    }
+    if(pensando) pensando.stop();
+    addMsg('brain', r.resposta);
+    _aplicarTurnoNaTela(r);
+  };
+  if(pensando && window.PERFIL) window.PERFIL.pintar().then(rodar); else rodar();
+}
+// [FIX_PAINEIS_CHAT_V1] atualizacao da tela depois de um turno (3D acende as palavras,
+// paineis ULTIMO TURNO / PESOS / CANDIDATOS / SELF-CORE / AMIGDALA), separada do enviar()
+// para o envio com e sem "pensando" usarem a mesma rotina.
+function _aplicarTurnoNaTela(r){
+  if(!r) return;
   try {
   const ativos = new Set();
   for(const t of (r.tokens || [])){
@@ -455,6 +486,7 @@ function enviar(){
   renderAmigdala(r.amigdala);
   updateHeader();
   } catch(_e){ /* resposta simples sem dados completos de painel — ok */ }
+  try { renderSelfCore(r); renderCandidatos(r); } catch(_e2){}
 }
 btn.addEventListener('click', enviar);
 input.addEventListener('keydown', e => {
@@ -987,7 +1019,7 @@ try {
       a.href = URL.createObjectURL(blob);
       a.download = 'brain_v112_' + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.json';
       a.click();
-      URL.revokeObjectURL(a.href);
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);  // [FIX_SALVAR_REVOKE_V1]
     });
   });
 })();
@@ -998,19 +1030,25 @@ window.carregarDoGithubExtra = async function(){
   if(!window.LOADING){ if(_carregarGithubExtraOrig) _carregarGithubExtraOrig(); return; }
   await window.LOADING.run('🧠 Carregando cérebro...', async function(setProgress, setLabel){
     try {
-      const arquivo = window.escolherCerebro ? window.escolherCerebro() : 'cerebro_V15.json';
-      setLabel('🧠 Carregando cérebro...', 'fetching ' + arquivo + '...');
-      let r = await fetch(arquivo);
-      // Fallback: leve não existe → usa pesado
-      if(!r.ok && arquivo === 'cerebro_V15.1.json'){
-        setLabel('🧠 Carregando cérebro...', 'leve não achado, usando completo...');
-        r = await fetch('cerebro_V15.json');
+      // [FIX_CARREGAR_COM_PCT_V1] o botao "carregar local" carrega o completo (40 MB): agora
+      // com % real do download e a tela pintada entre as fases (baixar / ler / importar).
+      const arquivo = 'cerebro_V15.json';
+      const prog = function(lido, total, fase){
+        if(fase === 'baixando'){ setProgress(lido, total); setLabel('🧠 Carregando cérebro...', 'baixando ' + arquivo + ' — ' + (lido/1048576).toFixed(1) + ' de ' + (total/1048576).toFixed(1) + ' MB'); }
+        else setLabel('🧠 Carregando cérebro...', 'lendo ' + arquivo + ' (pode levar alguns segundos)...');
+      };
+      let c;
+      if(window.PERFIL){
+        c = await window.PERFIL.baixarJSON(arquivo, prog);
+      } else {
+        const r = await fetch(arquivo);
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        c = await r.json();
       }
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      setLabel('🧠 Carregando cérebro...', 'parseando...');
-      const c = await r.json();
-      setLabel('🧠 Carregando cérebro...', 'importando...');
+      setLabel('🧠 Carregando cérebro...', 'importando ' + (c.nodes ? c.nodes.length : 0) + ' nós...');
+      if(window.PERFIL) await window.PERFIL.pintar();
       if(typeof v112_importar === 'function') v112_importar(c);
+      window._cerebroAtual = arquivo;
       if(window.TREINO) window.TREINO.reset();
       if(typeof renderStats === 'function') renderStats();
       if(typeof updateHeader === 'function') updateHeader();
@@ -1057,10 +1095,16 @@ window.carregarManualExtra = function(){
     if(typeof addMsg === 'function') addMsg('user', txt);
     inputEl.value = '';
 
-    const pensando = window.PENSANDO ? window.PENSANDO.start(msgsEl) : null;
-    setTimeout(function(){
+    // [FIX_PENSANDO_IMEDIATO_V1] se as respostas andam lentas (cerebro grande/aparelho
+    // fraco), os 3 pontinhos aparecem NA HORA e a tela e pintada antes do turno rodar.
+    const lento = window.PERFIL ? window.PERFIL.turnoLento() : false;
+    const pensando = window.PENSANDO ? window.PENSANDO.start(msgsEl, { imediato: lento }) : null;
+    const espera = (lento && window.PERFIL) ? window.PERFIL.pintar() : new Promise(function(ok){ setTimeout(ok, 20); });
+    espera.then(function(){
       try {
+        const _t0 = performance.now();
         const r = (typeof v112_processar === 'function') ? v112_processar(txt) : null;
+        if(window.PERFIL) window.PERFIL.medirTurno(performance.now() - _t0);
         if(pensando) pensando.stop();
         const resp = (r && r.resposta) || '(sem resposta)';
         let tag = 'tur';
@@ -1068,6 +1112,7 @@ window.carregarManualExtra = function(){
         else if(r && r._estatistico) tag = 'est';
         else if(r && r.reflexo_social) tag = 'soc';
         if(typeof addMsg === 'function') addMsg('brain', resp, tag);
+        _aplicarTurnoNaTela(r);
         if(typeof renderStats === 'function') renderStats();
         if(typeof renderEventos === 'function') renderEventos();
         if(typeof updateHeader === 'function') updateHeader();
@@ -1075,7 +1120,7 @@ window.carregarManualExtra = function(){
         if(pensando) pensando.stop();
         if(typeof addMsg === 'function') addMsg('brain', '⚠ ' + e.message);
       }
-    }, 20);
+    });
   }
 
   // Substitui handler do botão e Enter
@@ -1554,8 +1599,10 @@ window._updCerebroInd = function(){
   var el = document.getElementById('placa-cerebro'); if(!el) return;
   try {
     if(window.V112 && V112.nodes){
-      var arq = (typeof window.escolherCerebro === 'function') ? window.escolherCerebro() : '';
-      var nome = arq.indexOf('V15.1') >= 0 ? 'V15.1 · leve' : (arq.indexOf('V15') >= 0 ? 'V15 · completo' : 'cérebro');
+      // [FIX_INDICADOR_CEREBRO_V1] mostra o cerebro que ESTA carregado (antes mostrava o que
+      // o aparelho "escolheria" -> PC forte dizia "completo" rodando o embutido leve).
+      var arq = window._cerebroAtual || 'embutido';
+      var nome = arq === 'embutido' ? 'V15.1 · leve (embutido)' : (/V15[._]1/.test(arq) ? 'V15.1 · leve' : (arq.indexOf('V15') >= 0 ? 'V15 · completo' : 'cérebro importado'));
       el.textContent = '🧠 ' + nome + ' · ' + V112.nodes.length + ' nós · T' + (V112.turn || 0);
     }
   } catch(e){}

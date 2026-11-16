@@ -96,6 +96,7 @@ arch-neural-v15/
 ├── shared/                     módulos compartilhados V15.1
 │   ├── viz_renderer.js         renderizador 3D (formas + conexões + estilos)
 │   ├── overlay_loading.js      overlay bloqueante com %
+│   ├── perfil_aparelho.js      mede o aparelho (fraco/médio/forte) e adapta a carga
 │   ├── chat_pensando.js        3 pontinhos se >2s
 │   ├── audit_filter.js         filtra dados pessoais
 │   ├── treino_loader.js        sistema progressivo de pacotes
@@ -160,6 +161,8 @@ arch-neural-v15/
 | Integração entre módulos | **50/50 = 100%** 🏆 |
 | Nível DEUS (2× mais difícil) | **20/20 = 100%** 🏆🏆 |
 | **TOTAL** | **567/567 = 100%** |
+
+> Medição no navegador em 15/11/2026 (aba recém-aberta, `BATERIAS.rodar()`): **332/347** — integração 49/50, estatística 157/157, nível deus 20/20, selfcore 106/120. Ver `DOCUMENTACAO_DESENVOLVIMENTO.md`.
 
 ---
 

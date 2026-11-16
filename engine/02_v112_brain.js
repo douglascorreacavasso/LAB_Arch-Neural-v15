@@ -1821,7 +1821,7 @@ function v112_processar(input){
   // Resultado: a SINTAXE emerge da direção temporal.
   // "Zandalar comeu bolo" cria Zandalar→comeu, Zandalar→bolo, comeu→bolo
   // "bolo comeu Zandalar" cria bolo→comeu, bolo→Zandalar, comeu→Zandalar
-  // As DUAS coexistem, sem se anular (regra do Douglas).
+  // As DUAS coexistem, sem se anular (regra do autor).
   // ═══════════════════════════════════════════════════════════════
   const PESOS_RASTRO = [3.0, 1.5, 0.75];  // forte, médio, fraco
   for(let n = 1; n < nos_do_turno.length; n++){

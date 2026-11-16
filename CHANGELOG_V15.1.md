@@ -1,5 +1,14 @@
 # 📜 CHANGELOG — V15.1
 
+## V15.3 (Nov/2026) — Regiões ligadas no navegador + carga adaptada ao aparelho
+
+Detalhes, prova de cada correção e propostas: ver `DOCUMENTACAO_DESENVOLVIMENTO.md`.
+
+- **Corrigido**: 6 regiões (v154, v155, v156, v159, v159b, v160) não carregavam no navegador (`global is not defined`). Baterias no navegador: 142/347 → 332/347.
+- **Corrigido**: nome do cérebro leve (`cerebro_V15_1.json`), carga automática silenciosa de 40 MB no celular, preferências apagadas a cada abertura, seta `->` na engenharia reversa.
+- **Novo**: `shared/perfil_aparelho.js` (fraco/médio/forte): trabalho em fatias de tempo, 3D com intervalo pelo custo medido, download com % real, pontinhos "pensando" na hora quando a resposta é lenta, tela de "iniciando" com bolinha girando.
+- **Dados pessoais**: nome aprendido no `cerebro_V15.json` trocado por nome fictício; `self_core.user` vazio.
+
 ## V15.2 (Jun/2026) — Modularizacao do engine + fixes
 
 ### Novo

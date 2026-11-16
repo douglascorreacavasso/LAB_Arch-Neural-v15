@@ -16,7 +16,16 @@
     try { temDados = (localStorage.length > 0); } catch(e){}
     sessionStorage.setItem('arch_cache_limpo','1');   // marca ANTES (sessionStorage nao e limpo)
     if(temDados){
-      try { localStorage.clear(); } catch(e){}
+      // [FIX_PREFERENCIAS_FICAM_V1] antes: localStorage.clear() apagava tambem as preferencias
+      // (tema, "nao mostrar boas-vindas", perfil do aparelho) -> a caixinha nunca funcionava.
+      // O cerebro/identidade continuam zerados a cada abertura, como antes.
+      try {
+        var _fica = ['arch_welcome_skip','arch_tema','arch_tema_geral','arch_tema_cerebro','arch_forcar_cerebro','arch_perfil'];
+        var _guardado = {};
+        _fica.forEach(function(k){ var v = localStorage.getItem(k); if(v !== null) _guardado[k] = v; });
+        localStorage.clear();
+        Object.keys(_guardado).forEach(function(k){ localStorage.setItem(k, _guardado[k]); });
+      } catch(e){}
       try { if(window.caches && caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){try{caches.delete(k);}catch(e){}});}); } catch(e){}
       try { if(window.indexedDB && indexedDB.databases) indexedDB.databases().then(function(dbs){(dbs||[]).forEach(function(d){try{indexedDB.deleteDatabase(d.name);}catch(e){}});}); } catch(e){}
       // SEM location.reload(): este script roda no <head>, ANTES do engine/boot lerem qualquer dado,
@@ -30,7 +39,7 @@
     if(window.__fetchBust || typeof window.fetch !== 'function') return;
     var _f = window.fetch;
     window.fetch = function(u, o){
-      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=154'; }catch(e){}
+      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=159'; }catch(e){}
       return _f.call(this, u, o);
     };
     window.__fetchBust = true;
@@ -906,37 +915,38 @@
 </div>
 
 <!-- engine modularizado (14 partes - ORDEM OBRIGATORIA) -->
-<script src="engine/01_v112_core.js?v=154"></script>
-<script src="engine/02_v112_brain.js?v=154"></script>
-<script src="engine/03_v151_logica_prog.js?v=154"></script>
-<script src="engine/04_v152_afastamentos.js?v=154"></script>
-<script src="engine/05_v153_auto_mod.js?v=154"></script>
-<script src="engine/06_v154_aprendiz_meta.js?v=154"></script>
-<script src="engine/07_v155_valvula_escape.js?v=154"></script>
-<script src="engine/08_v156_evolucao.js?v=154"></script>
-<script src="engine/09_v158_reflexos_sociais.js?v=154"></script>
-<script src="engine/10_v15_cortex_logico.js?v=154"></script>
-<script src="engine/11_v159_cortex_cognitivo.js?v=154"></script>
-<script src="engine/12_v159b_motores_cognitivos.js?v=154"></script>
-<script src="engine/13_v160_estatistico.js?v=154"></script>
-<script src="engine/14_cerebro_embutido.js?v=154"></script>
-<script src="shared/device_check.js?v=154"></script>
-<script src="shared/identidade_persist.js?v=154"></script>
-<script src="shared/desenho_simbolos.js?v=154"></script>
-<script src="shared/motor_receitas.js?v=154"></script>
-<script src="shared/auto_receita.js?v=154"></script>
-<script src="shared/desenho_alfabeto.js?v=154"></script>
+<script src="engine/01_v112_core.js?v=159"></script>
+<script src="engine/02_v112_brain.js?v=159"></script>
+<script src="engine/03_v151_logica_prog.js?v=159"></script>
+<script src="engine/04_v152_afastamentos.js?v=159"></script>
+<script src="engine/05_v153_auto_mod.js?v=159"></script>
+<script src="engine/06_v154_aprendiz_meta.js?v=159"></script>
+<script src="engine/07_v155_valvula_escape.js?v=159"></script>
+<script src="engine/08_v156_evolucao.js?v=159"></script>
+<script src="engine/09_v158_reflexos_sociais.js?v=159"></script>
+<script src="engine/10_v15_cortex_logico.js?v=159"></script>
+<script src="engine/11_v159_cortex_cognitivo.js?v=159"></script>
+<script src="engine/12_v159b_motores_cognitivos.js?v=159"></script>
+<script src="engine/13_v160_estatistico.js?v=159"></script>
+<script src="engine/14_cerebro_embutido.js?v=159"></script>
+<script src="shared/device_check.js?v=159"></script>
+<script src="shared/perfil_aparelho.js?v=159"></script>
+<script src="shared/identidade_persist.js?v=159"></script>
+<script src="shared/desenho_simbolos.js?v=159"></script>
+<script src="shared/motor_receitas.js?v=159"></script>
+<script src="shared/auto_receita.js?v=159"></script>
+<script src="shared/desenho_alfabeto.js?v=159"></script>
 
 <!-- SHARED modules (Leva 1+2+3) -->
-<script src="shared/overlay_loading.js?v=154"></script>
-<script src="shared/chat_pensando.js?v=154"></script>
-<script src="shared/audit_filter.js?v=154"></script>
-<script src="shared/viz_renderer.js?v=154"></script>
+<script src="shared/overlay_loading.js?v=159"></script>
+<script src="shared/chat_pensando.js?v=159"></script>
+<script src="shared/audit_filter.js?v=159"></script>
+<script src="shared/viz_renderer.js?v=159"></script>
   <!-- NEREAL_PATCH_RENDER_GUARD_V1 -- DESLIGADO em NEREAL_FIX_RENDER_ORBITA_V1: a trava de congelar foi trocada por giro em orbita com FPS proporcional ao tamanho do cerebro. Se o render_guard.js fazia outra coisa alem de congelar, religar aqui. -->
-  <!-- <script src="shared/render_guard.js?v=154"></script> -->
-<script src="shared/treino_loader.js?v=154"></script>
+  <!-- <script src="shared/render_guard.js?v=159"></script> -->
+<script src="shared/treino_loader.js?v=159"></script>
 <!-- CELULAR: so ensina. baterias e treinos adaptativos sao PESADOS -> so no PC (index.html). -->
-<script src="shared/tutorials.js?v=154"></script>
+<script src="shared/tutorials.js?v=159"></script>
 
 <script>
 'use strict';
@@ -1481,7 +1491,11 @@ function _orbitaBudgetMs(){
 function _loopOrbita(ts){
   _orbitaRAF = requestAnimationFrame(_loopOrbita);
   if(!ts) ts = (window.performance && performance.now) ? performance.now() : Date.now();
-  if(ts - _orbitaUltimo < _orbitaBudgetMs()) return;  // throttle: pula frame, libera a thread
+  // [FIX_RENDER_ADAPTATIVO_V1] intervalo pelo PERFIL (custo medido do desenho, teto de qps do
+  // aparelho e ~4 qps durante operacao pesada); minimo 33 ms como antes no celular.
+  var _nN = (window.V112 && window.V112.nodes) ? window.V112.nodes.length : 0;
+  var _orc = window.PERFIL ? Math.max(33, window.PERFIL.intervaloRender(_nN)) : _orbitaBudgetMs();
+  if(ts - _orbitaUltimo < _orc) return;  // throttle: pula frame, libera a thread
   _orbitaUltimo = ts;
   // Avanca o angulo conforme o estado (so se o dedo nao estiver arrastando).
   if(!window._mobArrastando){
@@ -1490,7 +1504,9 @@ function _loopOrbita(ts){
     else if(girarState === 2) anguloX += 0.012;             // V
     else if(girarState === 3){ anguloY += 0.010; anguloX += 0.007; } // diagonal/espiral
   }
+  var _t0 = performance.now();
   desenharCerebro();
+  if(window.PERFIL) window.PERFIL.medirRender(performance.now() - _t0);
 }
 function _iniciarOrbita(){ if(!_orbitaRAF) _orbitaRAF = requestAnimationFrame(_loopOrbita); }
 _iniciarOrbita();
@@ -2167,9 +2183,17 @@ window.addEventListener('DOMContentLoaded', function() {
     desenharCerebro();
 
     // ─── CARREGAMENTO AUTOMÁTICO do cérebro treinado (escolhe leve/pesado) ───
+    // [FIX_CARGA_AUTO_COM_SPINNER_V1] antes a carga automatica era SILENCIOSA: o celular baixava
+    // e lia ate 40 MB sem aviso e a tela congelava. Agora roda dentro do overlay com % e o
+    // PERFIL decide leve/completo. Aparelho fraco/medio-celular fica com o leve.
     if(window.carregarCerebroAuto){
       setTimeout(function(){
-        window.carregarCerebroAuto(function(res){
+        var _rodar = function(cbFim){ return window.carregarCerebroAuto(cbFim, (window.LOADING ? window.LOADING.setLabel : null)); };
+        var _auto = function(cbFim){
+          if(window.LOADING) return window.LOADING.run('🧠 Carregando cérebro treinado...', function(){ return _rodar(cbFim); }, 'preparando...');
+          return _rodar(cbFim);
+        };
+        _auto(function(res){
           if(res && res.ok){
             atualizarBadges();
             desenharCerebro();
@@ -2471,20 +2495,27 @@ window.acao_carregar_github = async function(){
   if(!window.LOADING){ if(_acaoGitHubOrig) _acaoGitHubOrig(); return; }
   await window.LOADING.run('📂 Carregando cérebro...', async function(setProgress, setLabel){
     try {
-      const arquivo = window.escolherCerebro ? window.escolherCerebro() : 'cerebro_V15.json';
-      setLabel('📂 Carregando cérebro...', 'baixando ' + arquivo + '...');
-      let r = await fetch(arquivo);
-      // Fallback: se o leve não existe, tenta o pesado
-      if(!r.ok && arquivo === 'cerebro_V15.1.json'){
-        setLabel('📂 Carregando cérebro...', 'leve não achado, usando completo...');
-        r = await fetch('cerebro_V15.json');
+      // [FIX_CARREGAR_COM_PCT_V1] escolhe leve/completo pelo PERFIL do aparelho, mostra o % real
+      // do download e corrige o nome do leve (cerebro_V15_1.json; antes pedia V15.1 e falhava).
+      let arquivo = window.escolherCerebro ? window.escolherCerebro() : 'cerebro_V15.json';
+      const prog = function(lido, total, fase){
+        if(fase === 'baixando'){ setProgress(lido, total); setLabel('📂 Carregando cérebro...', 'baixando ' + arquivo + ' — ' + (lido/1048576).toFixed(1) + ' de ' + (total/1048576).toFixed(1) + ' MB'); }
+        else setLabel('📂 Carregando cérebro...', 'lendo ' + arquivo + '...');
+      };
+      let c;
+      try {
+        c = await window.PERFIL.baixarJSON(arquivo, prog);
+      } catch(e1){
+        if(arquivo !== 'cerebro_V15.json' && e1 && e1.status){
+          arquivo = 'cerebro_V15.json';
+          setLabel('📂 Carregando cérebro...', 'leve não achado, usando completo...');
+          c = await window.PERFIL.baixarJSON(arquivo, prog);
+        } else throw e1;
       }
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      setLabel('📂 Carregando cérebro...', 'parseando...');
-      const c = await r.json();
-      setLabel('📂 Carregando cérebro...', 'importando no cérebro...');
-      await new Promise(r => setTimeout(r, 50));
+      setLabel('📂 Carregando cérebro...', 'importando ' + (c.nodes ? c.nodes.length : 0) + ' nós...');
+      await window.PERFIL.pintar();
       window.v112_importar(c);
+      window._cerebroAtual = arquivo;
       // Reset estado treino (cérebro novo importado)
       if(window.TREINO) window.TREINO.reset();
       atualizarBadges();
@@ -2582,11 +2613,16 @@ window.enviar = function(){
 
   // Inicia "pensando"
   const chatContent = document.getElementById('chat-content');
-  const pensando = window.PENSANDO ? window.PENSANDO.start(chatContent) : null;
+  // [FIX_PENSANDO_IMEDIATO_V1] resposta lenta (cerebro grande/aparelho fraco): pontinhos na hora
+  const lento = window.PERFIL ? window.PERFIL.turnoLento() : false;
+  const pensando = window.PENSANDO ? window.PENSANDO.start(chatContent, { imediato: lento }) : null;
+  const espera = (lento && window.PERFIL) ? window.PERFIL.pintar() : new Promise(function(ok){ setTimeout(ok, 30); });
 
-  setTimeout(function(){
+  espera.then(function(){
     try {
+      const _t0 = performance.now();
       const r = window.v112_processar(texto);
+      if(window.PERFIL) window.PERFIL.medirTurno(performance.now() - _t0);
       if(pensando) pensando.stop();
       const resposta = (r && r.resposta) || '(sem resposta)';
       let tag = null;
@@ -2615,7 +2651,7 @@ window.enviar = function(){
       if(pensando) pensando.stop();
       addMsg('brain', '⚠ erro: ' + e.message);
     }
-  }, 30);
+  });
 };
 
 // Re-amarra Enter Leva 3 (Shift+Enter = linha nova, Enter = enviar)

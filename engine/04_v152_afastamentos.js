@@ -1,7 +1,7 @@
 // ─── REGIÃO 04/14 — v152_afastamentos.js ───
 window._ARCH_MODULOS.push({nome:"v152_afastamentos.js", src: `
 // ═══════════════════════════════════════════════════════════════════
-// v152_afastamentos.js — Caso real RH (Douglas)
+// v152_afastamentos.js — Caso de RH (exemplo do autor, sem dados reais)
 // Implementa a especificação da Aba 2 (handlers_propostos.md)
 //
 // Adiciona:

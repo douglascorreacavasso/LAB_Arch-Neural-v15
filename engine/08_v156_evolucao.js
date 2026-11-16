@@ -30,7 +30,7 @@ window._ARCH_MODULOS.push({nome:"v156_evolucao.js", src: `
 (function(){
 
 if(typeof V112 === 'undefined') return;
-if(typeof window === 'undefined') var window = global;
+var window = (typeof globalThis !== 'undefined') ? globalThis : global; // [FIX_GLOBAL_NAVEGADOR_V1] antes: 'var window' içado deixava window undefined no navegador
 
 // ───────────────────────────────────────────────────────────────────
 // CONSTANTES DE EVOLUÇÃO
