@@ -89,7 +89,10 @@
         var c;
         if(window.PERFIL && window.PERFIL.baixarJSON){
           try {
-            c = await window.PERFIL.baixarJSON(arquivo, function(lido, total, fase){
+            // [CEREBRO_COMPACTO_V1] prefere o .lab.json (hipercompactado, 4x menor, sem perda)
+            var _baixa = window.CEREBRO_COMPACTO ? function(a, f){ return window.CEREBRO_COMPACTO.baixar(a, f).then(function(b){ arquivo = b.arquivo; return b.cerebro; }); }
+                                                 : window.PERFIL.baixarJSON;
+            c = await _baixa(arquivo, function(lido, total, fase){
               if(!setLabel) return;
               if(fase === 'baixando') setLabel('🧠 Carregando cérebro...', 'baixando ' + arquivo + ': ' + Math.round(lido*100/total) + '% (' + (lido/1048576).toFixed(1) + ' de ' + (total/1048576).toFixed(1) + ' MB)');
               else setLabel('🧠 Carregando cérebro...', 'lendo ' + arquivo + '...');

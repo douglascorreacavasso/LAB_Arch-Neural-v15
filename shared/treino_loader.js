@@ -33,6 +33,18 @@
                            'treinos/treino_2000_identificacao.json'],
       qtd: 7000,
       label: 'Ensinar 7000' },
+    // [ENSINO_BASES_V1] 16/11: depois do 7000, o núcleo de cada base de conhecimento.
+    // Cada pacote ensina as frases-núcleo ao grafo E liga a consulta daquela base na conversa
+    // (o resto da base fica compactado em conhecimento/<base>/ e é lido só quando perguntam).
+    // Gerados por ferramentas/treinar_cerebro_ensinado.js --exportar-pacotes.
+    { nivel: 6, arquivos: ['treinos/treino_entidades.json'],  qtd: 0, base: 'ent',
+      label: 'Ensinar Entidades' },
+    { nivel: 7, arquivos: ['treinos/treino_gramatica.json'],  qtd: 0, base: 'gram', opcional: true,
+      label: 'Ensinar Regras do Português' },
+    { nivel: 8, arquivos: ['treinos/treino_dicionario.json'], qtd: 0, base: 'dic',
+      label: 'Ensinar Dicionário' },
+    { nivel: 9, arquivos: ['treinos/treino_wikipedia.json'],  qtd: 0, base: 'wiki',
+      label: 'Ensinar Wikipédia' },
   ];
 
   let nivelEnsino = 0; // 0 = ainda não ensinou nada; 5 = acabou tudo
@@ -111,7 +123,7 @@
       return { ok: false, motivo: 'já-acabou' };
     }
     const pacote = pacoteAtual();
-    const labelBase = '📚 Ensinando ' + pacote.qtd + ' frases';
+    const labelBase = pacote.base ? ('📚 ' + pacote.label) : ('📚 Ensinando ' + pacote.qtd + ' frases');
 
     return window.LOADING.run(labelBase, async (setProgress, setLabel) => {
       try {
@@ -123,7 +135,14 @@
             pacote.arquivos.length > 1
               ? 'baixando arquivo ' + (i+1) + '/' + pacote.arquivos.length
               : 'baixando pacote...');
-          const fs = await carregarPacoteArquivo(pacote.arquivos[i]);
+          let fs;
+          try { fs = await carregarPacoteArquivo(pacote.arquivos[i]); }
+          catch(eArq){
+            // pacote de base ainda não gerado (ex.: regras do português sem fonte): pula sem travar a sequência
+            if(pacote.opcional){ nivelEnsino++; const rr = { ok: true, qtd: 0, processadas: 0, nivelAgora: nivelEnsino, pulado: true, base: pacote.base };
+              if(typeof onFim === 'function') onFim(rr); return rr; }
+            throw eArq;
+          }
           todasFrases = todasFrases.concat(fs);
         }
         // Embaralha quando há múltiplos arquivos (5000+2000 misturados aprendem melhor)
@@ -140,7 +159,9 @@
 
         // Avança nível
         nivelEnsino++;
-        const r = { ok: true, qtd: pacote.qtd, processadas: processadas, nivelAgora: nivelEnsino };
+        // pacote de base: liga a consulta daquela base na conversa
+        if(pacote.base && window.CONHECIMENTO) window.CONHECIMENTO.ativar(pacote.base, true);
+        const r = { ok: true, qtd: pacote.qtd || processadas, processadas: processadas, nivelAgora: nivelEnsino, base: pacote.base };
         if(typeof onFim === 'function') onFim(r);
         return r;
       } catch(err) {
@@ -171,6 +192,13 @@
   function mensagemDeConclusao(resultado) {
     if(!resultado || !resultado.ok) {
       return '❌ Não consegui ensinar este pacote: ' + (resultado && resultado.erro || 'erro desconhecido');
+    }
+    if(resultado.pulado) {
+      return 'O pacote de ' + (resultado.base === 'gram' ? 'regras do português' : resultado.base) + ' ainda não existe nesta versão; segui para o próximo.';
+    }
+    if(resultado.base && window.CONHECIMENTO) {
+      return 'Aprendi ' + resultado.processadas + ' frases do núcleo de ' + window.CONHECIMENTO.NOMES[resultado.base] +
+             '. Agora também consulto essa base inteira quando você pergunta "o que é...?".';
     }
     if(nivelEnsino >= PACOTES.length) {
       // Última lição

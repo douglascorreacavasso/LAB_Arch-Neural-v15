@@ -1,0 +1,30 @@
+{
+ "wiki": {
+  "nome": "Wikipédia em português (resumo de cada artigo)",
+  "verbetes": 1139105,
+  "pedacos": 658,
+  "bytes_compactados": 69198870,
+  "montado": "2026-11-16 11:37"
+ },
+ "dic": {
+  "nome": "Novo Dicionário da Língua Portuguesa — Cândido de Figueiredo, 1913 (domínio público)",
+  "verbetes": 123634,
+  "pedacos": 31,
+  "bytes_compactados": 3743852,
+  "montado": "2026-11-16 05:41"
+ },
+ "ent": {
+  "nome": "Livro de Entidades (conceitos, definições e regras)",
+  "verbetes": 79,
+  "pedacos": 1,
+  "bytes_compactados": 10002,
+  "montado": "2026-11-16 05:41"
+ },
+ "gram": {
+  "nome": "Regras da língua portuguesa",
+  "verbetes": 156,
+  "pedacos": 1,
+  "bytes_compactados": 39987,
+  "montado": "2026-11-16 15:47"
+ }
+}

@@ -39,7 +39,7 @@
     if(window.__fetchBust || typeof window.fetch !== 'function') return;
     var _f = window.fetch;
     window.fetch = function(u, o){
-      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=159'; }catch(e){}
+      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=164'; }catch(e){}
       return _f.call(this, u, o);
     };
     window.__fetchBust = true;
@@ -780,6 +780,8 @@
     </div>
     <div class="ph-drawer-item" id="ph-ensinar" onclick="acao_ensinar240()">📌 ensinar 240 frases</div>
     <div class="ph-drawer-item" onclick="acao_meditar()">🧘 meditar</div>
+    <div class="ph-drawer-item" id="ph-modo-ensinado" onclick="fecharDrawer(); ENSINO_MODO.usarEnsinado()">⚡ usar cérebro já ensinado completo</div>
+    <div class="ph-drawer-item" id="ph-modo-basico" onclick="fecharDrawer(); ENSINO_MODO.desdeBasico()">🌱 treinar desde o básico</div>
     <div class="ph-drawer-item" onclick="acao_salvar()">💾 SALVAR CEREBRO</div>
     <div class="ph-drawer-item" onclick="acao_carregar_github()">📂 carregar do GitHub</div>
     <div class="ph-drawer-item" onclick="acao_carregar_manual()">📥 importar JSON manual</div>
@@ -915,38 +917,41 @@
 </div>
 
 <!-- engine modularizado (14 partes - ORDEM OBRIGATORIA) -->
-<script src="engine/01_v112_core.js?v=159"></script>
-<script src="engine/02_v112_brain.js?v=159"></script>
-<script src="engine/03_v151_logica_prog.js?v=159"></script>
-<script src="engine/04_v152_afastamentos.js?v=159"></script>
-<script src="engine/05_v153_auto_mod.js?v=159"></script>
-<script src="engine/06_v154_aprendiz_meta.js?v=159"></script>
-<script src="engine/07_v155_valvula_escape.js?v=159"></script>
-<script src="engine/08_v156_evolucao.js?v=159"></script>
-<script src="engine/09_v158_reflexos_sociais.js?v=159"></script>
-<script src="engine/10_v15_cortex_logico.js?v=159"></script>
-<script src="engine/11_v159_cortex_cognitivo.js?v=159"></script>
-<script src="engine/12_v159b_motores_cognitivos.js?v=159"></script>
-<script src="engine/13_v160_estatistico.js?v=159"></script>
-<script src="engine/14_cerebro_embutido.js?v=159"></script>
-<script src="shared/device_check.js?v=159"></script>
-<script src="shared/perfil_aparelho.js?v=159"></script>
-<script src="shared/identidade_persist.js?v=159"></script>
-<script src="shared/desenho_simbolos.js?v=159"></script>
-<script src="shared/motor_receitas.js?v=159"></script>
-<script src="shared/auto_receita.js?v=159"></script>
-<script src="shared/desenho_alfabeto.js?v=159"></script>
+<script src="engine/01_v112_core.js?v=164"></script>
+<script src="engine/02_v112_brain.js?v=164"></script>
+<script src="engine/03_v151_logica_prog.js?v=164"></script>
+<script src="engine/04_v152_afastamentos.js?v=164"></script>
+<script src="engine/05_v153_auto_mod.js?v=164"></script>
+<script src="engine/06_v154_aprendiz_meta.js?v=164"></script>
+<script src="engine/07_v155_valvula_escape.js?v=164"></script>
+<script src="engine/08_v156_evolucao.js?v=164"></script>
+<script src="engine/09_v158_reflexos_sociais.js?v=164"></script>
+<script src="engine/10_v15_cortex_logico.js?v=164"></script>
+<script src="engine/11_v159_cortex_cognitivo.js?v=164"></script>
+<script src="engine/12_v159b_motores_cognitivos.js?v=164"></script>
+<script src="engine/13_v160_estatistico.js?v=164"></script>
+<script src="engine/14_cerebro_embutido.js?v=164"></script>
+<script src="shared/device_check.js?v=164"></script>
+<script src="shared/perfil_aparelho.js?v=164"></script>
+<script src="shared/cerebro_compacto.js?v=164"></script>
+<script src="shared/conhecimento.js?v=164"></script>
+<script src="shared/identidade_persist.js?v=164"></script>
+<script src="shared/desenho_simbolos.js?v=164"></script>
+<script src="shared/motor_receitas.js?v=164"></script>
+<script src="shared/auto_receita.js?v=164"></script>
+<script src="shared/desenho_alfabeto.js?v=164"></script>
 
 <!-- SHARED modules (Leva 1+2+3) -->
-<script src="shared/overlay_loading.js?v=159"></script>
-<script src="shared/chat_pensando.js?v=159"></script>
-<script src="shared/audit_filter.js?v=159"></script>
-<script src="shared/viz_renderer.js?v=159"></script>
+<script src="shared/overlay_loading.js?v=164"></script>
+<script src="shared/chat_pensando.js?v=164"></script>
+<script src="shared/audit_filter.js?v=164"></script>
+<script src="shared/viz_renderer.js?v=164"></script>
   <!-- NEREAL_PATCH_RENDER_GUARD_V1 -- DESLIGADO em NEREAL_FIX_RENDER_ORBITA_V1: a trava de congelar foi trocada por giro em orbita com FPS proporcional ao tamanho do cerebro. Se o render_guard.js fazia outra coisa alem de congelar, religar aqui. -->
-  <!-- <script src="shared/render_guard.js?v=159"></script> -->
-<script src="shared/treino_loader.js?v=159"></script>
+  <!-- <script src="shared/render_guard.js?v=164"></script> -->
+<script src="shared/treino_loader.js?v=164"></script>
+<script src="shared/ensino_modo.js?v=164"></script>
 <!-- CELULAR: so ensina. baterias e treinos adaptativos sao PESADOS -> so no PC (index.html). -->
-<script src="shared/tutorials.js?v=159"></script>
+<script src="shared/tutorials.js?v=164"></script>
 
 <script>
 'use strict';
@@ -1046,7 +1051,7 @@ function addMsg(quem, texto, tag) {
   if(tag) {
     const tagDiv = document.createElement('div');
     tagDiv.className = 'ph-msg-tag ' + tag;
-    const labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing'};
+    const labelMap = {cog: '🧠 cognitivo', est: '📊 estatístico', soc: '💬 social', tur: '⚙️ turing', con: '📚 conhecimento'};
     tagDiv.textContent = labelMap[tag] || tag;
     chat.appendChild(tagDiv);
   }
@@ -1337,7 +1342,7 @@ window.acao_carregar_manual = function() {
     const r = new FileReader();
     r.onload = function(){
       try {
-        const c = JSON.parse(r.result);
+        const c = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(r.result)) : JSON.parse(r.result));  // [CEREBRO_COMPACTO_V1]
         window.v112_importar(c);
         toast('✓ ' + f.name);
         atualizarBadges();
@@ -2503,13 +2508,17 @@ window.acao_carregar_github = async function(){
         else setLabel('📂 Carregando cérebro...', 'lendo ' + arquivo + '...');
       };
       let c;
+      const baixar = async function(nome){   // [CEREBRO_COMPACTO_V1] prefere o .lab.json (4x menor)
+        if(window.CEREBRO_COMPACTO){ const b = await window.CEREBRO_COMPACTO.baixar(nome, prog); arquivo = b.arquivo; return b.cerebro; }
+        return await window.PERFIL.baixarJSON(nome, prog);
+      };
       try {
-        c = await window.PERFIL.baixarJSON(arquivo, prog);
+        c = await baixar(arquivo);
       } catch(e1){
         if(arquivo !== 'cerebro_V15.json' && e1 && e1.status){
           arquivo = 'cerebro_V15.json';
           setLabel('📂 Carregando cérebro...', 'leve não achado, usando completo...');
-          c = await window.PERFIL.baixarJSON(arquivo, prog);
+          c = await baixar(arquivo);
         } else throw e1;
       }
       setLabel('📂 Carregando cérebro...', 'importando ' + (c.nodes ? c.nodes.length : 0) + ' nós...');
@@ -2541,7 +2550,7 @@ window.acao_carregar_manual = async function(){
         setLabel('📥 Importando JSON...', 'lendo arquivo...');
         const txt = await f.text();
         let c;
-        try { c = JSON.parse(txt); }
+        try { c = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(txt)) : JSON.parse(txt)); }  // [CEREBRO_COMPACTO_V1]
         catch(err){ addMsg('brain', '❌ arquivo inválido — não é um cérebro .json válido.'); return; }
         if(!c || !Array.isArray(c.nodes)){ addMsg('brain', '❌ esse arquivo não parece um cérebro (sem lista de nós).'); return; }
         setLabel('📥 Importando JSON...', 'importando ' + c.nodes.length + ' nós (não feche)...');
@@ -2576,7 +2585,7 @@ window.acao_juntar = async function(){
         setLabel('🔀 Mesclando cérebros...', 'lendo arquivo...');
         const txt = await f.text();
         let c;
-        try { c = JSON.parse(txt); }
+        try { c = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(txt)) : JSON.parse(txt)); }  // [CEREBRO_COMPACTO_V1]
         catch(err){ addMsg('brain', '❌ arquivo inválido — não é um cérebro .json válido.'); return; }
         if(!c || !Array.isArray(c.nodes)){ addMsg('brain', '❌ esse arquivo não parece um cérebro (sem lista de nós).'); return; }
         setLabel('🔀 Mesclando cérebros...', 'integrando ' + c.nodes.length + ' nós (pode levar alguns segundos, não feche)...');
@@ -2623,6 +2632,20 @@ window.enviar = function(){
       const _t0 = performance.now();
       const r = window.v112_processar(texto);
       if(window.PERFIL) window.PERFIL.medirTurno(performance.now() - _t0);
+      // [CONHECIMENTO_NO_CHAT_V1] enrolação + pergunta "o que é / quem foi / o que significa X?":
+      // responde pela base ligada (Wikipédia, dicionário, entidades, regras) e ensina a frase ao grafo.
+      const K = window.CONHECIMENTO;
+      if(r && K && K.precisaDaBase(r) && K.ativas().length && K.ehPergunta(texto)){
+        const p2 = pensando || (window.PENSANDO ? window.PENSANDO.start(chatContent, { imediato: true }) : null);
+        K.completarTurno(texto, r).then(function(c){
+          if(p2) p2.stop();
+          addMsg('brain', c ? c.texto : ((r && r.resposta) || '(sem resposta)'), c ? 'con' : 'soc');
+          turnoNumero++;
+          ultimoTurno = { input: texto, resposta: c ? c.texto : r.resposta, tag: c ? 'con' : 'soc', r: r };
+          atualizarBadges(); desenharCerebro(); piscarLegenda();
+        });
+        return;
+      }
       if(pensando) pensando.stop();
       const resposta = (r && r.resposta) || '(sem resposta)';
       let tag = null;

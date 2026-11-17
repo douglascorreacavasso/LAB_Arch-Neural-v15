@@ -36,7 +36,7 @@
     if(window.__fetchBust || typeof window.fetch !== 'function') return;
     var _f = window.fetch;
     window.fetch = function(u, o){
-      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=159'; }catch(e){}
+      try{ if(typeof u === 'string' && /cerebro[^?]*\.json/i.test(u)) u += (u.indexOf('?')<0?'?':'&') + 'v=164'; }catch(e){}
       return _f.call(this, u, o);
     };
     window.__fetchBust = true;
@@ -69,7 +69,7 @@
   }
 })();
 </script>
-<link rel="stylesheet" href="index.css?v=159">
+<link rel="stylesheet" href="index.css?v=164">
 </head>
 <body>
 <!-- [FIX_BOOT_SPINNER_V1] tela de "iniciando" com bolinha girando enquanto os ~4,5 MB do
@@ -86,8 +86,20 @@
   <div class="boot-bola"></div>
   <div class="boot-tit">Iniciando o cérebro…</div>
   <div class="boot-sub" id="boot-carregando-sub">baixando as regiões do motor (~4,5 MB)</div>
+  <div style="width:220px;max-width:70vw;height:7px;background:rgba(94,234,212,.14);border-radius:4px;overflow:hidden;">
+    <div id="boot-carregando-barra" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#a78bfa,#5eead4);transition:width .18s ease-out;"></div>
+  </div>
+  <div id="boot-carregando-pct" style="color:#5eead4;font:700 12px monospace;">0%</div>
 </div>
 <script>
+// mesma barra do celular: sobe sozinha enquanto o motor baixa (não parece travado) e fecha em 100%
+(function(){
+  var pct = 0;
+  window.__bootPct = function(n){ pct = Math.max(pct, Math.min(100, n|0));
+    var b = document.getElementById('boot-carregando-barra'), p = document.getElementById('boot-carregando-pct');
+    if(b) b.style.width = pct + '%'; if(p) p.textContent = pct + '%'; };
+  window.__bootIv = setInterval(function(){ if(pct < 92) window.__bootPct(pct + (pct < 60 ? 2 : 1)); }, 140);
+})();
 window.addEventListener('error', function(ev){
   var s = document.getElementById('boot-carregando-sub');
   if(s && document.getElementById('boot-carregando')) { s.style.color = '#ff8888'; s.textContent = '⚠ erro ao iniciar: ' + (ev && ev.message ? ev.message : 'desconhecido') + ' — recarregue a página'; }
@@ -171,6 +183,19 @@ window.addEventListener('error', function(ev){
 <div class="faixa">
   <button id="btn-treinar" class="hud-btn primaria">📚 ensinar 240</button>
   <button id="btn-sleep" class="hud-btn sec">💤 meditar</button>
+
+  <!-- [ENSINO_MODO_V1] cérebro já ensinado completo ou treinar desde o básico -->
+  <div class="menu" data-menu>
+    <button class="hud-btn" id="btn-modo-cerebro" onclick="toggleMenu(this)" title="Escolher o cérebro: já ensinado ou desde o básico">🌱 básico ▾</button>
+    <div class="pop">
+      <div class="pop-titulo">🧠 qual cérebro usar</div>
+      <button class="pop-item-btn" onclick="ENSINO_MODO.usarEnsinado()" title="Carrega pronto: 7.000 frases + núcleo de Entidades, Regras, Dicionário e Wikipédia, e liga a consulta das 4 bases">⚡ usar cérebro já ensinado completo</button>
+      <button class="pop-item-btn" onclick="ENSINO_MODO.desdeBasico()" title="Volta ao cérebro leve e ensina pacote por pacote com o botão ENSINAR">🌱 treinar desde o básico</button>
+      <div class="pop-sep"></div>
+      <div class="pop-titulo">📚 consultar na conversa</div>
+      <div id="bases-conhecimento" style="font-size:11px;line-height:1.9;padding:2px 6px;"></div>
+    </div>
+  </div>
 
   <!-- CORES -->
   <div class="menu" data-menu>
@@ -330,52 +355,56 @@ window.addEventListener('error', function(ev){
 <input type="file" id="file-input" style="display:none" accept=".json">
 
 <!-- engine modularizado (14 partes — ORDEM OBRIGATORIA) -->
-<script src="engine/01_v112_core.js?v=159"></script>
-<script src="engine/02_v112_brain.js?v=159"></script>
-<script src="engine/03_v151_logica_prog.js?v=159"></script>
-<script src="engine/04_v152_afastamentos.js?v=159"></script>
-<script src="engine/05_v153_auto_mod.js?v=159"></script>
-<script src="engine/06_v154_aprendiz_meta.js?v=159"></script>
-<script src="engine/07_v155_valvula_escape.js?v=159"></script>
-<script src="engine/08_v156_evolucao.js?v=159"></script>
-<script src="engine/09_v158_reflexos_sociais.js?v=159"></script>
-<script src="engine/10_v15_cortex_logico.js?v=159"></script>
-<script src="engine/11_v159_cortex_cognitivo.js?v=159"></script>
-<script src="engine/12_v159b_motores_cognitivos.js?v=159"></script>
-<script src="engine/13_v160_estatistico.js?v=159"></script>
-<script src="engine/14_cerebro_embutido.js?v=159"></script>
-<script src="shared/device_check.js?v=159"></script>
-<script src="shared/perfil_aparelho.js?v=159"></script>
-<script src="shared/identidade_persist.js?v=159"></script>
-<script src="shared/desenho_simbolos.js?v=159"></script>
-<script src="shared/motor_receitas.js?v=159"></script>
-<script src="shared/auto_receita.js?v=159"></script>
-<script src="shared/desenho_alfabeto.js?v=159"></script>
+<script src="engine/01_v112_core.js?v=164"></script>
+<script src="engine/02_v112_brain.js?v=164"></script>
+<script src="engine/03_v151_logica_prog.js?v=164"></script>
+<script src="engine/04_v152_afastamentos.js?v=164"></script>
+<script src="engine/05_v153_auto_mod.js?v=164"></script>
+<script src="engine/06_v154_aprendiz_meta.js?v=164"></script>
+<script src="engine/07_v155_valvula_escape.js?v=164"></script>
+<script src="engine/08_v156_evolucao.js?v=164"></script>
+<script src="engine/09_v158_reflexos_sociais.js?v=164"></script>
+<script src="engine/10_v15_cortex_logico.js?v=164"></script>
+<script src="engine/11_v159_cortex_cognitivo.js?v=164"></script>
+<script src="engine/12_v159b_motores_cognitivos.js?v=164"></script>
+<script src="engine/13_v160_estatistico.js?v=164"></script>
+<script src="engine/14_cerebro_embutido.js?v=164"></script>
+<script src="shared/device_check.js?v=164"></script>
+<script src="shared/perfil_aparelho.js?v=164"></script>
+<script src="shared/cerebro_compacto.js?v=164"></script>
+<script src="shared/conhecimento.js?v=164"></script>
+<script src="shared/identidade_persist.js?v=164"></script>
+<script src="shared/desenho_simbolos.js?v=164"></script>
+<script src="shared/motor_receitas.js?v=164"></script>
+<script src="shared/auto_receita.js?v=164"></script>
+<script src="shared/desenho_alfabeto.js?v=164"></script>
 
 <!-- SHARED modules (Leva 1+2+3) -->
-<script src="shared/overlay_loading.js?v=159"></script>
-<script src="shared/chat_pensando.js?v=159"></script>
-<script src="shared/audit_filter.js?v=159"></script>
-<script src="shared/viz_renderer.js?v=159"></script>
+<script src="shared/overlay_loading.js?v=164"></script>
+<script src="shared/chat_pensando.js?v=164"></script>
+<script src="shared/audit_filter.js?v=164"></script>
+<script src="shared/viz_renderer.js?v=164"></script>
   <!-- NEREAL_PATCH_RENDER_GUARD_V1 -- DESLIGADO em NEREAL_FIX_RENDER_ORBITA_V1: trava de congelar trocada por giro + FPS proporcional. Religar se precisar. -->
-  <!-- <script src="shared/render_guard.js?v=159"></script> -->
-<script src="shared/treino_loader.js?v=159"></script>
+  <!-- <script src="shared/render_guard.js?v=164"></script> -->
+<script src="shared/treino_loader.js?v=164"></script>
+<script src="shared/ensino_modo.js?v=164"></script>
 <!-- baterias: testes que tambem treinam a rede (rodam apos o ensino) -->
-<script src="baterias/bateria_integracao.js?v=159"></script>
-<script src="baterias/bateria_estatistica.js?v=159"></script>
-<script src="baterias/bateria_nivel_deus.js?v=159"></script>
-<script src="baterias/bateria_selfcore.js?v=159"></script>
-<script src="shared/baterias_runner.js?v=159"></script>
+<script src="baterias/bateria_integracao.js?v=164"></script>
+<script src="baterias/bateria_estatistica.js?v=164"></script>
+<script src="baterias/bateria_nivel_deus.js?v=164"></script>
+<script src="baterias/bateria_selfcore.js?v=164"></script>
+<script src="shared/baterias_runner.js?v=164"></script>
 <!-- treinos adaptativos (dinamicos): xadrez, labirinto 10 niveis, benchmark -->
-<script src="treinos/treino_benchmark.js?v=159"></script>
-<script src="treinos/treino_labirinto.js?v=159"></script>
-<script src="treinos/treino_xadrez.js?v=159"></script>
-<script src="shared/treinos_adapt_runner.js?v=159"></script>
-<script src="shared/tutorials.js?v=159"></script>
-<script src="index.js?v=159"></script>
+<script src="treinos/treino_benchmark.js?v=164"></script>
+<script src="treinos/treino_labirinto.js?v=164"></script>
+<script src="treinos/treino_xadrez.js?v=164"></script>
+<script src="shared/treinos_adapt_runner.js?v=164"></script>
+<script src="shared/tutorials.js?v=164"></script>
+<script src="index.js?v=164"></script>
 <script>
 // [FIX_BOOT_SPINNER_V1] motor iniciado -> some a tela de "iniciando"
-(function(){ var b = document.getElementById('boot-carregando'); if(!b) return; b.style.opacity = '0'; setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); }, 260); })();
+(function(){ if(window.__bootIv) clearInterval(window.__bootIv); if(window.__bootPct) window.__bootPct(100);
+  var b = document.getElementById('boot-carregando'); if(!b) return; b.style.transitionDelay = '0.15s'; b.style.opacity = '0'; setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); }, 420); })();
 </script>
 </body>
 </html>

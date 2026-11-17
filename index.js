@@ -455,6 +455,19 @@ function enviar(){
       addMsg('brain', '⚠ ' + e.message);
       return;
     }
+    // [CONHECIMENTO_NO_CHAT_V1] cérebro respondeu com enrolação e a frase é "o que é / quem foi /
+    // o que significa X?": consulta as bases ligadas (Wikipédia, dicionário, entidades, regras),
+    // mostra a resposta com a fonte e ensina a frase curta ao grafo.
+    const K = window.CONHECIMENTO;
+    if(r && K && K.precisaDaBase(r) && K.ativas().length && K.ehPergunta(txt)){
+      const p2 = pensando || (window.PENSANDO ? window.PENSANDO.start(msgs, { imediato: true }) : null);
+      K.completarTurno(txt, r).then(function(c){
+        if(p2) p2.stop();
+        addMsg('brain', c ? c.texto : r.resposta, c ? c.tag : undefined);
+        _aplicarTurnoNaTela(r);
+      });
+      return;
+    }
     if(pensando) pensando.stop();
     addMsg('brain', r.resposta);
     _aplicarTurnoNaTela(r);
@@ -581,7 +594,7 @@ document.getElementById('file-input').addEventListener('change', e => {
   const r = new FileReader();
   r.onload = async ev => {
     try {
-      const s = JSON.parse(ev.target.result);
+      const s = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(ev.target.result)) : JSON.parse(ev.target.result));  // [CEREBRO_COMPACTO_V1]
       const doImp = () => v112_importar(s);
       const ok = window.LOADING ? await window.LOADING.wrap('📁 Carregando cérebro...', doImp, 'importando estado') : doImp();
       if(ok){
@@ -602,7 +615,7 @@ document.getElementById('btn-carregar-merge').addEventListener('click', () => {
     const r = new FileReader();
     r.onload = async ev => {
       try {
-        const s = JSON.parse(ev.target.result);
+        const s = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(ev.target.result)) : JSON.parse(ev.target.result));  // [CEREBRO_COMPACTO_V1]
         const doMerge = () => v112_importar_merge(s);
         const res = window.LOADING ? await window.LOADING.wrap('🔀 Juntando cérebros...', doMerge, 'mesclando nós e arestas') : doMerge();
         if(res.ok){
@@ -911,7 +924,7 @@ window.carregarManualExtra = function(){
     var r = new FileReader();
     r.onload = async function(){
       try {
-        var c = JSON.parse(r.result);
+        var c = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(r.result)) : JSON.parse(r.result));  // [CEREBRO_COMPACTO_V1]
         const doImp = () => window.v112_importar(c);
         if(window.LOADING) await window.LOADING.wrap('📂 Importando cérebro...', doImp, f.name); else doImp();
         toastExtra('✓ Importado: ' + f.name);
@@ -1032,14 +1045,15 @@ window.carregarDoGithubExtra = async function(){
     try {
       // [FIX_CARREGAR_COM_PCT_V1] o botao "carregar local" carrega o completo (40 MB): agora
       // com % real do download e a tela pintada entre as fases (baixar / ler / importar).
-      const arquivo = 'cerebro_V15.json';
+      let arquivo = 'cerebro_V15.json';   // [CEREBRO_COMPACTO_V1] baixa o .lab.json (4x menor) se existir
       const prog = function(lido, total, fase){
         if(fase === 'baixando'){ setProgress(lido, total); setLabel('🧠 Carregando cérebro...', 'baixando ' + arquivo + ' — ' + (lido/1048576).toFixed(1) + ' de ' + (total/1048576).toFixed(1) + ' MB'); }
         else setLabel('🧠 Carregando cérebro...', 'lendo ' + arquivo + ' (pode levar alguns segundos)...');
       };
       let c;
       if(window.PERFIL){
-        c = await window.PERFIL.baixarJSON(arquivo, prog);
+        if(window.CEREBRO_COMPACTO){ const b = await window.CEREBRO_COMPACTO.baixar(arquivo, prog); c = b.cerebro; arquivo = b.arquivo; }
+        else c = await window.PERFIL.baixarJSON(arquivo, prog);
       } else {
         const r = await fetch(arquivo);
         if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -1070,7 +1084,7 @@ window.carregarManualExtra = function(){
     await window.LOADING.run('📂 Importando JSON...', async function(setProgress, setLabel){
       setLabel('📂 Importando JSON...', 'lendo arquivo...');
       const txt = await f.text();
-      const c = JSON.parse(txt);
+      const c = (window.CEREBRO_COMPACTO ? window.CEREBRO_COMPACTO.abrir(JSON.parse(txt)) : JSON.parse(txt));  // [CEREBRO_COMPACTO_V1]
       setLabel('📂 Importando JSON...', 'importando...');
       if(typeof v112_importar === 'function') v112_importar(c);
       if(window.TREINO) window.TREINO.reset();

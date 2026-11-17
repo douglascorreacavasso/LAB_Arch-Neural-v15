@@ -97,3 +97,49 @@ Na abertura mede núcleos, RAM (quando o navegador informa), um teste de CPU de 
 - Antes de dizer pronto: `BATERIAS.rodar()` numa aba recém-aberta (as baterias também treinam a rede, então rodar duas vezes muda o resultado) e conversar pelo campo de texto do app.
 - Operação pesada nova: envolva em `LOADING.run(titulo, async (setProgress, setLabel) => { ... })` e, se for um laço, use `PERFIL.emFatias`.
 - Não renomear funções públicas (`v112_processar`, `v112_importar`, `arch_neural_init`, `escolherCerebro`, `LOADING`, `PENSANDO`, `TREINO`, `BATERIAS`): `index.js`, `mobile.html` e as baterias dependem delas.
+
+---
+
+# Parte 2 (16/11/2026) — cérebro hipercompactado, conhecimento das bases e "já ensinado"
+
+Pedido do autor: trocar a arquitetura de guardar o cérebro pela hipercompactada (igual ao Nerael); ensinar a Wikipédia inteira, o Livro de Entidades, as regras da língua portuguesa e o dicionário; deixar um cérebro já ensinado e um botão para escolher entre ele e treinar desde o básico. Tudo escrito pelo assistente de código (Claude); quem aprende as frases é o próprio motor do LAB (`v112_processar`).
+
+## Limite medido (por que a base inteira não entra frase por frase)
+No motor do LAB cada frase ensinada cria ~80 ligações e custa 80–170 ms (cérebro leve) a 0,5 s (completo), e o custo cresce. A Wikipédia tem ~1,1 milhão de artigos e o dicionário 123.634 verbetes: ensinar tudo pelo grafo levaria dias e geraria um arquivo de dezenas de GB, que não abre em navegador nem cabe no celular. Por isso cada base tem duas partes:
+1. **Núcleo no grafo** (aprendido de verdade): definições e regras do Livro de Entidades (353 frases), 1ª acepção das 300 palavras que o cérebro mais usa, 1ª frase dos artigos da Wikipédia cujo título é palavra do cérebro.
+2. **Base inteira compactada**, consultada na conversa: o navegador baixa só o índice e, na pergunta, só o pedaço onde está a resposta (~100 KB). Cada resposta consultada também é ensinada ao grafo ("aprendi no grafo"), então o grafo cresce com o uso.
+
+## Arquivos novos
+| Arquivo | O que faz |
+|---|---|
+| `shared/cerebro_compacto.js` | lê o formato LAB-CMP-1 (`CEREBRO_COMPACTO.abrir/baixar`); todo carregar/importar do PC e do celular passa por ele |
+| `shared/conhecimento.js` | consulta as bases (`conhecimento/<base>/`), reconhece "o que é / quem foi / o que significa / defina X", responde com a fonte e ensina a frase curta ao grafo |
+| `shared/ensino_modo.js` | botões "⚡ usar cérebro já ensinado completo" e "🌱 treinar desde o básico" + caixinhas das bases (PC) |
+| `conhecimento/catalogo.json`, `conhecimento/{dic,ent,wiki}/` | bases em pedaços `.tsv.gz` + `indice.json` |
+| `cerebro_V15.lab.json` (9,7 MB), `cerebro_V15_1.lab.json` (0,8 MB) | os cérebros de sempre no formato hipercompactado (o `.json` antigo continua, para compatibilidade) |
+| `treinos/treino_entidades.json`, `treino_dicionario.json`, `treino_wikipedia.json` | pacotes novos do ENSINAR |
+| `ferramentas/` | `extrair_wikipedia.py`, `extrair_dicionario.py`, `extrair_entidades.py`, `montar_conhecimento.py`, `cerebro_compacto.py`, `motor_node.js` (motor no Node, sem navegador), `treinar_cerebro_ensinado.js` |
+
+## Formato hipercompactado LAB-CMP-1
+Cada lista de objetos (nós, arestas, eventos) vira colunas; texto repetido fica uma vez num dicionário; `e_1, e_2...` vira prefixo + diferenças; coluna constante vira um valor só. Resultado: cérebro completo 40,9 MB → 9,7 MB (1,6 MB pela rede com gzip), abre em 185 ms contra 363 ms. **Sem perda**: `cerebro_compacto.py conferir` e o teste no Node comparam o JSON byte a byte (IGUAL). Na memória o motor continua com o formato de sempre. Salvar ainda grava o JSON normal (para versões antigas do app conseguirem abrir).
+
+## Fontes usadas
+- Wikipédia: `E:\NERAEL_BASES_DADOS\wikipedia_pt\ptwiki-latest-pages-articles.xml.bz2` (a limpeza de wikitexto reaproveita `FORJA\BASES_LEITURA_V1\preparar_bases.py`, para não ter duas).
+- Dicionário: Novo Dicionário de Cândido de Figueiredo (1913, domínio público), páginas já lidas em `E:\NERAEL_VISUAL43_DEV\integration_v1\PUC47_DUAL_20261025\PROFESSORES_700_GATE\BOOK_CORPUS\pt_DICIONARIO-acf31020fd2b217d.jsonl`. Os acentos soltos do PDF ("n˜ ao") foram consertados; a grafia é a de 1913 ("phenómeno"); ainda há palavras coladas pelo PDF ("pessôasou").
+- Entidades: `E:\NERAEL_MAPA_RECONEXAO\material\livros_tec\_consumo\livro_entidades.txt` (os exemplos com nomes inventados pelo livro não entram no ensino).
+- Regras do português: nenhum livro de regras foi achado nos discos (o Nerael aprendeu gramática pelo treebank UD "Bosque" em `E:\NERAEL_MAPA_RECONEXAO\material\ud\` e por uma lição de 14 regras). Com o aval do autor, foi baixado o livro **"Português" da Wikilivros** (CC BY-SA; dump oficial `E:\NERAEL_BASES_DADOS\wikilivros_pt\ptwikibooks-latest-pages-articles.xml.bz2`, 22 MB): 156 temas (acentuação, crase, hífen, classes de palavras, verbos, concordância, regência, colocação pronominal...). `ferramentas/extrair_gramatica.py` gera `gramatica.tsv.gz` (consulta) e `gramatica_frases.txt` (345 frases de regra no pacote `treinos/treino_gramatica.json`).
+
+## Trabalho longo no executor
+Ficha `C:\Users\Douglas\Downloads\ARCH-NEURAL 3D-MNLS v3\FORJA\EXECUTOR_SEM_CLAUDE\FILA\lab_v15_extrair_wikipedia.json` (pesado, respeita a trava, retoma sozinho): (1) extrair o resumo de todos os artigos, (2) montar os pedaços da Wikipédia, (3) treinar o cérebro já ensinado no Node, (4) compactar para `cerebro_V15_ensinado.lab.json` com conferência sem perda. Enquanto ele não roda, "já ensinado" usa o `cerebro_V15.lab.json` e a amostra de 5.000 artigos, e avisa isso na conversa.
+
+## Testes feitos (16/11, como usuário, pelo campo da conversa)
+- PC, "já ensinado": "o que significa saudade?" → dicionário; "o que é astronomia?" → Wikipédia; "o que é uma entidade?" → Livro de Entidades; "quem foi Aquiles?" → Wikipédia (o cérebro só tinha a associação "aquiles → com → peça → quem", que aparece junto); "qual seu nome?", "quem te criou?" e "média de [1,2,3]" continuam com o cérebro.
+- PC, "desde o básico" → ENSINAR Entidades: 353 frases, a base de entidades ligou, baterias depois 332/347 (igual a antes).
+- Celular (375×812): carga automática já usa o `.lab.json`; ☰ → "já ensinado": dicionário, Wikipédia e estatística funcionando.
+
+## Atualização 16/11 tarde
+- O executor rodou sozinho a ficha da Wikipédia: **1.139.105 artigos** em 658 pedaços (69 MB compactados, ~105 KB por pedaço) e o cérebro já ensinado `cerebro_V15_ensinado.lab.json` (12.228 nós, 316.942 ligações; 18,9 MB compactado, sem perda).
+- Regras do português ligadas (base `gram` + pacote `treinos/treino_gramatica.json`).
+- O cérebro ensinado será refeito com as regras dentro do grafo pela ficha `C:\Users\Douglas\Downloads\ARCH-NEURAL 3D-MNLS v3\FORJA\EXECUTOR_SEM_CLAUDE\FILA\lab_v15_treinar_com_gramatica.json` (espera a trava pesada). Até lá o ensinado atual já consulta as regras na conversa.
+- Teste no PC (cérebro ensinado): "o que é crase?", "o que é próclise?", "o que é concordância verbal?" → regras; "o que é fotossíntese?", "quem foi Machado de Assis?" → Wikipédia; "qual seu nome?" continua com o cérebro. Tempo por pergunta: 2 a 6 s no PC (turno do cérebro grande + pedaço baixado + frase aprendida); no celular será mais.
+- Consertos: textos gravados pelo Python no Windows têm fim de linha `\r\n` e o treino no Node agora separa com `\r?\n` (antes as regras davam 0 frases); o núcleo da Wikipédia ignora títulos que não são a própria palavra (".com", "Nao"); nenhuma frase começada por "você/eu/meu..." entra no treino (mexeria na identidade do cérebro).
